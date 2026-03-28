@@ -550,7 +550,7 @@ function showScene() {
             "<p>Grateful for your help, Sugriva brings forward his wisest and most loyal companion: Hanuman. Hanuman bows before you and offers his strength in the search for Sita.</p>" +
             "<p>A powerful new alliance has begun.</p>" +
             "<div id='choices'>" +
-            "<button onclick='restart()'>Restart</button>" +
+            "<button onclick='makeChoice()'>Restart</button>" +
             "</div>";
     }
 
@@ -853,3 +853,5 @@ function makeChoice(choice) {
     }
     showScene();
 }
+
+function 

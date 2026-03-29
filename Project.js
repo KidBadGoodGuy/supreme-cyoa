@@ -145,7 +145,7 @@ function showScene() {
 
     if (currentScene === 1) {
         storyCard.innerHTML =
-            "<h1>Part 1: The Exile</h1>
+            "<h1>Part 1: The Exile</h1>" +
             "<h2>Welcome, " + playerName + "!</h2>" +
             "<p>You are a brave warrior in ancient India from the Kingdom of Ayodhya. You are soon to be crowned ruler, as your father, King Dasharatha, is getting old.</p>" +
             "<p>One of your father's wives, Kaikeyi, demands that her own son, your younger brother Bharata, be crowned instead. Your father is left with no choice but to exile you from the kingdom.</p>" +

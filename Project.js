@@ -7,6 +7,7 @@ var receiptScenes = [];
 var receiptChoices = [];
 var oldStates = [];
 
+
 function randomizer() {
     return Math.floor(Math.random() * 101);
 }

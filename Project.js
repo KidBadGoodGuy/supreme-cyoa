@@ -64,6 +64,7 @@ var miniGameScores = {
 };
 var miniGameSession = null;
 var journeyTriviaState = null;
+var miniGameReturnScene = null;
 var ramayanaTriviaBank = [
     {
         prompt: "Who wrote the Ramayana, according to tradition?",
@@ -736,6 +737,7 @@ function saveOldState() {
         miniGameScores: JSON.parse(JSON.stringify(miniGameScores)),
         miniGameSession: miniGameSession ? JSON.parse(JSON.stringify(miniGameSession)) : null,
         journeyTriviaState: journeyTriviaState ? JSON.parse(JSON.stringify(journeyTriviaState)) : null,
+        miniGameReturnScene: miniGameReturnScene,
         receiptScenes: receiptScenes.slice(),
         receiptChoices: receiptChoices.slice(),
         visitedSceneIds: visitedSceneIds.slice(),
@@ -766,6 +768,7 @@ function undoChoice() {
     miniGameScores = oldState.miniGameScores || miniGameScores;
     miniGameSession = oldState.miniGameSession || null;
     journeyTriviaState = oldState.journeyTriviaState || null;
+    miniGameReturnScene = typeof oldState.miniGameReturnScene === "number" ? oldState.miniGameReturnScene : null;
     receiptScenes = oldState.receiptScenes;
     receiptChoices = oldState.receiptChoices;
     visitedSceneIds = oldState.visitedSceneIds;
@@ -870,6 +873,7 @@ function restart() {
     };
     miniGameSession = null;
     journeyTriviaState = null;
+    miniGameReturnScene = null;
     receiptScenes = [];
     receiptChoices = [];
     oldStates = [];
@@ -893,6 +897,7 @@ function startAdventure() {
     oldStates = [];
     visitedSceneIds = [];
     takenTransitions = [];
+    miniGameReturnScene = null;
     currentScene = 1;
     updatePlayerStatsCard();
     showScene();
@@ -902,6 +907,12 @@ function isTerminalScene(sceneId) {
     return sceneId === 17 || sceneId === 18 || sceneId === 21 || sceneId === 38 ||
         sceneId === 39 || sceneId === 45 || sceneId === 46 || sceneId === 52 ||
         sceneId === 67;
+}
+
+function isMiniGameScene(sceneId) {
+    return sceneId === 47 || sceneId === 55 || sceneId === 56 || sceneId === 57 ||
+        sceneId === 58 || sceneId === 59 || sceneId === 70 || sceneId === 71 ||
+        sceneId === 72 || sceneId === 73;
 }
 
 function escapeHtml(text) {
@@ -1150,6 +1161,7 @@ function handleTimelineModalBackdrop(event) {
 function showScene() {
     var storyCard = document.getElementById("storyCard");
     var shouldAutoOpenTimeline;
+    var choicesContainer;
 
     if (currentScene === 1) {
         storyCard.innerHTML =
@@ -1606,6 +1618,7 @@ function showScene() {
             "<button onclick='makeChoice(58)'>Chase (Race)</button>" +
             "<button onclick='makeChoice(59)'>Maze (Trivia)</button>" +
             "<button onclick='makeChoice(70)'>Journey Trivia</button>" +
+            (miniGameReturnScene !== null ? "<button onclick='makeChoice(76)'>Return to Main Story</button>" : "") +
             "<button onclick='makeDecision(1)'>Continue Main Story</button>" +
             "</div>";
     } else if (currentScene === 55) {
@@ -1750,6 +1763,12 @@ function showScene() {
         
     }
 
+    choicesContainer = document.getElementById("choices");
+    if (choicesContainer && miniGamesUnlocked && currentScene >= 53 &&
+        !isMiniGameScene(currentScene) && !isTerminalScene(currentScene)) {
+        choicesContainer.innerHTML += "<button onclick='makeChoice(75)'>Visit Hanuman's Training Grounds</button>";
+    }
+
     addSceneToReceipt();
     if (visitedSceneIds.indexOf(currentScene) === -1) {
         visitedSceneIds.push(currentScene);
@@ -1852,6 +1871,10 @@ function makeChoice(choice) {
         addChoiceToReceipt("Answered a journey trivia question incorrectly");
     } else if (choice === 74) {
         addChoiceToReceipt("Advanced to the next journey trivia question");
+    } else if (choice === 75) {
+        addChoiceToReceipt("Paused the mission to train with Hanuman");
+    } else if (choice === 76) {
+        addChoiceToReceipt("Returned to the rescue mission");
     } else if (choice === 48) {
         addChoiceToReceipt("Answered Jatayu question 1 correctly");
     } else if (choice === 49) {
@@ -1880,7 +1903,11 @@ function makeChoice(choice) {
         addChoiceToReceipt("Answered Sugriva's question incorrectly");
     }
 
-    if (currentScene === 1 || currentScene === 2) {
+    if (choice === 75 && miniGamesUnlocked && currentScene >= 53 &&
+        !isMiniGameScene(currentScene) && !isTerminalScene(currentScene)) {
+        miniGameReturnScene = currentScene;
+        currentScene = 47;
+    } else if (currentScene === 1 || currentScene === 2) {
         if (choice === 3) {
             currentScene = 3;
         } else if (choice === 4) {
@@ -2116,6 +2143,9 @@ function makeChoice(choice) {
             currentScene = 59;
         } else if (choice === 70) {
             currentScene = 70;
+        } else if (choice === 76 && miniGameReturnScene !== null) {
+            currentScene = miniGameReturnScene;
+            miniGameReturnScene = null;
         }
     } else if (currentScene === 55) {
         if (choice === 160) {
@@ -2216,6 +2246,7 @@ function makeChoice(choice) {
 
 function makeDecision(decision){
     if (decision === 1){
+        miniGameReturnScene = null;
         currentScene = 53;
     } else if (decision === 2){
         currentScene = 54; // begin the rescue

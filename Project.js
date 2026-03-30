@@ -11,6 +11,50 @@ var takenTransitions = [];
 var timelineModalOpen = false;
 var timelineZoom = 1;
 var miniGamesUnlocked = false;
+var mazeTriviaIndex = 0;
+var mazeTriviaScore = 0;
+var mazeTriviaQuestions = [
+    {
+        question: "Who authored the Ramayana in its oldest Sanskrit form?",
+        options: ["Valmiki", "Vyasa", "Tulsidas", "Kalidasa"],
+        answer: 0
+    },
+    {
+        question: "What is the name of Rama's father, the king of Ayodhya?",
+        options: ["Dasharatha", "Janaka", "Bharata", "Shantanu"],
+        answer: 0
+    },
+    {
+        question: "Which demon king abducts Sita?",
+        options: ["Kumbhakarna", "Ravana", "Maricha", "Indrajit"],
+        answer: 1
+    },
+    {
+        question: "Who helps Rama cross the ocean to Lanka by organizing the vanara army?",
+        options: ["Vibhishana", "Jambavan", "Sugriva", "Shatrughna"],
+        answer: 2
+    },
+    {
+        question: "What is the name of Ravana's righteous brother who joins Rama?",
+        options: ["Kumbhakarna", "Vibhishana", "Indrajit", "Akampana"],
+        answer: 1
+    },
+    {
+        question: "Who leaps across the ocean and finds Sita in Ashoka Vatika?",
+        options: ["Angada", "Lakshmana", "Hanuman", "Nala"],
+        answer: 2
+    },
+    {
+        question: "Which weapon is Lakshmana famously skilled with in battle?",
+        options: ["Mace", "Bow and arrows", "Spear", "Sword only"],
+        answer: 1
+    },
+    {
+        question: "What is the name of the bridge built to reach Lanka?",
+        options: ["Rama Setu", "Sarayu Setu", "Ayodhya Gate", "Pushpaka Path"],
+        answer: 0
+    }
+];
 var playerStatsModalOpen = false;
 var playerStats = {
     strength: 0,
@@ -311,6 +355,39 @@ function awardPowerup(statName, amount) {
     updatePlayerStatsCard();
 }
 
+function startMazeTrivia() {
+    mazeTriviaIndex = 0;
+    mazeTriviaScore = 0;
+}
+
+function answerMazeTrivia(selectedIndex) {
+    var currentQuestion;
+
+    if (currentScene !== 64) {
+        return;
+    }
+
+    currentQuestion = mazeTriviaQuestions[mazeTriviaIndex];
+    if (!currentQuestion) {
+        return;
+    }
+
+    if (selectedIndex === currentQuestion.answer) {
+        mazeTriviaScore += 1;
+    }
+
+    mazeTriviaIndex += 1;
+
+    if (mazeTriviaIndex >= mazeTriviaQuestions.length) {
+        if (mazeTriviaScore >= 5 && randomizer() < getChallengeOdds("maze")) {
+            awardPowerup("speedAgility", 1);
+            awardPowerup("magicalPower", 1);
+        }
+    }
+
+    showScene();
+}
+
 function clearStoryCard() {
     document.getElementById("storyCard").innerHTML =
         "<!-- this is where the story will be displayed --><div id='choices'></div>";
@@ -333,6 +410,8 @@ function saveOldState() {
         broughtLakshmana: broughtLakshmana,
         wentAlone: wentAlone,
         miniGamesUnlocked: miniGamesUnlocked,
+        mazeTriviaIndex: mazeTriviaIndex,
+        mazeTriviaScore: mazeTriviaScore,
         playerStats: JSON.parse(JSON.stringify(playerStats)),
         receiptScenes: receiptScenes.slice(),
         receiptChoices: receiptChoices.slice(),
@@ -355,6 +434,8 @@ function undoChoice() {
     broughtLakshmana = oldState.broughtLakshmana;
     wentAlone = oldState.wentAlone;
     miniGamesUnlocked = oldState.miniGamesUnlocked;
+    mazeTriviaIndex = oldState.mazeTriviaIndex || 0;
+    mazeTriviaScore = oldState.mazeTriviaScore || 0;
     playerStats = oldState.playerStats;
     receiptScenes = oldState.receiptScenes;
     receiptChoices = oldState.receiptChoices;
@@ -1141,7 +1222,7 @@ function showScene() {
             "<p><strong>Current duel win odds:</strong> " + getChallengeOdds("duel") + "%</p>" +
             "<div id='choices'>" +
             "<button onclick='makeChoice(60)'>Play Duel</button>" +
-            "<button onclick='makeChoice(47)'>Back to Hanuman</button>" +
+            "<button onclick='makeChoice(47)'>&larr; Back to Hanuman</button>" +
             "</div>";
     } else if (currentScene === 56) {
         storyCard.innerHTML =
@@ -1150,7 +1231,7 @@ function showScene() {
             "<p><strong>Current brawl win odds:</strong> " + getChallengeOdds("brawl") + "%</p>" +
             "<div id='choices'>" +
             "<button onclick='makeChoice(61)'>Play Brawl</button>" +
-            "<button onclick='makeChoice(47)'>Back to Hanuman</button>" +
+            "<button onclick='makeChoice(47)'>&larr; Back to Hanuman</button>" +
             "</div>";
     } else if (currentScene === 57) {
         storyCard.innerHTML =
@@ -1159,7 +1240,7 @@ function showScene() {
             "<p><strong>Current shooting win odds:</strong> " + getChallengeOdds("shooting") + "%</p>" +
             "<div id='choices'>" +
             "<button onclick='makeChoice(62)'>Play Shooting Range</button>" +
-            "<button onclick='makeChoice(47)'>Back to Hanuman</button>" +
+            "<button onclick='makeChoice(47)'>&larr; Back to Hanuman</button>" +
             "</div>";
     } else if (currentScene === 58) {
         storyCard.innerHTML =
@@ -1168,17 +1249,43 @@ function showScene() {
             "<p><strong>Current chase win odds:</strong> " + getChallengeOdds("chase") + "%</p>" +
             "<div id='choices'>" +
             "<button onclick='makeChoice(63)'>Play Chase</button>" +
-            "<button onclick='makeChoice(47)'>Back to Hanuman</button>" +
+            "<button onclick='makeChoice(47)'>&larr; Back to Hanuman</button>" +
             "</div>";
     } else if (currentScene === 59) {
         storyCard.innerHTML =
             "<h2>Mini-game: Maze Trivia</h2>" +
-            "<p>You navigate a puzzle maze while answering ancient-knowledge trivia.</p>" +
+            "<p>You navigate a puzzle maze while answering Ramayana trivia.</p>" +
             "<p><strong>Current maze win odds:</strong> " + getChallengeOdds("maze") + "%</p>" +
             "<div id='choices'>" +
-            "<button onclick='makeChoice(64)'>Play Maze</button>" +
-            "<button onclick='makeChoice(47)'>Back to Hanuman</button>" +
+            "<button onclick='makeChoice(64)'>Start Ramayana Trivia</button>" +
+            "<button onclick='makeChoice(47)'>&larr; Back to Hanuman</button>" +
             "</div>";
+    } else if (currentScene === 64) {
+        var question = mazeTriviaQuestions[mazeTriviaIndex];
+
+        if (question) {
+            storyCard.innerHTML =
+                "<h2>Mini-game: Ramayana Trivia</h2>" +
+                "<p><strong>Question " + (mazeTriviaIndex + 1) + " of " + mazeTriviaQuestions.length + "</strong></p>" +
+                "<p>" + question.question + "</p>" +
+                "<p><strong>Current score:</strong> " + mazeTriviaScore + "</p>" +
+                "<div id='choices'>" +
+                "<button onclick='answerMazeTrivia(0)'>" + question.options[0] + "</button>" +
+                "<button onclick='answerMazeTrivia(1)'>" + question.options[1] + "</button>" +
+                "<button onclick='answerMazeTrivia(2)'>" + question.options[2] + "</button>" +
+                "<button onclick='answerMazeTrivia(3)'>" + question.options[3] + "</button>" +
+                "<button onclick='makeChoice(47)'>&larr; Back to Hanuman</button>" +
+                "</div>";
+        } else {
+            storyCard.innerHTML =
+                "<h2>Mini-game: Ramayana Trivia Complete</h2>" +
+                "<p>You answered <strong>" + mazeTriviaScore + " out of " + mazeTriviaQuestions.length + "</strong> questions correctly.</p>" +
+                "<p>Score at least 5 correct answers and pass the maze challenge roll to earn +1 Speed & Agility and +1 Magical Power.</p>" +
+                "<div id='choices'>" +
+                "<button onclick='makeChoice(64)'>Play Again</button>" +
+                "<button onclick='makeChoice(47)'>&larr; Back to Hanuman</button>" +
+                "</div>";
+        }
     } else if (currentScene === 53) {
         storyCard.innerhtml = 
             "<h1>Part 2: The Rescue</h1>" +
@@ -1285,7 +1392,11 @@ function makeChoice(choice) {
     } else if (choice === 63) {
         addChoiceToReceipt("Played chase mini-game");
     } else if (choice === 64) {
-        addChoiceToReceipt("Played maze mini-game");
+        if (currentScene === 59) {
+            addChoiceToReceipt("Started Ramayana trivia mini-game");
+        } else if (currentScene === 64) {
+            addChoiceToReceipt("Replayed Ramayana trivia mini-game");
+        }
     } else if (choice === 48) {
         addChoiceToReceipt("Answered Jatayu question 1 correctly");
     } else if (choice === 49) {
@@ -1577,12 +1688,15 @@ function makeChoice(choice) {
         }
     } else if (currentScene === 59) {
         if (choice === 64) {
-            if (randomizer() < getChallengeOdds("maze")) {
-                awardPowerup("speedAgility", 1);
-                awardPowerup("magicalPower", 1);
-            }
-
+            startMazeTrivia();
+            currentScene = 64;
+        } else if (choice === 47) {
             currentScene = 47;
+        }
+    } else if (currentScene === 64) {
+        if (choice === 64) {
+            startMazeTrivia();
+            currentScene = 64;
         } else if (choice === 47) {
             currentScene = 47;
         }

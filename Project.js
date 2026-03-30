@@ -12,6 +12,8 @@ var timelineModalOpen = false;
 var timelineZoom = 1;
 var miniGamesUnlocked = false;
 var playerStatsModalOpen = false;
+var inventoryModalOpen = false;
+var inventoryArtifacts = [];
 var playerStats = {
     strength: 0,
     defense: 0,
@@ -75,7 +77,11 @@ var timelineNodeTitles = {
     51: "Fate Decision",
     52: "Peaceful Ending",
     53: "Part 2 Intro",
-    54: "Part 2 Start"
+    54: "Part 2 Start",
+    65: "Search for Sita",
+    66: "Bharata's Plea",
+    67: "Ayodhya Return Ending",
+    68: "Sandals Promise"
 };
 
 var timelineLevels = [
@@ -100,8 +106,10 @@ var timelineLevels = [
     [49],
     [50],
     [33, 37],
-    [36, 40],
-    [38, 41],
+    [36, 65],
+    [38, 66],
+    [67, 68],
+    [40, 41],
     [42],
     [43],
     [44, 45, 46],
@@ -168,8 +176,12 @@ var timelineEdges = [
     { from: 36, to: 38, label: "Fight Ravana" },
     { from: 34, to: 37, label: "Continue" },
     { from: 35, to: 37, label: "Continue" },
-    { from: 31, to: 40, label: "Continue search" },
-    { from: 37, to: 40, label: "Continue search" },
+    { from: 31, to: 65, label: "Keep searching" },
+    { from: 37, to: 65, label: "Keep searching" },
+    { from: 65, to: 66, label: "Return to hut" },
+    { from: 66, to: 67, label: "Accept return" },
+    { from: 66, to: 68, label: "Decline return" },
+    { from: 68, to: 40, label: "Continue exile" },
     { from: 40, to: 41, label: "Hear request" },
     { from: 41, to: 42, label: "Consider plan" },
     { from: 42, to: 43, label: "Set trap" },
@@ -296,6 +308,62 @@ function closePlayerStatsModal() {
     modal.setAttribute("aria-hidden", "true");
 }
 
+function updateInventoryCard() {
+    var body = document.getElementById("inventoryBody");
+    var markup = "";
+    var i;
+
+    if (!body) {
+        return;
+    }
+
+    if (inventoryArtifacts.length === 0) {
+        body.innerHTML = "<p>You have not collected any special artifacts yet.</p>";
+        return;
+    }
+
+    markup += "<p><strong>Artifacts Collected:</strong></p>";
+    markup += "<ul class='stats-list'>";
+
+    for (i = 0; i < inventoryArtifacts.length; i++) {
+        markup += "<li>" + inventoryArtifacts[i] + "</li>";
+    }
+
+    markup += "</ul>";
+    body.innerHTML = markup;
+}
+
+function openInventoryModal() {
+    var modal = document.getElementById("inventoryModal");
+
+    if (!modal) {
+        return;
+    }
+
+    inventoryModalOpen = true;
+    updateInventoryCard();
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+}
+
+function closeInventoryModal() {
+    var modal = document.getElementById("inventoryModal");
+
+    if (!modal) {
+        return;
+    }
+
+    inventoryModalOpen = false;
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+}
+
+function handleInventoryModalBackdrop(event) {
+    if (event.target && event.target.id === "inventoryModal") {
+        closeInventoryModal();
+    }
+}
+
 function handlePlayerStatsModalBackdrop(event) {
     if (event.target && event.target.id === "playerStatsModal") {
         closePlayerStatsModal();
@@ -309,6 +377,13 @@ function awardPowerup(statName, amount) {
 
     playerStats[statName] += amount;
     updatePlayerStatsCard();
+}
+
+function addArtifact(artifactName) {
+    if (inventoryArtifacts.indexOf(artifactName) === -1) {
+        inventoryArtifacts.push(artifactName);
+        updateInventoryCard();
+    }
 }
 
 function clearStoryCard() {
@@ -333,6 +408,7 @@ function saveOldState() {
         broughtLakshmana: broughtLakshmana,
         wentAlone: wentAlone,
         miniGamesUnlocked: miniGamesUnlocked,
+        inventoryArtifacts: inventoryArtifacts.slice(),
         playerStats: JSON.parse(JSON.stringify(playerStats)),
         receiptScenes: receiptScenes.slice(),
         receiptChoices: receiptChoices.slice(),
@@ -355,6 +431,7 @@ function undoChoice() {
     broughtLakshmana = oldState.broughtLakshmana;
     wentAlone = oldState.wentAlone;
     miniGamesUnlocked = oldState.miniGamesUnlocked;
+    inventoryArtifacts = oldState.inventoryArtifacts;
     playerStats = oldState.playerStats;
     receiptScenes = oldState.receiptScenes;
     receiptChoices = oldState.receiptChoices;
@@ -395,7 +472,7 @@ function makeReceipt() {
     if (currentScene !== 17 && currentScene !== 18 && currentScene !== 21 &&
         currentScene !== 31 && currentScene !== 37 && currentScene !== 38 &&
         currentScene !== 39 && currentScene !== 45 && currentScene !== 46 &&
-        currentScene !== 52 &&
+        currentScene !== 52 && currentScene !== 67 &&
         currentScene !== 47) {
         return;
     }
@@ -430,6 +507,7 @@ function restart() {
     broughtLakshmana = false;
     wentAlone = false;
     miniGamesUnlocked = false;
+    inventoryArtifacts = [];
     playerStats = {
         strength: 0,
         defense: 0,
@@ -447,6 +525,7 @@ function restart() {
     renderTimeline(timelineModalOpen);
     setUndoButton();
     updatePlayerStatsCard();
+    updateInventoryCard();
 }
 
 function startAdventure() {
@@ -467,7 +546,8 @@ function startAdventure() {
 
 function isTerminalScene(sceneId) {
     return sceneId === 17 || sceneId === 18 || sceneId === 21 || sceneId === 38 ||
-        sceneId === 39 || sceneId === 45 || sceneId === 46 || sceneId === 52;
+        sceneId === 39 || sceneId === 45 || sceneId === 46 || sceneId === 52 ||
+        sceneId === 67;
 }
 
 function escapeHtml(text) {
@@ -970,9 +1050,9 @@ function showScene() {
         storyCard.innerHTML =
             "<h2>Sita is Taken</h2>" +
             "<p>Jatayu does not intervene. Ravana escapes with Sita, and when you return, your exile has become a desperate rescue mission.</p>" +
-            "<p>Your search soon leads you deeper into the forest, where new allies may be waiting.</p>" +
+            "<p>You and Lakshmana immediately begin searching the forest for signs of where she was taken.</p>" +
             "<div id='choices'>" +
-            "<button onclick='makeChoice(40)'>Continue the search</button>" +
+            "<button onclick='makeChoice(65)'>Keep searching</button>" +
             "</div>";
     } else if (currentScene === 32) {
         storyCard.innerHTML =
@@ -1045,9 +1125,41 @@ function showScene() {
         storyCard.innerHTML =
             "<h2>Sita is Taken</h2>" +
             "<p>Jatayu's bravery could not stop Ravana. When you return, you learn that Sita has been taken, and your exile becomes a rescue mission.</p>" +
-            "<p>The search carries you onward into the forest, where fate prepares another meeting.</p>" +
+            "<p>You and Lakshmana begin searching at once, following broken branches and tracks through the woods.</p>" +
             "<div id='choices'>" +
-            "<button onclick='makeChoice(40)'>Continue the search</button>" +
+            "<button onclick='makeChoice(65)'>Keep searching</button>" +
+            "</div>";
+    } else if (currentScene === 65) {
+        storyCard.innerHTML =
+            "<h2>Searching for Sita</h2>" +
+            "<p>You search through groves, riverbanks, and rocky trails for any clue of Sita's path. As the day fades, you decide to return to your forest home to regroup.</p>" +
+            "<div id='choices'>" +
+            "<button onclick='makeChoice(66)'>Return to the hut</button>" +
+            "</div>";
+    } else if (currentScene === 66) {
+        storyCard.innerHTML =
+            "<h2>Bharata at the Hut</h2>" +
+            "<p>When you return, Bharata is waiting. He falls at your feet and pleads for you to return to Ayodhya and take the throne.</p>" +
+            "<p>Do you accept Bharata's plea or continue your exile and rescue mission?</p>" +
+            "<div id='choices'>" +
+            "<button onclick='makeChoice(67)'>Accept and return</button>" +
+            "<button onclick='makeChoice(68)'>Decline and continue exile</button>" +
+            "</div>";
+    } else if (currentScene === 67) {
+        storyCard.innerHTML =
+            "<h2>Ayodhya Return Ending</h2>" +
+            "<p>You accept Bharata's plea and return to Ayodhya before your exile vow is complete. Court rivals see your return as a threat, and you are killed in a palace conspiracy.</p>" +
+            "<p>Your story ends in Ayodhya before Sita can be rescued.</p>" +
+            "<div id='choices'>" +
+            "<button onclick='restart()'>Restart</button>" +
+            "</div>";
+    } else if (currentScene === 68) {
+        storyCard.innerHTML =
+            "<h2>The Sandals Promise</h2>" +
+            "<p>You refuse to return early and place your sandals in Bharata's hands. Bharata vows, \"I am not king. You are king, and I will rule only as your servant until you return.\"</p>" +
+            "<p>With your vow intact, you continue the search and soon cross paths with Sugriva.</p>" +
+            "<div id='choices'>" +
+            "<button onclick='makeChoice(40)'>Continue to Sugriva</button>" +
             "</div>";
     } else if (currentScene === 38) {
         storyCard.innerHTML =
@@ -1258,6 +1370,14 @@ function makeChoice(choice) {
         addChoiceToReceipt("Went after Ravana in the forest");
     } else if (choice === 40) {
         addChoiceToReceipt("Continued searching for Sita");
+    } else if (choice === 65) {
+        addChoiceToReceipt("Searched the forest for Sita");
+    } else if (choice === 66) {
+        addChoiceToReceipt("Returned to the hut to regroup");
+    } else if (choice === 67) {
+        addChoiceToReceipt("Accepted Bharata's plea to return");
+    } else if (choice === 68) {
+        addChoiceToReceipt("Declined and gave sandals to Bharata");
     } else if (choice === 41) {
         addChoiceToReceipt("Listened to Sugriva's request");
     } else if (choice === 42) {
@@ -1445,6 +1565,7 @@ function makeChoice(choice) {
         if (choice === 31) {
             currentScene = 31;
         } else if (choice === 32) {
+            addArtifact("Jatayu's Feather");
             currentScene = 32;
         }
     } else if (currentScene === 32) {
@@ -1487,16 +1608,32 @@ function makeChoice(choice) {
         if (choice === 37) {
             currentScene = 37;
         }
+    } else if (currentScene === 31 || currentScene === 37) {
+        if (choice === 65) {
+            currentScene = 65;
+        }
+    } else if (currentScene === 65) {
+        if (choice === 66) {
+            currentScene = 66;
+        }
+    } else if (currentScene === 66) {
+        if (choice === 67) {
+            currentScene = 67;
+        } else if (choice === 68) {
+            addArtifact("Rama's Sandals (Paduka)");
+            currentScene = 68;
+        }
     } else if (currentScene === 36) {
         if (choice === 38) {
             currentScene = 38;
         }
-    } else if (currentScene === 31 || currentScene === 37) {
+    } else if (currentScene === 68) {
         if (choice === 40) {
             currentScene = 40;
         }
     } else if (currentScene === 40) {
         if (choice === 41) {
+            addArtifact("Sugriva Alliance Oath");
             currentScene = 41;
         }
     } else if (currentScene === 41) {
@@ -1606,11 +1743,13 @@ function makeDecision(decision){
 document.addEventListener("DOMContentLoaded", function () {
     renderTimeline(timelineModalOpen);
     updatePlayerStatsCard();
+    updateInventoryCard();
 
     document.addEventListener("keydown", function (event) {
         if (event.key === "Escape") {
             closeTimelineModal();
             closePlayerStatsModal();
+            closeInventoryModal();
         }
     });
 });

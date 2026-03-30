@@ -18,8 +18,41 @@ var playerStats = {
     stamina: 0,
     speedAgility: 0,
     magicalPower: 0,
-    weaponMastery: 0
+    weaponMastery: 0,
+    smarts: 0
 };
+var inventoryItems = [];
+var maxInventoryItems = 20;
+var rewardItems = [
+    "Sun Sigil", "Moon Sigil", "Forest Sigil", "River Sigil", "Sky Sigil",
+    "Flame Sigil", "Stone Sigil", "Wind Sigil", "Thunder Sigil", "Lotus Sigil",
+    "Lion Sigil", "Eagle Sigil", "Ocean Sigil", "Mountain Sigil", "Dawn Sigil",
+    "Dusk Sigil", "Star Sigil", "Temple Sigil", "Crown Sigil", "Royal Emblem"
+];
+var titles = {
+    king: {
+        label: "King",
+        bonuses: {
+            strength: 100,
+            defense: 100,
+            stamina: 100,
+            speedAgility: 100,
+            magicalPower: 100,
+            weaponMastery: 100,
+            smarts: 100
+        }
+    }
+};
+var ownedTitles = [];
+var equippedTitle = "";
+var selectedMiniGameTactics = {
+    duel: "balanced",
+    brawl: "balanced",
+    shooting: "balanced",
+    chase: "balanced",
+    maze: "balanced"
+};
+var journeyTriviaState = null;
 
 var timelineNodeTitles = {
     1: "The Exile",
@@ -198,32 +231,58 @@ function clampOdds(value) {
     return value;
 }
 
+function getEffectiveStats() {
+    var effective = JSON.parse(JSON.stringify(playerStats));
+    var bonuses;
+    var statName;
+
+    if (equippedTitle && titles[equippedTitle]) {
+        bonuses = titles[equippedTitle].bonuses;
+        for (statName in bonuses) {
+            if (bonuses.hasOwnProperty(statName) && effective.hasOwnProperty(statName)) {
+                effective[statName] += bonuses[statName];
+            }
+        }
+    }
+
+    return effective;
+}
+
+function getMiniGameTacticBonus(challengeType) {
+    var tactic = selectedMiniGameTactics[challengeType];
+
+    if (tactic === "careful") {
+        return 10;
+    }
+
+    if (tactic === "risky") {
+        return 15;
+    }
+
+    return 0;
+}
+
 function getChallengeOdds(challengeType) {
+    var effectiveStats = getEffectiveStats();
+    var baseOdds = 50;
+
     if (challengeType === "fight") {
-        return clampOdds(70 + (playerStats.strength * 10) + (playerStats.speedAgility * 5));
+        baseOdds = 70 + (effectiveStats.strength * 10) + (effectiveStats.speedAgility * 5);
+    } else if (challengeType === "duel") {
+        baseOdds = 50 + (effectiveStats.defense * 10) + (effectiveStats.weaponMastery * 10);
+    } else if (challengeType === "brawl") {
+        baseOdds = 50 + (effectiveStats.stamina * 10) + (effectiveStats.strength * 10);
+    } else if (challengeType === "shooting") {
+        baseOdds = 50 + (effectiveStats.stamina * 10) + (effectiveStats.weaponMastery * 10);
+    } else if (challengeType === "chase") {
+        baseOdds = 50 + (effectiveStats.speedAgility * 10);
+    } else if (challengeType === "maze") {
+        baseOdds = 50 + (effectiveStats.speedAgility * 8) + (effectiveStats.magicalPower * 8) + (effectiveStats.smarts * 12);
+    } else if (challengeType === "journeyTrivia") {
+        baseOdds = 45 + (effectiveStats.smarts * 15) + (effectiveStats.magicalPower * 5);
     }
 
-    if (challengeType === "duel") {
-        return clampOdds(50 + (playerStats.defense * 10) + (playerStats.weaponMastery * 10));
-    }
-
-    if (challengeType === "brawl") {
-        return clampOdds(50 + (playerStats.stamina * 10) + (playerStats.strength * 10));
-    }
-
-    if (challengeType === "shooting") {
-        return clampOdds(50 + (playerStats.stamina * 10) + (playerStats.weaponMastery * 10));
-    }
-
-    if (challengeType === "chase") {
-        return clampOdds(50 + (playerStats.speedAgility * 10));
-    }
-
-    if (challengeType === "maze") {
-        return clampOdds(50 + (playerStats.speedAgility * 10) + (playerStats.magicalPower * 10));
-    }
-
-    return 50;
+    return clampOdds(baseOdds + getMiniGameTacticBonus(challengeType));
 }
 
 function getAllOddsSummary() {
@@ -233,30 +292,140 @@ function getAllOddsSummary() {
         brawl: getChallengeOdds("brawl"),
         shooting: getChallengeOdds("shooting"),
         chase: getChallengeOdds("chase"),
-        maze: getChallengeOdds("maze")
+        maze: getChallengeOdds("maze"),
+        journeyTrivia: getChallengeOdds("journeyTrivia")
+    };
+}
+
+function unlockTitleIfEligible() {
+    if (inventoryItems.length >= maxInventoryItems && ownedTitles.indexOf("king") === -1) {
+        ownedTitles.push("king");
+    }
+}
+
+function awardMiniGameReward(gameName) {
+    var itemName;
+    var unlockedNow = false;
+
+    if (inventoryItems.length >= maxInventoryItems) {
+        unlockTitleIfEligible();
+        return "Inventory complete. The royal trials are already finished.";
+    }
+
+    itemName = rewardItems[inventoryItems.length];
+    inventoryItems.push(itemName);
+    addChoiceToReceipt("Won " + gameName + " and earned " + itemName);
+    if (inventoryItems.length >= maxInventoryItems && ownedTitles.indexOf("king") === -1) {
+        unlockedNow = true;
+    }
+    unlockTitleIfEligible();
+    return "Victory! You earned: " + itemName + ". (" + inventoryItems.length + "/" + maxInventoryItems + ")" +
+        (unlockedNow ? " You unlocked the King title! Equip it in Player Stats." : "");
+}
+
+function equipTitle(titleKey) {
+    if (ownedTitles.indexOf(titleKey) !== -1) {
+        equippedTitle = titleKey;
+        updatePlayerStatsCard();
+    }
+}
+
+function unequipTitle() {
+    equippedTitle = "";
+    updatePlayerStatsCard();
+}
+
+function setMiniGameTactic(gameType, tactic) {
+    selectedMiniGameTactics[gameType] = tactic;
+    showScene();
+}
+
+function sampleChoicesExcluding(correctValue) {
+    var pool = receiptChoices.filter(function (choiceText) {
+        return choiceText !== correctValue;
+    });
+    var options = [correctValue];
+    var randomIndex;
+
+    while (options.length < 3 && pool.length > 0) {
+        randomIndex = Math.floor(Math.random() * pool.length);
+        options.push(pool[randomIndex]);
+        pool.splice(randomIndex, 1);
+    }
+
+    while (options.length < 3) {
+        options.push("Unknown");
+    }
+
+    return options.sort(function () {
+        return Math.random() - 0.5;
+    });
+}
+
+function buildJourneyTriviaState() {
+    var firstChoice = receiptChoices[0] || "No recorded choice";
+    var lastChoice = receiptChoices[receiptChoices.length - 1] || "No recorded choice";
+    var middleIndex = Math.floor((receiptChoices.length - 1) / 2);
+    var middleChoice = receiptChoices[middleIndex] || firstChoice;
+
+    journeyTriviaState = {
+        currentQuestion: 0,
+        score: 0,
+        questions: [
+            {
+                prompt: "Which choice happened first in your journey?",
+                correct: firstChoice
+            },
+            {
+                prompt: "Which choice happened around the middle of your journey?",
+                correct: middleChoice
+            },
+            {
+                prompt: "Which choice was most recent before this trivia?",
+                correct: lastChoice
+            }
+        ]
     };
 }
 
 function updatePlayerStatsCard() {
     var body = document.getElementById("playerStatsBody");
     var odds;
+    var effectiveStats;
+    var titleLabel = equippedTitle && titles[equippedTitle] ? titles[equippedTitle].label : "None";
+    var i;
+    var titleButtons = "";
 
     if (!body) {
         return;
     }
 
     odds = getAllOddsSummary();
+    effectiveStats = getEffectiveStats();
+
+    for (i = 0; i < ownedTitles.length; i++) {
+        titleButtons += "<button type='button' onclick=\"equipTitle('" + ownedTitles[i] + "')\">Equip " +
+            titles[ownedTitles[i]].label + "</button> ";
+    }
 
     body.innerHTML =
         "<p><strong>Traveler:</strong> " + (playerName || "Unknown") + "</p>" +
+        "<p><strong>Equipped Title:</strong> " + titleLabel + "</p>" +
         "<ul class='stats-list'>" +
-        "<li><strong>Strength:</strong> " + playerStats.strength + " <span>(+10 fight odds each)</span></li>" +
-        "<li><strong>Defense:</strong> " + playerStats.defense + " <span>(+10 duel odds each)</span></li>" +
-        "<li><strong>Stamina:</strong> " + playerStats.stamina + " <span>(+10 brawl & shooting odds each)</span></li>" +
-        "<li><strong>Speed & Agility:</strong> " + playerStats.speedAgility + " <span>(+5 fight, +10 chase, +10 maze each)</span></li>" +
-        "<li><strong>Magical Power:</strong> " + playerStats.magicalPower + " <span>(+10 maze odds each)</span></li>" +
-        "<li><strong>Weapon Mastery:</strong> " + playerStats.weaponMastery + " <span>(+10 duel & shooting odds each)</span></li>" +
+        "<li><strong>Strength:</strong> " + playerStats.strength + " <span>(effective: " + effectiveStats.strength + ")</span></li>" +
+        "<li><strong>Defense:</strong> " + playerStats.defense + " <span>(effective: " + effectiveStats.defense + ")</span></li>" +
+        "<li><strong>Stamina:</strong> " + playerStats.stamina + " <span>(effective: " + effectiveStats.stamina + ")</span></li>" +
+        "<li><strong>Speed & Agility:</strong> " + playerStats.speedAgility + " <span>(effective: " + effectiveStats.speedAgility + ")</span></li>" +
+        "<li><strong>Magical Power:</strong> " + playerStats.magicalPower + " <span>(effective: " + effectiveStats.magicalPower + ")</span></li>" +
+        "<li><strong>Weapon Mastery:</strong> " + playerStats.weaponMastery + " <span>(effective: " + effectiveStats.weaponMastery + ")</span></li>" +
+        "<li><strong>Smarts:</strong> " + playerStats.smarts + " <span>(effective: " + effectiveStats.smarts + ")</span></li>" +
         "</ul>" +
+        "<h4>Inventory</h4>" +
+        "<p><strong>Relics:</strong> " + inventoryItems.length + "/" + maxInventoryItems + "</p>" +
+        "<p>" + (inventoryItems.length ? inventoryItems.join(", ") : "No relics yet. Win mini-games to collect them.") + "</p>" +
+        "<h4>Titles</h4>" +
+        "<p>Owned titles: " + (ownedTitles.length ? ownedTitles.map(function (titleKey) { return titles[titleKey].label; }).join(", ") : "None yet") + "</p>" +
+        "<p>" + titleButtons + (equippedTitle ? "<button type='button' onclick='unequipTitle()'>Unequip Title</button>" : "") + "</p>" +
         "<h4>Current Win Odds</h4>" +
         "<ul class='stats-list odds-list'>" +
         "<li>Fight: " + odds.fight + "%</li>" +
@@ -265,6 +434,7 @@ function updatePlayerStatsCard() {
         "<li>Shooting Range: " + odds.shooting + "%</li>" +
         "<li>Chase: " + odds.chase + "%</li>" +
         "<li>Maze Trivia: " + odds.maze + "%</li>" +
+        "<li>Journey Trivia: " + odds.journeyTrivia + "%</li>" +
         "</ul>" +
         "<p class='stats-note'>" + (miniGamesUnlocked ?
             "Mini-games unlocked. Keep training with Hanuman to boost your stats." :
@@ -334,6 +504,11 @@ function saveOldState() {
         wentAlone: wentAlone,
         miniGamesUnlocked: miniGamesUnlocked,
         playerStats: JSON.parse(JSON.stringify(playerStats)),
+        inventoryItems: inventoryItems.slice(),
+        ownedTitles: ownedTitles.slice(),
+        equippedTitle: equippedTitle,
+        selectedMiniGameTactics: JSON.parse(JSON.stringify(selectedMiniGameTactics)),
+        journeyTriviaState: journeyTriviaState ? JSON.parse(JSON.stringify(journeyTriviaState)) : null,
         receiptScenes: receiptScenes.slice(),
         receiptChoices: receiptChoices.slice(),
         visitedSceneIds: visitedSceneIds.slice(),
@@ -356,6 +531,11 @@ function undoChoice() {
     wentAlone = oldState.wentAlone;
     miniGamesUnlocked = oldState.miniGamesUnlocked;
     playerStats = oldState.playerStats;
+    inventoryItems = oldState.inventoryItems || [];
+    ownedTitles = oldState.ownedTitles || [];
+    equippedTitle = oldState.equippedTitle || "";
+    selectedMiniGameTactics = oldState.selectedMiniGameTactics || selectedMiniGameTactics;
+    journeyTriviaState = oldState.journeyTriviaState || null;
     receiptScenes = oldState.receiptScenes;
     receiptChoices = oldState.receiptChoices;
     visitedSceneIds = oldState.visitedSceneIds;
@@ -436,8 +616,20 @@ function restart() {
         stamina: 0,
         speedAgility: 0,
         magicalPower: 0,
-        weaponMastery: 0
+        weaponMastery: 0,
+        smarts: 0
     };
+    inventoryItems = [];
+    ownedTitles = [];
+    equippedTitle = "";
+    selectedMiniGameTactics = {
+        duel: "balanced",
+        brawl: "balanced",
+        shooting: "balanced",
+        chase: "balanced",
+        maze: "balanced"
+    };
+    journeyTriviaState = null;
     receiptScenes = [];
     receiptChoices = [];
     oldStates = [];
@@ -1126,20 +1318,26 @@ function showScene() {
             "<h2>Meeting Hanuman</h2>" +
             "<p>Grateful for your help, Sugriva brings forward his wisest and most loyal companion: Hanuman. Hanuman bows before you and offers his strength in the search for Sita.</p>" +
             "<p>A powerful new alliance has begun. Hanuman also offers training mini-games before the next chapter.</p>" +
+            "<p><strong>Special reward:</strong> every mini-game win grants a relic. Collect all 20 relics to unlock the title <strong>King</strong>.</p>" +
             "<div id='choices'>" +
             "<button onclick='makeChoice(55)'>Duel (Swords)</button>" +
             "<button onclick='makeChoice(56)'>Brawl (Wrestling)</button>" +
             "<button onclick='makeChoice(57)'>Shooting Range (Bows)</button>" +
             "<button onclick='makeChoice(58)'>Chase (Race)</button>" +
             "<button onclick='makeChoice(59)'>Maze (Trivia)</button>" +
+            "<button onclick='makeChoice(65)'>Journey Trivia</button>" +
             "<button onclick='makeDecision(1)'>Continue Main Story</button>" +
             "</div>";
     } else if (currentScene === 55) {
         storyCard.innerHTML =
             "<h2>Mini-game: Duel</h2>" +
             "<p>Hanuman arranges a sword duel to sharpen your timing and guard.</p>" +
+            "<p><strong>Tactic:</strong> " + selectedMiniGameTactics.duel + "</p>" +
             "<p><strong>Current duel win odds:</strong> " + getChallengeOdds("duel") + "%</p>" +
             "<div id='choices'>" +
+            "<button onclick=\"setMiniGameTactic('duel','careful')\">Careful Guard (+10%)</button>" +
+            "<button onclick=\"setMiniGameTactic('duel','balanced')\">Balanced Style</button>" +
+            "<button onclick=\"setMiniGameTactic('duel','risky')\">All-in Strike (+15%)</button>" +
             "<button onclick='makeChoice(60)'>Play Duel</button>" +
             "<button onclick='makeChoice(47)'>Back to Hanuman</button>" +
             "</div>";
@@ -1147,8 +1345,12 @@ function showScene() {
         storyCard.innerHTML =
             "<h2>Mini-game: Brawl</h2>" +
             "<p>You enter a friendly wrestling brawl with the vanara champions.</p>" +
+            "<p><strong>Tactic:</strong> " + selectedMiniGameTactics.brawl + "</p>" +
             "<p><strong>Current brawl win odds:</strong> " + getChallengeOdds("brawl") + "%</p>" +
             "<div id='choices'>" +
+            "<button onclick=\"setMiniGameTactic('brawl','careful')\">Defensive Grapple (+10%)</button>" +
+            "<button onclick=\"setMiniGameTactic('brawl','balanced')\">Balanced Style</button>" +
+            "<button onclick=\"setMiniGameTactic('brawl','risky')\">Berserker Rush (+15%)</button>" +
             "<button onclick='makeChoice(61)'>Play Brawl</button>" +
             "<button onclick='makeChoice(47)'>Back to Hanuman</button>" +
             "</div>";
@@ -1156,8 +1358,12 @@ function showScene() {
         storyCard.innerHTML =
             "<h2>Mini-game: Shooting Range</h2>" +
             "<p>Hanuman sets up moving targets for your bow practice.</p>" +
+            "<p><strong>Tactic:</strong> " + selectedMiniGameTactics.shooting + "</p>" +
             "<p><strong>Current shooting win odds:</strong> " + getChallengeOdds("shooting") + "%</p>" +
             "<div id='choices'>" +
+            "<button onclick=\"setMiniGameTactic('shooting','careful')\">Steady Aim (+10%)</button>" +
+            "<button onclick=\"setMiniGameTactic('shooting','balanced')\">Balanced Style</button>" +
+            "<button onclick=\"setMiniGameTactic('shooting','risky')\">Rapid Fire (+15%)</button>" +
             "<button onclick='makeChoice(62)'>Play Shooting Range</button>" +
             "<button onclick='makeChoice(47)'>Back to Hanuman</button>" +
             "</div>";
@@ -1165,19 +1371,62 @@ function showScene() {
         storyCard.innerHTML =
             "<h2>Mini-game: Chase</h2>" +
             "<p>You race through the forest in a speed and agility challenge.</p>" +
+            "<p><strong>Tactic:</strong> " + selectedMiniGameTactics.chase + "</p>" +
             "<p><strong>Current chase win odds:</strong> " + getChallengeOdds("chase") + "%</p>" +
             "<div id='choices'>" +
+            "<button onclick=\"setMiniGameTactic('chase','careful')\">Safe Route (+10%)</button>" +
+            "<button onclick=\"setMiniGameTactic('chase','balanced')\">Balanced Style</button>" +
+            "<button onclick=\"setMiniGameTactic('chase','risky')\">Shortcut Sprint (+15%)</button>" +
             "<button onclick='makeChoice(63)'>Play Chase</button>" +
             "<button onclick='makeChoice(47)'>Back to Hanuman</button>" +
             "</div>";
     } else if (currentScene === 59) {
         storyCard.innerHTML =
             "<h2>Mini-game: Maze Trivia</h2>" +
-            "<p>You navigate a puzzle maze while answering ancient-knowledge trivia.</p>" +
+            "<p>You navigate a puzzle maze while answering ancient-knowledge trivia. Smarts now boosts maze success.</p>" +
+            "<p><strong>Tactic:</strong> " + selectedMiniGameTactics.maze + "</p>" +
             "<p><strong>Current maze win odds:</strong> " + getChallengeOdds("maze") + "%</p>" +
             "<div id='choices'>" +
+            "<button onclick=\"setMiniGameTactic('maze','careful')\">Map Every Turn (+10%)</button>" +
+            "<button onclick=\"setMiniGameTactic('maze','balanced')\">Balanced Style</button>" +
+            "<button onclick=\"setMiniGameTactic('maze','risky')\">Blind Dash (+15%)</button>" +
             "<button onclick='makeChoice(64)'>Play Maze</button>" +
             "<button onclick='makeChoice(47)'>Back to Hanuman</button>" +
+            "</div>";
+    } else if (currentScene === 65) {
+        storyCard.innerHTML =
+            "<h2>Mini-game: Journey Trivia</h2>" +
+            "<p>Answer questions based on the order of your own journey. Use your Story Receipt if you need a hint.</p>" +
+            "<p><strong>Current journey trivia win odds:</strong> " + getChallengeOdds("journeyTrivia") + "%</p>" +
+            "<div id='choices'>" +
+            "<button onclick='makeChoice(66)'>Start Journey Trivia</button>" +
+            "<button onclick='makeChoice(47)'>Back to Hanuman</button>" +
+            "</div>";
+    } else if (currentScene === 66) {
+        if (!journeyTriviaState || journeyTriviaState.currentQuestion >= journeyTriviaState.questions.length) {
+            buildJourneyTriviaState();
+        }
+        storyCard.innerHTML =
+            "<h2>Journey Trivia Question " + (journeyTriviaState.currentQuestion + 1) + "</h2>" +
+            "<p><strong>" + journeyTriviaState.questions[journeyTriviaState.currentQuestion].prompt + "</strong></p>" +
+            "<div id='choices'>" +
+            sampleChoicesExcluding(journeyTriviaState.questions[journeyTriviaState.currentQuestion].correct).map(function (optionText) {
+                return "<button onclick='makeChoice(" + (optionText === journeyTriviaState.questions[journeyTriviaState.currentQuestion].correct ? 67 : 68) + ")'>" + optionText + "</button>";
+            }).join("") +
+            "</div>";
+    } else if (currentScene === 67) {
+        storyCard.innerHTML =
+            "<h2>Correct!</h2>" +
+            "<p>You remembered the order of your journey correctly.</p>" +
+            "<div id='choices'>" +
+            "<button onclick='makeChoice(69)'>Next Question</button>" +
+            "</div>";
+    } else if (currentScene === 68) {
+        storyCard.innerHTML =
+            "<h2>Not Quite</h2>" +
+            "<p>That was not the right point in your journey order. Try the next one anyway.</p>" +
+            "<div id='choices'>" +
+            "<button onclick='makeChoice(69)'>Continue</button>" +
             "</div>";
     } else if (currentScene === 53) {
         storyCard.innerhtml = 
@@ -1286,6 +1535,16 @@ function makeChoice(choice) {
         addChoiceToReceipt("Played chase mini-game");
     } else if (choice === 64) {
         addChoiceToReceipt("Played maze mini-game");
+    } else if (choice === 65) {
+        addChoiceToReceipt("Started journey trivia mini-game");
+    } else if (choice === 66) {
+        addChoiceToReceipt("Began journey trivia questions");
+    } else if (choice === 67) {
+        addChoiceToReceipt("Answered a journey trivia question correctly");
+    } else if (choice === 68) {
+        addChoiceToReceipt("Answered a journey trivia question incorrectly");
+    } else if (choice === 69) {
+        addChoiceToReceipt("Advanced to the next journey trivia question");
     } else if (choice === 48) {
         addChoiceToReceipt("Answered Jatayu question 1 correctly");
     } else if (choice === 49) {
@@ -1531,12 +1790,16 @@ function makeChoice(choice) {
             currentScene = 58;
         } else if (choice === 59) {
             currentScene = 59;
+        } else if (choice === 65) {
+            currentScene = 65;
         }
     } else if (currentScene === 55) {
         if (choice === 60) {
             if (randomizer() < getChallengeOdds("duel")) {
                 awardPowerup("defense", 1);
                 awardPowerup("weaponMastery", 1);
+                awardPowerup("smarts", 1);
+                alert(awardMiniGameReward("Duel"));
             }
 
             currentScene = 47;
@@ -1548,6 +1811,7 @@ function makeChoice(choice) {
             if (randomizer() < getChallengeOdds("brawl")) {
                 awardPowerup("strength", 1);
                 awardPowerup("stamina", 1);
+                alert(awardMiniGameReward("Brawl"));
             }
 
             currentScene = 47;
@@ -1559,6 +1823,7 @@ function makeChoice(choice) {
             if (randomizer() < getChallengeOdds("shooting")) {
                 awardPowerup("stamina", 1);
                 awardPowerup("weaponMastery", 1);
+                alert(awardMiniGameReward("Shooting Range"));
             }
 
             currentScene = 47;
@@ -1569,6 +1834,7 @@ function makeChoice(choice) {
         if (choice === 63) {
             if (randomizer() < getChallengeOdds("chase")) {
                 awardPowerup("speedAgility", 1);
+                alert(awardMiniGameReward("Chase"));
             }
 
             currentScene = 47;
@@ -1580,11 +1846,42 @@ function makeChoice(choice) {
             if (randomizer() < getChallengeOdds("maze")) {
                 awardPowerup("speedAgility", 1);
                 awardPowerup("magicalPower", 1);
+                awardPowerup("smarts", 1);
+                alert(awardMiniGameReward("Maze Trivia"));
             }
 
             currentScene = 47;
         } else if (choice === 47) {
             currentScene = 47;
+        }
+    } else if (currentScene === 65) {
+        if (choice === 66) {
+            buildJourneyTriviaState();
+            currentScene = 66;
+        } else if (choice === 47) {
+            currentScene = 47;
+        }
+    } else if (currentScene === 66) {
+        if (choice === 67) {
+            journeyTriviaState.score += 1;
+            currentScene = 67;
+        } else if (choice === 68) {
+            currentScene = 68;
+        }
+    } else if (currentScene === 67 || currentScene === 68) {
+        if (choice === 69) {
+            journeyTriviaState.currentQuestion += 1;
+            if (journeyTriviaState.currentQuestion >= journeyTriviaState.questions.length) {
+                if (journeyTriviaState.score >= 2 || randomizer() < getChallengeOdds("journeyTrivia")) {
+                    awardPowerup("smarts", 2);
+                    awardPowerup("magicalPower", 1);
+                    alert(awardMiniGameReward("Journey Trivia"));
+                }
+                journeyTriviaState = null;
+                currentScene = 47;
+            } else {
+                currentScene = 66;
+            }
         }
     }
     if (previousScene !== currentScene) {

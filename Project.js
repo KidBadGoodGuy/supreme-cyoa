@@ -8,6 +8,7 @@ var receiptChoices = [];
 var oldStates = [];
 var visitedSceneIds = [];
 var takenTransitions = [];
+var timelineModalOpen = false;
 
 var timelineNodeTitles = {
     1: "The Exile",
@@ -222,7 +223,7 @@ function undoChoice() {
 
     if (currentScene === 0) {
         clearStoryCard();
-        renderTimeline(false);
+        renderTimeline(timelineModalOpen);
         setUndoButton();
         return;
     }
@@ -294,7 +295,7 @@ function restart() {
     visitedSceneIds = [];
     takenTransitions = [];
     clearStoryCard();
-    renderTimeline(false);
+    renderTimeline(timelineModalOpen);
     setUndoButton();
 }
 
@@ -318,20 +319,60 @@ function isTerminalScene(sceneId) {
         sceneId === 39 || sceneId === 45 || sceneId === 46 || sceneId === 52;
 }
 
+function escapeHtml(text) {
+    return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;");
+}
+
+function makeWrappedTextLines(text, maxCharsPerLine) {
+    var words = text.split(" ");
+    var lines = [];
+    var line = "";
+    var i;
+
+    for (i = 0; i < words.length; i++) {
+        if ((line + " " + words[i]).trim().length > maxCharsPerLine && line !== "") {
+            lines.push(line);
+            line = words[i];
+        } else {
+            line = (line + " " + words[i]).trim();
+        }
+    }
+
+    if (line !== "") {
+        lines.push(line);
+    }
+
+    return lines;
+}
+
 function renderTimeline(showHighlight) {
     var container = document.getElementById("timelineFlowchart");
     var svg = "";
-    var nodeWidth = 220;
-    var nodeHeight = 84;
-    var levelGap = 280;
-    var rowGap = 150;
-    var marginX = 56;
-    var marginY = 52;
+    var nodeWidth = 260;
+    var nodeHeight = 100;
+    var levelGap = 330;
+    var rowGap = 180;
+    var marginX = 70;
+    var marginY = 80;
     var width = marginX * 2 + (timelineLevels.length - 1) * levelGap + nodeWidth;
     var maxRows = 0;
     var height;
     var coords = {};
     var edgeKeyMap = {};
+    var levelGroups = [
+        "Exile",
+        "Surphanaka",
+        "Golden Deer",
+        "Abduction",
+        "Jatayu",
+        "Alliance",
+        "Part 2"
+    ];
+    var levelLabelStep = Math.ceil(timelineLevels.length / levelGroups.length);
     var i;
     var j;
     var levelNodes;
@@ -347,8 +388,14 @@ function renderTimeline(showHighlight) {
     var ctrlX1;
     var ctrlX2;
     var pathClass;
+    var nodeClass;
     var labelX;
     var labelY;
+    var titleLines;
+    var titleLine;
+    var k;
+    var columnLabel;
+    var columnStartX;
 
     if (!container) {
         return;
@@ -382,6 +429,17 @@ function renderTimeline(showHighlight) {
     }
 
     svg += "<svg viewBox='0 0 " + width + " " + height + "' role='img' aria-label='Story timeline flowchart'>";
+
+    for (i = 0; i < timelineLevels.length; i++) {
+        columnStartX = marginX + i * levelGap;
+        svg += "<rect x='" + (columnStartX - 16) + "' y='16' width='" + (nodeWidth + 32) +
+            "' height='" + (height - 32) + "' rx='18' ry='18' fill='rgba(255, 248, 229, 0.02)' stroke='rgba(255, 225, 169, 0.08)' />";
+
+        if (i % levelLabelStep === 0) {
+            columnLabel = levelGroups[Math.floor(i / levelLabelStep)] || "Story";
+            svg += "<text class='timeline-column-label' x='" + columnStartX + "' y='48'>" + columnLabel + "</text>";
+        }
+    }
 
     for (i = 0; i < timelineEdges.length; i++) {
         edge = timelineEdges[i];
@@ -421,22 +479,62 @@ function renderTimeline(showHighlight) {
 
         for (j = 0; j < levelNodes.length; j++) {
             nodeId = levelNodes[j];
-            pathClass = "timeline-node";
+            nodeClass = "timeline-node";
 
             if (showHighlight && visitedSceneIds.indexOf(nodeId) !== -1) {
-                pathClass += " active";
+                nodeClass += " visited";
             }
 
-            svg += "<rect class='" + pathClass + "' x='" + coords[nodeId].x + "' y='" + coords[nodeId].y +
+            if (showHighlight && nodeId === currentScene) {
+                nodeClass += " active";
+            }
+
+            svg += "<rect class='" + nodeClass + "' x='" + coords[nodeId].x + "' y='" + coords[nodeId].y +
                 "' rx='12' ry='12' width='" + nodeWidth + "' height='" + nodeHeight + "'></rect>";
             svg += "<text class='node-id' x='" + (coords[nodeId].x + 16) + "' y='" + (coords[nodeId].y + 30) + "'>S" + nodeId + "</text>";
-            svg += "<text class='node-title' x='" + (coords[nodeId].x + 16) + "' y='" + (coords[nodeId].y + 56) + "'>" +
-                (timelineNodeTitles[nodeId] || "Scene") + "</text>";
+            titleLines = makeWrappedTextLines(timelineNodeTitles[nodeId] || "Scene", 24);
+
+            for (k = 0; k < titleLines.length && k < 3; k++) {
+                titleLine = escapeHtml(titleLines[k]);
+                svg += "<text class='node-title' x='" + (coords[nodeId].x + 16) + "' y='" +
+                    (coords[nodeId].y + 56 + k * 18) + "'>" + titleLine + "</text>";
+            }
         }
     }
 
     svg += "</svg>";
     container.innerHTML = svg;
+}
+
+function openTimelineModal() {
+    var modal = document.getElementById("timelineModal");
+
+    if (!modal) {
+        return;
+    }
+
+    timelineModalOpen = true;
+    renderTimeline(true);
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+}
+
+function closeTimelineModal() {
+    var modal = document.getElementById("timelineModal");
+
+    if (!modal) {
+        return;
+    }
+
+    timelineModalOpen = false;
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+}
+
+function handleTimelineModalBackdrop(event) {
+    if (event.target && event.target.id === "timelineModal") {
+        closeTimelineModal();
+    }
 }
 
 function showScene() {
@@ -874,7 +972,7 @@ function showScene() {
     }
     makeReceipt();
     setUndoButton();
-    renderTimeline(isTerminalScene(currentScene));
+    renderTimeline(timelineModalOpen);
 }
 
 // scene 2 - banished into exile
@@ -1187,5 +1285,11 @@ function makeDecision(decision){
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-    renderTimeline(false);
+    renderTimeline(timelineModalOpen);
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+            closeTimelineModal();
+        }
+    });
 });

@@ -362,7 +362,7 @@ function updateTimelineZoomLabel() {
 }
 
 function adjustTimelineZoom(change) {
-    timelineZoom = Math.max(0.6, Math.min(1.8, timelineZoom + change));
+    timelineZoom = Math.max(1, Math.min(2.5, timelineZoom + change));
     updateTimelineZoomLabel();
     renderTimeline(timelineModalOpen);
 }

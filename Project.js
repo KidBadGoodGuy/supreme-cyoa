@@ -321,12 +321,12 @@ function isTerminalScene(sceneId) {
 function renderTimeline(showHighlight) {
     var container = document.getElementById("timelineFlowchart");
     var svg = "";
-    var nodeWidth = 140;
-    var nodeHeight = 54;
-    var levelGap = 170;
-    var rowGap = 98;
-    var marginX = 36;
-    var marginY = 34;
+    var nodeWidth = 220;
+    var nodeHeight = 84;
+    var levelGap = 280;
+    var rowGap = 150;
+    var marginX = 56;
+    var marginY = 52;
     var width = marginX * 2 + (timelineLevels.length - 1) * levelGap + nodeWidth;
     var maxRows = 0;
     var height;
@@ -347,8 +347,12 @@ function renderTimeline(showHighlight) {
     var ctrlX1;
     var ctrlX2;
     var pathClass;
+    var labelClass;
     var labelX;
     var labelY;
+    var isNodeActive;
+    var nodeIdClass;
+    var nodeTitleClass;
 
     if (!container) {
         return;
@@ -396,8 +400,8 @@ function renderTimeline(showHighlight) {
         fromY = fromNode.y + nodeHeight / 2;
         toX = toNode.x;
         toY = toNode.y + nodeHeight / 2;
-        ctrlX1 = fromX + 52;
-        ctrlX2 = toX - 52;
+        ctrlX1 = fromX + 90;
+        ctrlX2 = toX - 90;
         pathClass = "timeline-edge";
 
         if (edge.type === "chance") {
@@ -413,7 +417,11 @@ function renderTimeline(showHighlight) {
 
         labelX = (fromX + toX) / 2;
         labelY = (fromY + toY) / 2 - 6;
-        svg += "<text class='edge-label' x='" + labelX + "' y='" + labelY + "'>" + edge.label + "</text>";
+        labelClass = "edge-label";
+        if (edgeKeyMap[edge.from + "->" + edge.to]) {
+            labelClass += " active";
+        }
+        svg += "<text class='" + labelClass + "' x='" + labelX + "' y='" + labelY + "'>" + edge.label + "</text>";
     }
 
     for (i = 0; i < timelineLevels.length; i++) {
@@ -422,15 +430,24 @@ function renderTimeline(showHighlight) {
         for (j = 0; j < levelNodes.length; j++) {
             nodeId = levelNodes[j];
             pathClass = "timeline-node";
+            isNodeActive = showHighlight && visitedSceneIds.indexOf(nodeId) !== -1;
 
-            if (showHighlight && visitedSceneIds.indexOf(nodeId) !== -1) {
+            if (isNodeActive) {
                 pathClass += " active";
+            }
+
+            nodeIdClass = "node-id";
+            nodeTitleClass = "node-title";
+
+            if (isNodeActive) {
+                nodeIdClass += " active";
+                nodeTitleClass += " active";
             }
 
             svg += "<rect class='" + pathClass + "' x='" + coords[nodeId].x + "' y='" + coords[nodeId].y +
                 "' rx='12' ry='12' width='" + nodeWidth + "' height='" + nodeHeight + "'></rect>";
-            svg += "<text class='node-id' x='" + (coords[nodeId].x + 10) + "' y='" + (coords[nodeId].y + 18) + "'>S" + nodeId + "</text>";
-            svg += "<text class='node-title' x='" + (coords[nodeId].x + 10) + "' y='" + (coords[nodeId].y + 37) + "'>" +
+            svg += "<text class='" + nodeIdClass + "' x='" + (coords[nodeId].x + 16) + "' y='" + (coords[nodeId].y + 30) + "'>S" + nodeId + "</text>";
+            svg += "<text class='" + nodeTitleClass + "' x='" + (coords[nodeId].x + 16) + "' y='" + (coords[nodeId].y + 56) + "'>" +
                 (timelineNodeTitles[nodeId] || "Scene") + "</text>";
         }
     }

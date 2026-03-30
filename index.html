@@ -13,6 +13,8 @@
 </head>
 <body>
   <button id="undoButton" onclick="undoChoice()" type="button" disabled>Undo</button>
+  <button id="timelineButton" onclick="openTimelineModal()" type="button">Timeline</button>
+
   <div id="titleContainer">
     <header>
       <h1>The Ramayana</h1>
@@ -39,14 +41,22 @@
     <div id="choices"></div>
   </div>
 
-  <section id="timelineCard" aria-live="polite">
-    <h2>Timeline</h2>
-    <p>Every possible scene path is shown here. Endings highlight the route you took.</p>
-    <div id="timelineLegend">
-      <span class="legend-item"><span class="legend-swatch"></span>All possible paths</span>
-      <span class="legend-item"><span class="legend-swatch highlight"></span>Your path</span>
-    </div>
-    <div id="timelineFlowchart"></div>
-  </section>
+  <div id="timelineModal" class="timeline-modal" aria-hidden="true" onclick="handleTimelineModalBackdrop(event)">
+    <section id="timelineCard" aria-live="polite" role="dialog" aria-modal="true" aria-label="Timeline Flowchart">
+      <div class="timeline-modal-header">
+        <div>
+          <h2>Timeline Flowchart</h2>
+          <p>Complete map of all scenes. Your route is always highlighted in bright teal.</p>
+        </div>
+        <button type="button" class="timeline-close" onclick="closeTimelineModal()" aria-label="Close timeline">✕</button>
+      </div>
+      <div id="timelineLegend">
+        <span class="legend-item"><span class="legend-swatch"></span>All possible paths</span>
+        <span class="legend-item"><span class="legend-swatch highlight"></span>Your exact route</span>
+        <span class="legend-item"><span class="legend-swatch current"></span>Current scene</span>
+      </div>
+      <div id="timelineFlowchart"></div>
+    </section>
+  </div>
 </body>
 </html>

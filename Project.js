@@ -12,13 +12,17 @@ var timelineModalOpen = false;
 var timelineZoom = 1;
 var miniGamesUnlocked = false;
 var playerStatsModalOpen = false;
+var allyTalkModalOpen = false;
+var guessRound = null;
+var guessResultMessage = "";
 var playerStats = {
     strength: 0,
     defense: 0,
     stamina: 0,
     speedAgility: 0,
     magicalPower: 0,
-    weaponMastery: 0
+    weaponMastery: 0,
+    luck: 0
 };
 
 var timelineNodeTitles = {
@@ -223,6 +227,10 @@ function getChallengeOdds(challengeType) {
         return clampOdds(50 + (playerStats.speedAgility * 10) + (playerStats.magicalPower * 10));
     }
 
+    if (challengeType === "guessing") {
+        return clampOdds(45 + (playerStats.magicalPower * 10) + (playerStats.luck * 10));
+    }
+
     return 50;
 }
 
@@ -233,7 +241,8 @@ function getAllOddsSummary() {
         brawl: getChallengeOdds("brawl"),
         shooting: getChallengeOdds("shooting"),
         chase: getChallengeOdds("chase"),
-        maze: getChallengeOdds("maze")
+        maze: getChallengeOdds("maze"),
+        guessing: getChallengeOdds("guessing")
     };
 }
 
@@ -256,6 +265,7 @@ function updatePlayerStatsCard() {
         "<li><strong>Speed & Agility:</strong> " + playerStats.speedAgility + " <span>(+5 fight, +10 chase, +10 maze each)</span></li>" +
         "<li><strong>Magical Power:</strong> " + playerStats.magicalPower + " <span>(+10 maze odds each)</span></li>" +
         "<li><strong>Weapon Mastery:</strong> " + playerStats.weaponMastery + " <span>(+10 duel & shooting odds each)</span></li>" +
+        "<li><strong>Luck:</strong> " + playerStats.luck + " <span>(+10 guessing odds each)</span></li>" +
         "</ul>" +
         "<h4>Current Win Odds</h4>" +
         "<ul class='stats-list odds-list'>" +
@@ -265,6 +275,7 @@ function updatePlayerStatsCard() {
         "<li>Shooting Range: " + odds.shooting + "%</li>" +
         "<li>Chase: " + odds.chase + "%</li>" +
         "<li>Maze Trivia: " + odds.maze + "%</li>" +
+        "<li>Guessing Game: " + odds.guessing + "%</li>" +
         "</ul>" +
         "<p class='stats-note'>" + (miniGamesUnlocked ?
             "Mini-games unlocked. Keep training with Hanuman to boost your stats." :
@@ -300,6 +311,167 @@ function handlePlayerStatsModalBackdrop(event) {
     if (event.target && event.target.id === "playerStatsModal") {
         closePlayerStatsModal();
     }
+}
+
+function openAllyTalkModal() {
+    var modal = document.getElementById("allyTalkModal");
+
+    if (!modal) {
+        return;
+    }
+
+    allyTalkModalOpen = true;
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+}
+
+function closeAllyTalkModal() {
+    var modal = document.getElementById("allyTalkModal");
+
+    if (!modal) {
+        return;
+    }
+
+    allyTalkModalOpen = false;
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+}
+
+function handleAllyTalkModalBackdrop(event) {
+    if (event.target && event.target.id === "allyTalkModal") {
+        closeAllyTalkModal();
+    }
+}
+
+function getAllyDialogue(allyId) {
+    var randomRoll = randomizer();
+
+    if (allyId === "hanuman") {
+        if (randomRoll > 75 && visitedSceneIds.indexOf(44) !== -1) {
+            return "Hanuman smiles: \"You helped Sugriva when no one else would. I trust your heart.\"";
+        }
+
+        return "Hanuman says: \"Stay steady. With courage and patience, no mountain is too high.\"";
+    }
+
+    if (allyId === "lakshmana") {
+        if (randomRoll > 75 && wentAlone) {
+            return "Lakshmana says softly: \"Even when you walked alone, I never stopped watching over you.\"";
+        }
+
+        if (randomRoll > 75 && broughtLakshmana) {
+            return "Lakshmana nods: \"You chose to keep me close. We face danger better side by side.\"";
+        }
+
+        return "Lakshmana says: \"I stand with you, always. Give the word and I am ready.\"";
+    }
+
+    if (allyId === "sugriva") {
+        if (randomRoll > 75 && visitedSceneIds.indexOf(44) !== -1) {
+            return "Sugriva says: \"Because you took down Vali, Kishkindha stands with you in full strength.\"";
+        }
+
+        return "Sugriva says: \"My vanaras are prepared. We will search every forest and mountain.\"";
+    }
+
+    if (allyId === "angada") {
+        if (randomRoll > 75 && visitedSceneIds.indexOf(44) !== -1) {
+            return "Angada says: \"I remember my father, but I choose this path. Let us fight for dharma.\"";
+        }
+
+        return "Angada says: \"I move fast and strike hard. Send me where the odds are toughest.\"";
+    }
+
+    return "Your ally is silent for a moment.";
+}
+
+function talkToAlly(allyId) {
+    var dialogue = document.getElementById("allyDialogue");
+    var allyNames = {
+        hanuman: "Hanuman",
+        lakshmana: "Lakshmana",
+        sugriva: "Sugriva",
+        angada: "Angada"
+    };
+
+    if (!dialogue) {
+        return;
+    }
+
+    dialogue.innerHTML = "<h4>" + allyNames[allyId] + "</h4><p>" + getAllyDialogue(allyId) + "</p>";
+}
+
+function getRandomGuessRound() {
+    var questions = [
+        {
+            clue: "I am the mighty king of Lanka who abducts Sita. Who am I?",
+            answer: "Ravana",
+            options: ["Ravana", "Bharata", "Jatayu"]
+        },
+        {
+            clue: "I am Rama's devoted wife, known for great courage and purity. Who am I?",
+            answer: "Sita",
+            options: ["Sita", "Kaikeyi", "Mandodari"]
+        },
+        {
+            clue: "I am Rama's loyal brother who follows him into exile. Who am I?",
+            answer: "Lakshmana",
+            options: ["Lakshmana", "Sugriva", "Vali"]
+        },
+        {
+            clue: "I am the vanara hero who leaps across the ocean to find Sita. Who am I?",
+            answer: "Hanuman",
+            options: ["Hanuman", "Maricha", "Dasharatha"]
+        },
+        {
+            clue: "I am Vali's son and a young vanara warrior prince. Who am I?",
+            answer: "Angada",
+            options: ["Angada", "Kumbhakarna", "Bharata"]
+        }
+    ];
+
+    return questions[Math.floor(Math.random() * questions.length)];
+}
+
+function shuffleOptions(options) {
+    var shuffled = options.slice();
+    var i;
+    var j;
+    var temp;
+
+    for (i = shuffled.length - 1; i > 0; i--) {
+        j = Math.floor(Math.random() * (i + 1));
+        temp = shuffled[i];
+        shuffled[i] = shuffled[j];
+        shuffled[j] = temp;
+    }
+
+    return shuffled;
+}
+
+function startGuessRound() {
+    guessRound = getRandomGuessRound();
+    guessRound.shuffledOptions = shuffleOptions(guessRound.options);
+}
+
+function playGuess(characterName) {
+    if (!guessRound) {
+        return;
+    }
+
+    if (characterName === guessRound.answer) {
+        if (randomizer() < getChallengeOdds("guessing")) {
+            awardPowerup("luck", 1);
+            guessResultMessage = "Correct! Your instincts were sharp. Luck increased by +1.";
+        } else {
+            guessResultMessage = "Correct answer! No stat gain this time, but your intuition is improving.";
+        }
+    } else {
+        guessResultMessage = "Not quite. The correct answer was " + guessRound.answer + ".";
+    }
+
+    startGuessRound();
+    showScene();
 }
 
 function awardPowerup(statName, amount) {
@@ -436,7 +608,8 @@ function restart() {
         stamina: 0,
         speedAgility: 0,
         magicalPower: 0,
-        weaponMastery: 0
+        weaponMastery: 0,
+        luck: 0
     };
     receiptScenes = [];
     receiptChoices = [];
@@ -1132,8 +1305,26 @@ function showScene() {
             "<button onclick='makeChoice(57)'>Shooting Range (Bows)</button>" +
             "<button onclick='makeChoice(58)'>Chase (Race)</button>" +
             "<button onclick='makeChoice(59)'>Maze (Trivia)</button>" +
+            "<button onclick='makeChoice(65)'>Guessing Game (Characters)</button>" +
             "<button onclick='makeDecision(1)'>Continue Main Story</button>" +
             "</div>";
+    } else if (currentScene === 65) {
+        if (!guessRound) {
+            startGuessRound();
+        }
+
+        storyCard.innerHTML =
+            "<h2>Mini-game: Guess the Ramayana Character</h2>" +
+            "<p>Use your smarts and luck to identify characters from clues.</p>" +
+            "<p><strong>Current guessing win odds:</strong> " + getChallengeOdds("guessing") + "%</p>" +
+            "<p><strong>Clue:</strong> " + guessRound.clue + "</p>" +
+            "<div id='choices'>" +
+            "<button onclick=\"playGuess('" + guessRound.shuffledOptions[0] + "')\">" + guessRound.shuffledOptions[0] + "</button>" +
+            "<button onclick=\"playGuess('" + guessRound.shuffledOptions[1] + "')\">" + guessRound.shuffledOptions[1] + "</button>" +
+            "<button onclick=\"playGuess('" + guessRound.shuffledOptions[2] + "')\">" + guessRound.shuffledOptions[2] + "</button>" +
+            "<button onclick='makeChoice(47)'>Back to Hanuman</button>" +
+            "</div>" +
+            (guessResultMessage ? "<p><em>" + guessResultMessage + "</em></p>" : "");
     } else if (currentScene === 55) {
         storyCard.innerHTML =
             "<h2>Mini-game: Duel</h2>" +
@@ -1276,6 +1467,8 @@ function makeChoice(choice) {
         addChoiceToReceipt("Started the chase mini-game");
     } else if (choice === 59) {
         addChoiceToReceipt("Started the maze mini-game");
+    } else if (choice === 65) {
+        addChoiceToReceipt("Started the guessing game mini-game");
     } else if (choice === 60) {
         addChoiceToReceipt("Played duel mini-game");
     } else if (choice === 61) {
@@ -1531,6 +1724,14 @@ function makeChoice(choice) {
             currentScene = 58;
         } else if (choice === 59) {
             currentScene = 59;
+        } else if (choice === 65) {
+            startGuessRound();
+            guessResultMessage = "";
+            currentScene = 65;
+        }
+    } else if (currentScene === 65) {
+        if (choice === 47) {
+            currentScene = 47;
         }
     } else if (currentScene === 55) {
         if (choice === 60) {
@@ -1611,6 +1812,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (event.key === "Escape") {
             closeTimelineModal();
             closePlayerStatsModal();
+            closeAllyTalkModal();
         }
     });
 });

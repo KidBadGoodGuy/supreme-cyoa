@@ -364,71 +364,46 @@ function randomizer() {
 }
 
 function clampOdds(value) {
-    if (value < 5) {
-        return 5;
-    }
-
-    if (value > 95) {
-        return 95;
-    }
-
-    return value;
+    return Math.max(5, Math.min(95, value));
 }
 
 function getEffectiveStats() {
     var effective = JSON.parse(JSON.stringify(playerStats));
-    var bonuses;
+    var bonuses = equippedTitle && titles[equippedTitle] ? titles[equippedTitle].bonuses : null;
     var statName;
 
-    if (equippedTitle && titles[equippedTitle]) {
-        bonuses = titles[equippedTitle].bonuses;
-        for (statName in bonuses) {
-            if (bonuses.hasOwnProperty(statName) && effective.hasOwnProperty(statName)) {
-                effective[statName] += bonuses[statName];
-            }
-        }
+    if (!bonuses) {
+        return effective;
     }
 
+    for (statName in bonuses) {
+        if (bonuses.hasOwnProperty(statName) && effective.hasOwnProperty(statName)) {
+            effective[statName] += bonuses[statName];
+        }
+    }
     return effective;
 }
 
 function getMiniGameTacticBonus(challengeType) {
-    var tactic = selectedMiniGameTactics[challengeType];
-
-    if (tactic === "careful") {
-        return 10;
-    }
-
-    if (tactic === "risky") {
-        return 15;
-    }
-
-    return 0;
+    var tacticBonuses = { careful: 10, risky: 15 };
+    return tacticBonuses[selectedMiniGameTactics[challengeType]] || 0;
 }
 
 function getChallengeOdds(challengeType) {
     var effectiveStats = getEffectiveStats();
-    var baseOdds = 35;
+    var oddsByChallenge = {
+        fight: 70 + (effectiveStats.strength * 10) + (effectiveStats.speedAgility * 5),
+        duel: 28 + (effectiveStats.defense * 8) + (effectiveStats.weaponMastery * 8),
+        brawl: 28 + (effectiveStats.stamina * 8) + (effectiveStats.strength * 8),
+        shooting: 28 + (effectiveStats.stamina * 8) + (effectiveStats.weaponMastery * 8),
+        chase: 30 + (effectiveStats.speedAgility * 8),
+        maze: 28 + (effectiveStats.speedAgility * 6) + (effectiveStats.magicalPower * 6) + (effectiveStats.smarts * 10),
+        journeyTrivia: 25 + (effectiveStats.smarts * 10) + (effectiveStats.magicalPower * 4) + (effectiveStats.luck * 4),
+        guessing: 15 + (effectiveStats.luck * 6),
+        exploration: 30 + (effectiveStats.luck * 5) + (effectiveStats.smarts * 4)
+    };
+    var baseOdds = oddsByChallenge.hasOwnProperty(challengeType) ? oddsByChallenge[challengeType] : 35;
 
-    if (challengeType === "fight") {
-        baseOdds = 70 + (effectiveStats.strength * 10) + (effectiveStats.speedAgility * 5);
-    } else if (challengeType === "duel") {
-        baseOdds = 28 + (effectiveStats.defense * 8) + (effectiveStats.weaponMastery * 8);
-    } else if (challengeType === "brawl") {
-        baseOdds = 28 + (effectiveStats.stamina * 8) + (effectiveStats.strength * 8);
-    } else if (challengeType === "shooting") {
-        baseOdds = 28 + (effectiveStats.stamina * 8) + (effectiveStats.weaponMastery * 8);
-    } else if (challengeType === "chase") {
-        baseOdds = 30 + (effectiveStats.speedAgility * 8);
-    } else if (challengeType === "maze") {
-        baseOdds = 28 + (effectiveStats.speedAgility * 6) + (effectiveStats.magicalPower * 6) + (effectiveStats.smarts * 10);
-    } else if (challengeType === "journeyTrivia") {
-        baseOdds = 25 + (effectiveStats.smarts * 10) + (effectiveStats.magicalPower * 4) + (effectiveStats.luck * 4);
-    } else if (challengeType === "guessing") {
-        baseOdds = 15 + (effectiveStats.luck * 6);
-    } else if (challengeType === "exploration") {
-        baseOdds = 30 + (effectiveStats.luck * 5) + (effectiveStats.smarts * 4);
-    }
     return clampOdds(Math.min(85, baseOdds + getMiniGameTacticBonus(challengeType)));
 }
 
@@ -455,13 +430,11 @@ function unlockTitleIfEligible() {
 
 function getRewardItemByName(itemName) {
     var i;
-
     for (i = 0; i < rewardItems.length; i++) {
         if (rewardItems[i].name === itemName) {
             return rewardItems[i];
         }
     }
-
     return null;
 }
 
@@ -500,10 +473,7 @@ function awardMiniGameReward(gameName) {
 }
 
 function addSigilToSatchel(sigilName, amount) {
-    if (!sigilSatchel[sigilName]) {
-        sigilSatchel[sigilName] = 0;
-    }
-    sigilSatchel[sigilName] += amount;
+    sigilSatchel[sigilName] = (sigilSatchel[sigilName] || 0) + amount;
 }
 
 function spendSigil(sigilName) {
@@ -541,10 +511,7 @@ function trySpendGold(amount) {
 }
 
 function addGoodsToShop(itemName, amount) {
-    if (!shopGoods[itemName]) {
-        shopGoods[itemName] = 0;
-    }
-    shopGoods[itemName] += amount;
+    shopGoods[itemName] = (shopGoods[itemName] || 0) + amount;
 }
 
 function removeGoodsFromShop(itemName, amount) {
@@ -587,14 +554,16 @@ function runGuessingGame(guess) {
 }
 
 function applyExplorationPowerup(powerupName) {
-    if (powerupName === "Powerup: Titan Tonic") {
-        awardPowerup("strength", 2);
-    } else if (powerupName === "Powerup: Guardian Elixir") {
-        awardPowerup("defense", 2);
-    } else if (powerupName === "Powerup: Oracle Dust") {
-        awardPowerup("smarts", 2);
-    } else if (powerupName === "Powerup: Fortune Feather") {
-        awardPowerup("luck", 2);
+    var statByPowerup = {
+        "Powerup: Titan Tonic": "strength",
+        "Powerup: Guardian Elixir": "defense",
+        "Powerup: Oracle Dust": "smarts",
+        "Powerup: Fortune Feather": "luck"
+    };
+    var statName = statByPowerup[powerupName];
+
+    if (statName) {
+        awardPowerup(statName, 2);
     }
 }
 
@@ -729,37 +698,35 @@ function setMiniGameTactic(gameType, tactic) {
 }
 
 function getMiniGameDecisionOptions(gameType) {
-    if (gameType === "duel") {
-        return [
+    var options = {
+        duel: [
             { choice: 160, label: "Feint then Parry", bonus: 10 },
             { choice: 161, label: "Guard and Counter", bonus: 5 },
             { choice: 162, label: "Heavy Overhead Strike", bonus: -5 }
-        ];
-    } else if (gameType === "brawl") {
-        return [
+        ],
+        brawl: [
             { choice: 163, label: "Low Stance Grapple", bonus: 10 },
             { choice: 164, label: "Shoulder Rush", bonus: 5 },
             { choice: 165, label: "Wild Leap Tackle", bonus: -5 }
-        ];
-    } else if (gameType === "shooting") {
-        return [
+        ],
+        shooting: [
             { choice: 166, label: "Hold Breath, Single Arrow", bonus: 10 },
             { choice: 167, label: "Quick Draw Shot", bonus: 5 },
             { choice: 168, label: "Rapid Triple Shot", bonus: -5 }
-        ];
-    } else if (gameType === "chase") {
-        return [
+        ],
+        chase: [
             { choice: 169, label: "Riverbank Shortcut", bonus: 10 },
             { choice: 170, label: "Steady Pace Through Trees", bonus: 5 },
             { choice: 171, label: "Long Cliff Jump", bonus: -5 }
-        ];
-    }
-
-    return [
+        ],
+        maze: [
         { choice: 172, label: "Mark Every Turn", bonus: 10 },
         { choice: 173, label: "Follow Wind and Light", bonus: 5 },
         { choice: 174, label: "Sprint Blindly", bonus: -5 }
-    ];
+        ]
+    };
+
+    return options[gameType] || options.maze;
 }
 
 function beginMiniGameSession(gameType) {
@@ -929,11 +896,9 @@ function updatePlayerStatsCard() {
 
 function openPlayerStatsModal() {
     var modal = document.getElementById("playerStatsModal");
-
     if (!modal) {
         return;
     }
-
     playerStatsModalOpen = true;
     updatePlayerStatsCard();
     modal.classList.add("open");
@@ -942,11 +907,9 @@ function openPlayerStatsModal() {
 
 function closePlayerStatsModal() {
     var modal = document.getElementById("playerStatsModal");
-
     if (!modal) {
         return;
     }
-
     playerStatsModalOpen = false;
     modal.classList.remove("open");
     modal.setAttribute("aria-hidden", "true");
@@ -1002,11 +965,9 @@ function updateInventoryCard() {
 
 function openInventoryModal() {
     var modal = document.getElementById("inventoryModal");
-
     if (!modal) {
         return;
     }
-
     inventoryModalOpen = true;
     updateInventoryCard();
     modal.classList.add("open");
@@ -1015,24 +976,22 @@ function openInventoryModal() {
 
 function closeInventoryModal() {
     var modal = document.getElementById("inventoryModal");
-
     if (!modal) {
         return;
     }
-
     inventoryModalOpen = false;
     modal.classList.remove("open");
     modal.setAttribute("aria-hidden", "true");
 }
 
 function handleInventoryModalBackdrop(event) {
-    if (event.target && event.target.id === "inventoryModal") {
+    if (event.target.id === "inventoryModal") {
         closeInventoryModal();
     }
 }
 
 function handlePlayerStatsModalBackdrop(event) {
-    if (event.target && event.target.id === "playerStatsModal") {
+    if (event.target.id === "playerStatsModal") {
         closePlayerStatsModal();
     }
 }
@@ -1060,11 +1019,9 @@ function clearStoryCard() {
 
 function setUndoButton() {
     var undoButton = document.getElementById("undoButton");
-
     if (!undoButton) {
         return;
     }
-
     undoButton.disabled = oldStates.length === 0;
 }
 
@@ -1282,16 +1239,11 @@ function startAdventure() {
 }
 
 function isTerminalScene(sceneId) {
-    return sceneId === 17 || sceneId === 18 || sceneId === 21 || sceneId === 38 ||
-        sceneId === 39 || sceneId === 45 || sceneId === 46 || sceneId === 52 ||
-        sceneId === 67;
+    return [17, 18, 21, 38, 39, 45, 46, 52, 67].indexOf(sceneId) !== -1;
 }
 
 function isMiniGameScene(sceneId) {
-    return sceneId === 47 || sceneId === 55 || sceneId === 56 || sceneId === 57 ||
-        sceneId === 58 || sceneId === 59 || sceneId === 70 || sceneId === 71 ||
-        sceneId === 72 || sceneId === 73 || sceneId === 77 || sceneId === 79 ||
-        sceneId === 93 || sceneId === 94;
+    return [47, 55, 56, 57, 58, 59, 70, 71, 72, 73, 77, 79, 93, 94].indexOf(sceneId) !== -1;
 }
 
 function escapeHtml(text) {
@@ -1507,11 +1459,9 @@ function renderTimeline(showHighlight) {
 
 function openTimelineModal() {
     var modal = document.getElementById("timelineModal");
-
     if (!modal) {
         return;
     }
-
     timelineModalOpen = true;
     updateTimelineZoomLabel();
     renderTimeline(true);
@@ -1521,18 +1471,16 @@ function openTimelineModal() {
 
 function closeTimelineModal() {
     var modal = document.getElementById("timelineModal");
-
     if (!modal) {
         return;
     }
-
     timelineModalOpen = false;
     modal.classList.remove("open");
     modal.setAttribute("aria-hidden", "true");
 }
 
 function handleTimelineModalBackdrop(event) {
-    if (event.target && event.target.id === "timelineModal") {
+    if (event.target.id === "timelineModal") {
         closeTimelineModal();
     }
 }

@@ -11,6 +11,7 @@
   --gold-deep: #c98b2f;
   --crimson: #7b263f;
   --shadow: 0 28px 70px rgba(13, 8, 14, 0.38);
+  --interactive-ring: 0 0 0 4px rgba(243, 201, 120, 0.2);
 }
 
 * {
@@ -520,6 +521,13 @@ button:hover,
     0 16px 36px rgba(16, 8, 14, 0.28);
 }
 
+button:focus-visible,
+.btn:focus-visible,
+#playerName:focus-visible {
+  outline: none;
+  box-shadow: var(--interactive-ring), 0 16px 36px rgba(16, 8, 14, 0.28);
+}
+
 button:active,
 .btn:active {
   transform: translateY(0);
@@ -568,6 +576,8 @@ blockquote,
     var(--panel);
   border: 1px solid var(--panel-border);
   box-shadow: var(--shadow);
+  max-height: min(82vh, 920px);
+  overflow: auto;
 }
 
 #inventoryCard {
@@ -579,6 +589,8 @@ blockquote,
     var(--panel);
   border: 1px solid var(--panel-border);
   box-shadow: var(--shadow);
+  max-height: min(82vh, 920px);
+  overflow: auto;
 }
 
 .stats-modal-header {
@@ -645,29 +657,46 @@ blockquote,
   button,
   .btn {
     width: 100%;
+    min-height: 44px;
   }
 
   #undoButton {
-    top: 10px;
+    top: auto;
     right: 10px;
+    bottom: 10px;
     width: auto;
   }
 
   #timelineButton {
-    top: 10px;
-    right: 90px;
+    top: auto;
+    right: 98px;
+    bottom: 10px;
     width: auto;
   }
 
   #playerStatsButton {
-    top: 10px;
+    top: auto;
     left: 10px;
+    bottom: 10px;
     width: auto;
   }
 
   #inventoryButton {
-    top: 10px;
+    top: auto;
     left: 126px;
+    bottom: 10px;
     width: auto;
+  }
+
+  body {
+    padding-bottom: 92px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
   }
 }

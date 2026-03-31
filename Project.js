@@ -21,7 +21,10 @@ var playerStats = {
     speedAgility: 0,
     magicalPower: 0,
     weaponMastery: 0,
-    smarts: 0
+    smarts: 0,
+    luck: 0,
+    esteem: 0,
+    prosperity: 0
 };
 var inventoryItems = [];
 var maxInventoryItems = 20;
@@ -57,7 +60,17 @@ var titles = {
             speedAgility: 100,
             magicalPower: 100,
             weaponMastery: 100,
-            smarts: 100
+            smarts: 100,
+            luck: 100
+        }
+    },
+    prosperousLeader: {
+        label: "Prosperous Leader",
+        bonuses: {
+            smarts: 6,
+            luck: 6,
+            esteem: 4,
+            prosperity: 8
         }
     }
 };
@@ -82,6 +95,7 @@ var miniGameSession = null;
 var journeyTriviaState = null;
 var miniGameReturnScene = null;
 var playerGold = 0;
+var tradeCount = 0;
 var sigilSatchel = {};
 var trainingShopCatalog = {
     "Sun Sigil": 40,
@@ -96,6 +110,31 @@ var trainingShopCatalog = {
 var trainingCharacters = ["Hanuman", "Sugriva", "Lakshmana", "Angada"];
 var characterConversationState = null;
 var pendingSigilDebt = "";
+var guessGameState = null;
+var explorationState = null;
+var shopGoods = {};
+var explorationDiscoveries = [
+    { name: "Meteor Shard", category: "Artifact", value: 140, description: "A warm shard that hums with star-fire." },
+    { name: "Ancient Seal Ring", category: "Artifact", value: 95, description: "A royal ring engraved with forgotten vows." },
+    { name: "Moonsteel Compass", category: "Artifact", value: 120, description: "Points toward hidden places and old shrines." },
+    { name: "Whispering Idol", category: "Artifact", value: 110, description: "A tiny idol that murmurs when danger is near." },
+    { name: "Ironwood Bundle", category: "Material", value: 16, description: "Dense wood prized by weapon-smiths." },
+    { name: "River Stone Crate", category: "Material", value: 18, description: "Strong polished stones for construction." },
+    { name: "Lotus Fiber Roll", category: "Material", value: 20, description: "Fine fibers used for bowstrings and cloth." },
+    { name: "Crystal Sand Pouch", category: "Material", value: 26, description: "Sparkling grit used for ritual ink." },
+    { name: "Spice Caravan Pack", category: "Ordinary Good", value: 24, description: "Everyday spice packs useful for trade." },
+    { name: "Medicinal Herb Satchel", category: "Ordinary Good", value: 22, description: "Basic remedies treasured in camps." },
+    { name: "Bronze Tools Set", category: "Ordinary Good", value: 30, description: "Reliable tools for scouts and builders." },
+    { name: "Silk Cloth Bundle", category: "Ordinary Good", value: 34, description: "Common cloth that still sells quickly." },
+    { name: "Swift Forest Hawk", category: "Animal", value: 70, description: "A trained hawk that can scout distant routes." },
+    { name: "Pack Yak", category: "Animal", value: 60, description: "Strong and patient, ideal for long hauls." },
+    { name: "Mountain Ram", category: "Animal", value: 55, description: "Tough beast adapted to cliffs and cold." },
+    { name: "Spirit Fox", category: "Animal", value: 85, description: "Rare fox said to notice hidden treasure." },
+    { name: "Powerup: Titan Tonic", category: "Powerup", value: 0, description: "Instantly grants +2 Strength." },
+    { name: "Powerup: Guardian Elixir", category: "Powerup", value: 0, description: "Instantly grants +2 Defense." },
+    { name: "Powerup: Oracle Dust", category: "Powerup", value: 0, description: "Instantly grants +2 Smarts." },
+    { name: "Powerup: Fortune Feather", category: "Powerup", value: 0, description: "Instantly grants +2 Luck." }
+];
 var ramayanaTriviaBank = [
     {
         prompt: "Who wrote the Ramayana, according to tradition?",
@@ -369,25 +408,28 @@ function getMiniGameTacticBonus(challengeType) {
 
 function getChallengeOdds(challengeType) {
     var effectiveStats = getEffectiveStats();
-    var baseOdds = 50;
+    var baseOdds = 35;
 
     if (challengeType === "fight") {
         baseOdds = 70 + (effectiveStats.strength * 10) + (effectiveStats.speedAgility * 5);
     } else if (challengeType === "duel") {
-        baseOdds = 50 + (effectiveStats.defense * 10) + (effectiveStats.weaponMastery * 10);
+        baseOdds = 28 + (effectiveStats.defense * 8) + (effectiveStats.weaponMastery * 8);
     } else if (challengeType === "brawl") {
-        baseOdds = 50 + (effectiveStats.stamina * 10) + (effectiveStats.strength * 10);
+        baseOdds = 28 + (effectiveStats.stamina * 8) + (effectiveStats.strength * 8);
     } else if (challengeType === "shooting") {
-        baseOdds = 50 + (effectiveStats.stamina * 10) + (effectiveStats.weaponMastery * 10);
+        baseOdds = 28 + (effectiveStats.stamina * 8) + (effectiveStats.weaponMastery * 8);
     } else if (challengeType === "chase") {
-        baseOdds = 50 + (effectiveStats.speedAgility * 10);
+        baseOdds = 30 + (effectiveStats.speedAgility * 8);
     } else if (challengeType === "maze") {
-        baseOdds = 50 + (effectiveStats.speedAgility * 8) + (effectiveStats.magicalPower * 8) + (effectiveStats.smarts * 12);
+        baseOdds = 28 + (effectiveStats.speedAgility * 6) + (effectiveStats.magicalPower * 6) + (effectiveStats.smarts * 10);
     } else if (challengeType === "journeyTrivia") {
-        baseOdds = 45 + (effectiveStats.smarts * 15) + (effectiveStats.magicalPower * 5);
+        baseOdds = 25 + (effectiveStats.smarts * 10) + (effectiveStats.magicalPower * 4) + (effectiveStats.luck * 4);
+    } else if (challengeType === "guessing") {
+        baseOdds = 15 + (effectiveStats.luck * 6);
+    } else if (challengeType === "exploration") {
+        baseOdds = 30 + (effectiveStats.luck * 5) + (effectiveStats.smarts * 4);
     }
-
-    return clampOdds(baseOdds + getMiniGameTacticBonus(challengeType));
+    return clampOdds(Math.min(85, baseOdds + getMiniGameTacticBonus(challengeType)));
 }
 
 function getAllOddsSummary() {
@@ -398,13 +440,16 @@ function getAllOddsSummary() {
         shooting: getChallengeOdds("shooting"),
         chase: getChallengeOdds("chase"),
         maze: getChallengeOdds("maze"),
-        journeyTrivia: getChallengeOdds("journeyTrivia")
+        journeyTrivia: getChallengeOdds("journeyTrivia"),
+        guessing: getChallengeOdds("guessing"),
+        exploration: getChallengeOdds("exploration")
     };
 }
 
 function unlockTitleIfEligible() {
-    if (inventoryItems.length >= maxInventoryItems && ownedTitles.indexOf("king") === -1) {
+    if (inventoryItems.length >= rewardItems.length && ownedTitles.indexOf("king") === -1) {
         ownedTitles.push("king");
+        alert("Title unlocked: King. Equip it in Player Stats.");
     }
 }
 
@@ -493,6 +538,105 @@ function trySpendGold(amount) {
     }
     playerGold -= amount;
     return true;
+}
+
+function addGoodsToShop(itemName, amount) {
+    if (!shopGoods[itemName]) {
+        shopGoods[itemName] = 0;
+    }
+    shopGoods[itemName] += amount;
+}
+
+function removeGoodsFromShop(itemName, amount) {
+    if (!shopGoods[itemName] || shopGoods[itemName] < amount) {
+        return false;
+    }
+    shopGoods[itemName] -= amount;
+    if (shopGoods[itemName] <= 0) {
+        delete shopGoods[itemName];
+    }
+    return true;
+}
+
+function registerTrade() {
+    tradeCount += 1;
+    if (tradeCount >= 10 && ownedTitles.indexOf("prosperousLeader") === -1) {
+        ownedTitles.push("prosperousLeader");
+        awardPowerup("smarts", 2);
+        awardPowerup("luck", 2);
+        awardPowerup("esteem", 2);
+        awardPowerup("prosperity", 2);
+        alert("Title unlocked: Prosperous Leader! Your leadership and fortune grow.");
+    }
+}
+
+function runGuessingGame(guess) {
+    var secret = 1 + Math.floor(Math.random() * 10);
+    var gap = Math.abs(secret - guess);
+    if (guess === secret) {
+        awardPowerup("luck", 3);
+        grantGold(45, "perfect guess");
+        return "Perfect guess! The hidden number was " + secret + ". +3 Luck and +45 gold.";
+    }
+    if (gap === 1) {
+        awardPowerup("luck", 1);
+        grantGold(12, "close guess");
+        return "So close! The hidden number was " + secret + ". +1 Luck and +12 gold.";
+    }
+    return "Missed. The hidden number was " + secret + ". Better fortune next time.";
+}
+
+function applyExplorationPowerup(powerupName) {
+    if (powerupName === "Powerup: Titan Tonic") {
+        awardPowerup("strength", 2);
+    } else if (powerupName === "Powerup: Guardian Elixir") {
+        awardPowerup("defense", 2);
+    } else if (powerupName === "Powerup: Oracle Dust") {
+        awardPowerup("smarts", 2);
+    } else if (powerupName === "Powerup: Fortune Feather") {
+        awardPowerup("luck", 2);
+    }
+}
+
+function runExplorationMiniGame() {
+    var discoveries = [];
+    var i;
+    var picked;
+    var summary = [];
+
+    for (i = 0; i < 3; i++) {
+        picked = randomFrom(explorationDiscoveries);
+        discoveries.push(picked);
+        if (picked.category === "Powerup") {
+            applyExplorationPowerup(picked.name);
+            summary.push(picked.name + " (" + picked.description + ")");
+        } else {
+            addGoodsToShop(picked.name, 1);
+            summary.push(picked.name + " [" + picked.category + "] worth " + picked.value + " gold");
+        }
+    }
+
+    explorationState = { finds: discoveries };
+    addChoiceToReceipt("Completed an exploration run");
+    grantGold(10, "exploration expedition stipend");
+    return summary.join(" | ");
+}
+
+function maybeGrantStoryPowerup() {
+    var luckOdds = 7 + (playerStats.luck * 2);
+    if (randomizer() > clampOdds(luckOdds)) {
+        return "";
+    }
+
+    var boon = randomFrom([
+        { text: "You discover a hidden blessing shrine. +1 Strength.", stat: "strength" },
+        { text: "A wandering sage gifts you arcane fire. +1 Magical Power.", stat: "magicalPower" },
+        { text: "You uncover a forgotten battle manual. +1 Weapon Mastery.", stat: "weaponMastery" },
+        { text: "You find a lucky totem in the road dust. +1 Luck.", stat: "luck" }
+    ]);
+    awardPowerup(boon.stat, 1);
+    addArtifact("Story Powerup: " + boon.text);
+    return "<p><strong>Lucky Encounter:</strong> " + boon.text + "</p>";
 }
 
 function randomFrom(list) {
@@ -653,7 +797,7 @@ function handleMiniGameRound(gameType, decisionBonus, rewardName, statRewards) {
     if (miniGameSession.round > miniGameSession.maxRounds) {
         miniGameScores[gameType] += miniGameSession.score;
 
-        if (miniGameSession.score >= 2) {
+        if (miniGameSession.score >= 3) {
             for (statName in statRewards) {
                 if (statRewards.hasOwnProperty(statName)) {
                     awardPowerup(statName, statRewards[statName]);
@@ -663,7 +807,7 @@ function handleMiniGameRound(gameType, decisionBonus, rewardName, statRewards) {
             alert(rewardMessage);
         } else {
             grantGold(5, gameType + " training completion");
-            alert("Training complete: " + miniGameSession.score + "/3 rounds won. You need at least 2 rounds for relic rewards.");
+            alert("Training complete: " + miniGameSession.score + "/3 rounds won. You now need a perfect 3/3 for relic rewards.");
         }
 
         miniGameSession = null;
@@ -753,9 +897,13 @@ function updatePlayerStatsCard() {
         "<li><strong>Magical Power:</strong> " + playerStats.magicalPower + " <span>(effective: " + effectiveStats.magicalPower + ")</span></li>" +
         "<li><strong>Weapon Mastery:</strong> " + playerStats.weaponMastery + " <span>(effective: " + effectiveStats.weaponMastery + ")</span></li>" +
         "<li><strong>Smarts:</strong> " + playerStats.smarts + " <span>(effective: " + effectiveStats.smarts + ")</span></li>" +
+        "<li><strong>Luck:</strong> " + playerStats.luck + " <span>(effective: " + effectiveStats.luck + ")</span></li>" +
+        "<li><strong>Esteem:</strong> " + playerStats.esteem + " <span>(effective: " + effectiveStats.esteem + ")</span></li>" +
+        "<li><strong>Prosperity:</strong> " + playerStats.prosperity + " <span>(effective: " + effectiveStats.prosperity + ")</span></li>" +
         "</ul>" +
         "<h4>Inventory</h4>" +
         "<p><strong>Gold:</strong> " + playerGold + "</p>" +
+        "<p><strong>Total Trades:</strong> " + tradeCount + "/10</p>" +
         "<p><strong>Sigil Satchel:</strong> " + getSatchelSummary() + "</p>" +
         "<p><strong>Relics:</strong> " + inventoryItems.length + "/" + maxInventoryItems + "</p>" +
         "<p>" + (inventoryItems.length ? inventoryItems.join(", ") : "No relics yet. Win mini-games to collect them.") + "</p>" +
@@ -771,6 +919,8 @@ function updatePlayerStatsCard() {
         "<li>Chase: " + odds.chase + "%</li>" +
         "<li>Maze Trivia: " + odds.maze + "%</li>" +
         "<li>Journey Trivia: " + odds.journeyTrivia + "%</li>" +
+        "<li>Guessing Game: " + odds.guessing + "%</li>" +
+        "<li>Exploration: " + odds.exploration + "%</li>" +
         "</ul>" +
         "<p class='stats-note'>" + (miniGamesUnlocked ?
             "Mini-games unlocked. Keep training with Hanuman to boost your stats." :
@@ -822,9 +972,10 @@ function updateInventoryCard() {
         markup += "<ul class='stats-list'>";
 
         for (i = 0; i < inventoryItems.length; i++) {
+            var rewardInfo = getRewardItemByName(inventoryItems[i]);
             safeName = inventoryItems[i].replace(/'/g, "\\'");
             markup += "<li><strong>" + inventoryItems[i] + "</strong>: " +
-                rewardItems[i].description +
+                (rewardInfo ? rewardInfo.description : "Unknown relic lore.") +
                 " <button type='button' onclick=\"readRelicKnowledge('" + safeName + "')\">Read</button></li>";
         }
 
@@ -935,9 +1086,13 @@ function saveOldState() {
         journeyTriviaState: journeyTriviaState ? JSON.parse(JSON.stringify(journeyTriviaState)) : null,
         miniGameReturnScene: miniGameReturnScene,
         playerGold: playerGold,
+        tradeCount: tradeCount,
         sigilSatchel: JSON.parse(JSON.stringify(sigilSatchel)),
+        shopGoods: JSON.parse(JSON.stringify(shopGoods)),
         characterConversationState: characterConversationState ? JSON.parse(JSON.stringify(characterConversationState)) : null,
         pendingSigilDebt: pendingSigilDebt,
+        guessGameState: guessGameState ? JSON.parse(JSON.stringify(guessGameState)) : null,
+        explorationState: explorationState ? JSON.parse(JSON.stringify(explorationState)) : null,
         receiptScenes: receiptScenes.slice(),
         receiptChoices: receiptChoices.slice(),
         visitedSceneIds: visitedSceneIds.slice(),
@@ -970,9 +1125,13 @@ function undoChoice() {
     journeyTriviaState = oldState.journeyTriviaState || null;
     miniGameReturnScene = typeof oldState.miniGameReturnScene === "number" ? oldState.miniGameReturnScene : null;
     playerGold = oldState.playerGold || 0;
+    tradeCount = oldState.tradeCount || 0;
     sigilSatchel = oldState.sigilSatchel || {};
+    shopGoods = oldState.shopGoods || {};
     characterConversationState = oldState.characterConversationState || null;
     pendingSigilDebt = oldState.pendingSigilDebt || "";
+    guessGameState = oldState.guessGameState || null;
+    explorationState = oldState.explorationState || null;
     receiptScenes = oldState.receiptScenes;
     receiptChoices = oldState.receiptChoices;
     visitedSceneIds = oldState.visitedSceneIds;
@@ -1055,7 +1214,10 @@ function restart() {
         speedAgility: 0,
         magicalPower: 0,
         weaponMastery: 0,
-        smarts: 0
+        smarts: 0,
+        luck: 0,
+        esteem: 0,
+        prosperity: 0
     };
     inventoryItems = [];
     ownedTitles = [];
@@ -1079,9 +1241,13 @@ function restart() {
     journeyTriviaState = null;
     miniGameReturnScene = null;
     playerGold = 0;
+    tradeCount = 0;
     sigilSatchel = {};
+    shopGoods = {};
     characterConversationState = null;
     pendingSigilDebt = "";
+    guessGameState = null;
+    explorationState = null;
     receiptScenes = [];
     receiptChoices = [];
     oldStates = [];
@@ -1108,6 +1274,8 @@ function startAdventure() {
     miniGameReturnScene = null;
     characterConversationState = null;
     pendingSigilDebt = "";
+    guessGameState = null;
+    explorationState = null;
     currentScene = 1;
     updatePlayerStatsCard();
     showScene();
@@ -1122,7 +1290,8 @@ function isTerminalScene(sceneId) {
 function isMiniGameScene(sceneId) {
     return sceneId === 47 || sceneId === 55 || sceneId === 56 || sceneId === 57 ||
         sceneId === 58 || sceneId === 59 || sceneId === 70 || sceneId === 71 ||
-        sceneId === 72 || sceneId === 73 || sceneId === 77 || sceneId === 79;
+        sceneId === 72 || sceneId === 73 || sceneId === 77 || sceneId === 79 ||
+        sceneId === 93 || sceneId === 94;
 }
 
 function escapeHtml(text) {
@@ -1372,6 +1541,8 @@ function showScene() {
     var storyCard = document.getElementById("storyCard");
     var shouldAutoOpenTimeline;
     var choicesContainer;
+
+    unlockTitleIfEligible();
 
     if (currentScene === 1) {
         storyCard.innerHTML =
@@ -1830,6 +2001,8 @@ function showScene() {
             "<button onclick='makeChoice(58)'>Chase (Race)</button>" +
             "<button onclick='makeChoice(59)'>Maze (Trivia)</button>" +
             "<button onclick='makeChoice(70)'>Journey Trivia</button>" +
+            "<button onclick='makeChoice(93)'>Guessing Game</button>" +
+            "<button onclick='makeChoice(94)'>Exploration</button>" +
             "<button onclick='makeChoice(80)'>Talk to Hanuman</button>" +
             "<button onclick='makeChoice(81)'>Talk to Sugriva</button>" +
             "<button onclick='makeChoice(82)'>Talk to Lakshmana</button>" +
@@ -1938,6 +2111,30 @@ function showScene() {
             "<button onclick='makeChoice(71)'>Start Journey Trivia</button>" +
             "<button onclick='makeChoice(47)'>Back to Hanuman</button>" +
             "</div>";
+    } else if (currentScene === 93) {
+        storyCard.innerHTML =
+            "<h2>Mini-game: Guessing Game</h2>" +
+            "<p>A mystic asks you to guess a hidden number from 1 to 10. Exact guesses grant major luck growth.</p>" +
+            "<p><strong>Luck-assisted odds hint:</strong> " + getChallengeOdds("guessing") + "%</p>" +
+            "<div id='choices'>" +
+            "<button onclick='makeChoice(130)'>Guess 1-3</button>" +
+            "<button onclick='makeChoice(131)'>Guess 4-6</button>" +
+            "<button onclick='makeChoice(132)'>Guess 7-10</button>" +
+            "<button onclick='makeChoice(47)'>Back to Hanuman</button>" +
+            "</div>";
+    } else if (currentScene === 94) {
+        storyCard.innerHTML =
+            "<h2>Mini-game: Exploration</h2>" +
+            "<p>You send scouts through ruins, hills, and jungle trails. They can find artifacts, raw materials, ordinary goods, animals, and rare powerups.</p>" +
+            "<p><strong>Exploration success hint:</strong> " + getChallengeOdds("exploration") + "%</p>" +
+            "<p><strong>Trade progress:</strong> " + tradeCount + "/10</p>" +
+            (explorationState && explorationState.finds ? "<p><strong>Latest finds:</strong> " + explorationState.finds.map(function (item) {
+                return item.name;
+            }).join(", ") + "</p>" : "") +
+            "<div id='choices'>" +
+            "<button onclick='makeChoice(133)'>Launch Exploration Run</button>" +
+            "<button onclick='makeChoice(47)'>Back to Hanuman</button>" +
+            "</div>";
     } else if (currentScene === 71) {
         if (!journeyTriviaState || journeyTriviaState.currentQuestion >= journeyTriviaState.questions.length) {
             buildJourneyTriviaState();
@@ -1982,10 +2179,12 @@ function showScene() {
             disableUndo.title = "No longer works in this Part.";
         }
     } else if (currentScene === 54) {
+        var luckyEncounterText = maybeGrantStoryPowerup();
         storyCard.innerHTML =
             "<h2>Part 2: War Council</h2>" +
             "<p>The rescue campaign begins. Scouts bring reports from coastlines, forests, and hidden roads toward Lanka.</p>" +
             "<p>You can continue the main mission immediately, or return to the training grounds for extra preparation and resources.</p>" +
+            luckyEncounterText +
             "<div id='choices'>" +
             "<button onclick='makeChoice(75)'>Visit Hanuman's Training Grounds</button>" +
             "<button onclick='makeChoice(91)'>Lead the next story mission</button>" +
@@ -2004,17 +2203,27 @@ function showScene() {
             "<button onclick='makeChoice(47)'>Back to Training Hub</button>" +
             "</div>";
     } else if (currentScene === 79) {
+        var goodsKeys = Object.keys(shopGoods);
         storyCard.innerHTML =
             "<h2>Training Shop</h2>" +
             "<p>The quartermaster opens a sigil ledger. Buy what you need with gold earned in story battles, mini-games, and sparring.</p>" +
             "<p><strong>Gold:</strong> " + playerGold + "</p>" +
+            "<p><strong>Total Trades:</strong> " + tradeCount + "/10</p>" +
             "<p><strong>Debt:</strong> " + (pendingSigilDebt || "None") + "</p>" +
             "<p><strong>Satchel:</strong> " + getSatchelSummary() + "</p>" +
+            "<p><strong>Market Goods:</strong> " + (goodsKeys.length ? goodsKeys.map(function (itemName) {
+                return itemName + " x" + shopGoods[itemName];
+            }).join(", ") : "No goods to sell yet. Try Exploration.") + "</p>" +
             "<div id='choices'>" +
             Object.keys(trainingShopCatalog).map(function (sigilName) {
                 return "<button onclick='makeChoice(" + (100 + Object.keys(trainingShopCatalog).indexOf(sigilName)) + ")'>Buy " +
                     sigilName + " (" + trainingShopCatalog[sigilName] + " gold)</button>";
             }).join("") +
+            (goodsKeys.length ? goodsKeys.map(function (itemName, index) {
+                var itemInfo = explorationDiscoveries.filter(function (entry) { return entry.name === itemName; })[0];
+                var itemValue = itemInfo ? itemInfo.value : 10;
+                return "<button onclick='makeChoice(" + (200 + index) + ")'>Sell " + itemName + " (+" + itemValue + " gold)</button>";
+            }).join("") : "") +
             "<button onclick='makeChoice(92)'>Pay Debt and Return</button>" +
             "<button onclick='makeChoice(47)'>Back to Training Hub</button>" +
             "</div>";
@@ -2116,6 +2325,12 @@ function makeChoice(choice) {
         addChoiceToReceipt("Made a mini-game round decision");
     } else if (choice === 70) {
         addChoiceToReceipt("Started journey trivia mini-game");
+    } else if (choice === 93) {
+        addChoiceToReceipt("Started the guessing mini-game");
+    } else if (choice === 94) {
+        addChoiceToReceipt("Started the exploration mini-game");
+    } else if (choice === 133) {
+        addChoiceToReceipt("Launched an exploration run");
     } else if (choice === 71) {
         addChoiceToReceipt("Began journey trivia questions");
     } else if (choice === 72) {
@@ -2142,6 +2357,8 @@ function makeChoice(choice) {
         addChoiceToReceipt("Attempted to settle sigil debt");
     } else if (choice >= 100 && choice <= 107) {
         addChoiceToReceipt("Bought a sigil from the shop");
+    } else if (choice >= 200 && choice <= 260) {
+        addChoiceToReceipt("Sold explored goods at the shop");
     } else if (choice === 91) {
         addChoiceToReceipt("Led the next rescue mission");
     } else if (choice === 48) {
@@ -2414,6 +2631,10 @@ function makeChoice(choice) {
             currentScene = 59;
         } else if (choice === 70) {
             currentScene = 70;
+        } else if (choice === 93) {
+            currentScene = 93;
+        } else if (choice === 94) {
+            currentScene = 94;
         } else if (choice === 80 || choice === 81 || choice === 82 || choice === 83) {
             beginCharacterConversation(trainingCharacters[choice - 80]);
             currentScene = 77;
@@ -2450,9 +2671,20 @@ function makeChoice(choice) {
             var selectedSigil = catalogKeys[choice - 100];
             if (selectedSigil && trySpendGold(trainingShopCatalog[selectedSigil])) {
                 addSigilToSatchel(selectedSigil, 1);
+                registerTrade();
                 alert("Purchased " + selectedSigil + ".");
             } else {
                 alert("Not enough gold.");
+            }
+        } else if (choice >= 200 && choice <= 260) {
+            var marketKeys = Object.keys(shopGoods);
+            var selectedGood = marketKeys[choice - 200];
+            var marketInfo = explorationDiscoveries.filter(function (entry) { return entry.name === selectedGood; })[0];
+            var saleValue = marketInfo ? marketInfo.value : 10;
+            if (selectedGood && removeGoodsFromShop(selectedGood, 1)) {
+                grantGold(saleValue, "sold " + selectedGood);
+                registerTrade();
+                alert("Sold " + selectedGood + " for " + saleValue + " gold.");
             }
         } else if (choice === 92) {
             if (!pendingSigilDebt) {
@@ -2529,6 +2761,22 @@ function makeChoice(choice) {
         } else if (choice === 47) {
             currentScene = 47;
         }
+    } else if (currentScene === 93) {
+        if (choice === 130) {
+            alert(runGuessingGame(1 + Math.floor(Math.random() * 3)));
+        } else if (choice === 131) {
+            alert(runGuessingGame(4 + Math.floor(Math.random() * 3)));
+        } else if (choice === 132) {
+            alert(runGuessingGame(7 + Math.floor(Math.random() * 4)));
+        } else if (choice === 47) {
+            currentScene = 47;
+        }
+    } else if (currentScene === 94) {
+        if (choice === 133) {
+            alert("Exploration returns: " + runExplorationMiniGame());
+        } else if (choice === 47) {
+            currentScene = 47;
+        }
     } else if (currentScene === 71) {
         if (choice === 72) {
             journeyTriviaState.score += 1;
@@ -2543,9 +2791,10 @@ function makeChoice(choice) {
             journeyTriviaState.currentQuestion += 1;
             if (journeyTriviaState.currentQuestion >= journeyTriviaState.questions.length) {
                 miniGameScores.journeyTrivia += journeyTriviaState.score;
-                if (journeyTriviaState.score >= 4 || randomizer() < getChallengeOdds("journeyTrivia")) {
+                if (journeyTriviaState.score >= 5) {
                     awardPowerup("smarts", 2);
                     awardPowerup("magicalPower", 1);
+                    awardPowerup("luck", 1);
                     alert(awardMiniGameReward("Journey Trivia"));
                     grantGold(35, "journey trivia excellence");
                 }

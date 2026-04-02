@@ -10,10 +10,11 @@ var visitedSceneIds = [];
 var takenTransitions = [];
 var timelineModalOpen = false;
 var timelineZoom = 1;
+var journeyTriviaState = null;
+var perfectTriviaSessionsInRow = 0;
+var dasharathaStoryUnlocked = false;
+var miniGameReturnScene = null;
 var miniGamesUnlocked = false;
-var playerStatsModalOpen = false;
-var inventoryModalOpen = false;
-var inventoryArtifacts = [];
 var playerStats = {
     strength: 0,
     defense: 0,
@@ -26,166 +27,86 @@ var playerStats = {
     esteem: 0,
     prosperity: 0
 };
+var playerGold = 0;
 var inventoryItems = [];
-var maxInventoryItems = 20;
-var rewardItems = [
-    { name: "Sun Sigil", description: "Inscribed with solar hymns that teach timing, courage, and leadership in battle." },
-    { name: "Moon Sigil", description: "A silver glyph of calm reflection that sharpens judgment during uncertain moments." },
-    { name: "Forest Sigil", description: "Etched with woodland routes and creature lore, improving survival knowledge." },
-    { name: "River Sigil", description: "Carries flowing script about adaptation, helping you solve changing problems faster." },
-    { name: "Sky Sigil", description: "Celestial markings reveal wind signs and distant patterns, boosting strategic insight." },
-    { name: "Flame Sigil", description: "Contains teachings on discipline and focus, tempering quick decisions with clarity." },
-    { name: "Stone Sigil", description: "Ancient carvings on endurance and fortitude that reinforce practical wisdom." },
-    { name: "Wind Sigil", description: "Whispered verses on movement and timing that improve tactical thinking." },
-    { name: "Thunder Sigil", description: "Battle chants about decisive action, training your mind to react intelligently." },
-    { name: "Lotus Sigil", description: "Sacred lessons in patience and purity that strengthen thoughtful decision-making." },
-    { name: "Lion Sigil", description: "Royal maxims on courage and command that raise your confidence and intellect." },
-    { name: "Eagle Sigil", description: "High-watch teachings that help you read situations from a wider perspective." },
-    { name: "Ocean Sigil", description: "Deep-water lore of tides and cycles that expands long-term planning skills." },
-    { name: "Mountain Sigil", description: "Peak inscriptions on perseverance that enhance disciplined problem-solving." },
-    { name: "Dawn Sigil", description: "Morning mantras of renewal that encourage creative, fresh solutions." },
-    { name: "Dusk Sigil", description: "Evening teachings on caution and review that refine careful analysis." },
-    { name: "Star Sigil", description: "Constellation guides that improve memory, navigation, and abstract reasoning." },
-    { name: "Temple Sigil", description: "Priestly records of ethics and law that deepen moral and scholarly knowledge." },
-    { name: "Crown Sigil", description: "Statecraft doctrine that sharpens leadership, diplomacy, and political wisdom." },
-    { name: "Royal Emblem", description: "The final archive of kingship, uniting every lesson into master-level insight." }
-];
-var titles = {
-    king: {
-        label: "King",
-        bonuses: {
-            strength: 100,
-            defense: 100,
-            stamina: 100,
-            speedAgility: 100,
-            magicalPower: 100,
-            weaponMastery: 100,
-            smarts: 100,
-            luck: 100
-        }
-    },
-    prosperousLeader: {
-        label: "Prosperous Leader",
-        bonuses: {
-            smarts: 6,
-            luck: 6,
-            esteem: 4,
-            prosperity: 8
-        }
-    }
-};
+var inventoryArtifacts = [];
 var ownedTitles = [];
 var equippedTitle = "";
-var selectedMiniGameTactics = {
-    duel: "balanced",
-    brawl: "balanced",
-    shooting: "balanced",
-    chase: "balanced",
-    maze: "balanced"
-};
-var miniGameScores = {
-    duel: 0,
-    brawl: 0,
-    shooting: 0,
-    chase: 0,
-    maze: 0,
-    journeyTrivia: 0
-};
+var miniGameScores = { journeyTrivia: 0 };
 var miniGameSession = null;
-var journeyTriviaState = null;
-var miniGameReturnScene = null;
-var playerGold = 0;
+var selectedMiniGameTactics = { duel: "balanced", brawl: "balanced", shooting: "balanced", chase: "balanced", maze: "balanced" };
 var tradeCount = 0;
 var sigilSatchel = {};
-var trainingShopCatalog = {
-    "Sun Sigil": 40,
-    "Moon Sigil": 40,
-    "Forest Sigil": 45,
-    "River Sigil": 45,
-    "Sky Sigil": 50,
-    "Flame Sigil": 55,
-    "Stone Sigil": 55,
-    "Wind Sigil": 50
-};
+var shopGoods = {};
+var pendingSigilDebt = "";
+var trainingShopCatalog = {};
+var explorationDiscoveries = [];
+var explorationState = null;
 var trainingCharacters = ["Hanuman", "Sugriva", "Lakshmana", "Angada"];
 var characterConversationState = null;
-var pendingSigilDebt = "";
 var guessGameState = null;
-var explorationState = null;
-var shopGoods = {};
-var explorationDiscoveries = [
-    { name: "Meteor Shard", category: "Artifact", value: 140, description: "A warm shard that hums with star-fire." },
-    { name: "Ancient Seal Ring", category: "Artifact", value: 95, description: "A royal ring engraved with forgotten vows." },
-    { name: "Moonsteel Compass", category: "Artifact", value: 120, description: "Points toward hidden places and old shrines." },
-    { name: "Whispering Idol", category: "Artifact", value: 110, description: "A tiny idol that murmurs when danger is near." },
-    { name: "Ironwood Bundle", category: "Material", value: 16, description: "Dense wood prized by weapon-smiths." },
-    { name: "River Stone Crate", category: "Material", value: 18, description: "Strong polished stones for construction." },
-    { name: "Lotus Fiber Roll", category: "Material", value: 20, description: "Fine fibers used for bowstrings and cloth." },
-    { name: "Crystal Sand Pouch", category: "Material", value: 26, description: "Sparkling grit used for ritual ink." },
-    { name: "Spice Caravan Pack", category: "Ordinary Good", value: 24, description: "Everyday spice packs useful for trade." },
-    { name: "Medicinal Herb Satchel", category: "Ordinary Good", value: 22, description: "Basic remedies treasured in camps." },
-    { name: "Bronze Tools Set", category: "Ordinary Good", value: 30, description: "Reliable tools for scouts and builders." },
-    { name: "Silk Cloth Bundle", category: "Ordinary Good", value: 34, description: "Common cloth that still sells quickly." },
-    { name: "Swift Forest Hawk", category: "Animal", value: 70, description: "A trained hawk that can scout distant routes." },
-    { name: "Pack Yak", category: "Animal", value: 60, description: "Strong and patient, ideal for long hauls." },
-    { name: "Mountain Ram", category: "Animal", value: 55, description: "Tough beast adapted to cliffs and cold." },
-    { name: "Spirit Fox", category: "Animal", value: 85, description: "Rare fox said to notice hidden treasure." },
-    { name: "Powerup: Titan Tonic", category: "Powerup", value: 0, description: "Instantly grants +2 Strength." },
-    { name: "Powerup: Guardian Elixir", category: "Powerup", value: 0, description: "Instantly grants +2 Defense." },
-    { name: "Powerup: Oracle Dust", category: "Powerup", value: 0, description: "Instantly grants +2 Smarts." },
-    { name: "Powerup: Fortune Feather", category: "Powerup", value: 0, description: "Instantly grants +2 Luck." }
+
+var ramayanaTriviaFacts = [
+    ["Who wrote the Ramayana, according to tradition?", "Valmiki", ["Vyasa", "Kalidasa", "Tulsidas"]],
+    ["Who is Rama's wife?", "Sita", ["Mandodari", "Draupadi", "Tara"]],
+    ["Who is Rama's father?", "Dasharatha", ["Janaka", "Vishwamitra", "Ravana"]],
+    ["Who sends Rama into exile?", "Kaikeyi", ["Kausalya", "Sumitra", "Shabari"]],
+    ["Who goes with Rama into exile?", "Lakshmana", ["Bharata", "Shatrughna", "Vali"]],
+    ["Who abducts Sita?", "Ravana", ["Kumbhakarna", "Indrajit", "Khara"]],
+    ["What kingdom does Ravana rule?", "Lanka", ["Ayodhya", "Mithila", "Kishkindha"]],
+    ["Who leaps across the ocean to Lanka?", "Hanuman", ["Sugriva", "Angada", "Nala"]],
+    ["Who is Ravana's righteous brother?", "Vibhishana", ["Kumbhakarna", "Akampana", "Maricha"]],
+    ["Who tests Rama by appearing as a golden deer?", "Maricha", ["Khara", "Vali", "Kabandha"]],
+    ["What city is Rama from?", "Ayodhya", ["Ujjain", "Dwaraka", "Hastinapura"]],
+    ["Who is Sita's father?", "Janaka", ["Dasharatha", "Sugriva", "Vibhishana"]],
+    ["Who is the monkey king helped by Rama?", "Sugriva", ["Vali", "Jambavan", "Nila"]],
+    ["Who is Sugriva's powerful brother?", "Vali", ["Angada", "Nala", "Indrajit"]],
+    ["Who carries Rama's ring to Sita?", "Hanuman", ["Lakshmana", "Jatayu", "Vibhishana"]],
+    ["Who fights Ravana with Rama?", "Vanara army", ["Kauravas", "Pandavas", "Yadavas"]],
+    ["What is the bridge to Lanka called?", "Rama Setu", ["Kurukshetra", "Setubandha Lake", "Pushpaka Path"]],
+    ["Who is Ravana's giant sleeping brother?", "Kumbhakarna", ["Indrajit", "Trijata", "Khara"]],
+    ["What is another name for Indrajit?", "Meghanada", ["Akshayakumara", "Atikaya", "Prahasta"]],
+    ["Who rules Ayodhya while Rama is away?", "Bharata as regent", ["Lakshmana", "Shatrughna", "Janaka"]],
+    ["Who protects Sita in Ashoka Vatika?", "Trijata", ["Surpanakha", "Tara", "Mandodari"]],
+    ["Who gives Rama divine guidance in forest years?", "Rishis and sages", ["Yakshas", "Nagas", "Gandharvas"]],
+    ["Who offers berries to Rama with devotion?", "Shabari", ["Kaikeyi", "Urmila", "Tara"]],
+    ["Who is Lakshmana's wife?", "Urmila", ["Mandavi", "Shrutakirti", "Kaushalya"]],
+    ["How many years is Rama exiled?", "14", ["7", "10", "12"]]
 ];
-var ramayanaTriviaBank = [
-    {
-        prompt: "Who wrote the Ramayana, according to tradition?",
-        options: ["Valmiki", "Vyasa", "Kalidasa", "Tulsidas"],
-        correct: "Valmiki"
-    },
-    {
-        prompt: "Who is Rama's devoted wife?",
-        options: ["Sita", "Draupadi", "Mandodari", "Tara"],
-        correct: "Sita"
-    },
-    {
-        prompt: "Which brother stays with Rama during exile?",
-        options: ["Lakshmana", "Bharata", "Shatrughna", "Indrajit"],
-        correct: "Lakshmana"
-    },
-    {
-        prompt: "Who abducts Sita in the Ramayana?",
-        options: ["Ravana", "Kumbhakarna", "Vali", "Maricha"],
-        correct: "Ravana"
-    },
-    {
-        prompt: "Which vanara hero leaps to Lanka?",
-        options: ["Hanuman", "Sugriva", "Nala", "Angada"],
-        correct: "Hanuman"
-    },
-    {
-        prompt: "What is the name of Ravana's kingdom?",
-        options: ["Lanka", "Ayodhya", "Mithila", "Kishkindha"],
-        correct: "Lanka"
-    },
-    {
-        prompt: "Who helps Rama build the bridge to Lanka?",
-        options: ["Vanara army", "Kauravas", "Nagas", "Yadavas"],
-        correct: "Vanara army"
-    },
-    {
-        prompt: "What is Rama and Sita's homeland city?",
-        options: ["Ayodhya", "Dwarka", "Indraprastha", "Ujjain"],
-        correct: "Ayodhya"
-    },
-    {
-        prompt: "Who is the giant brother of Ravana?",
-        options: ["Kumbhakarna", "Vibhishana", "Meghanada", "Khara"],
-        correct: "Kumbhakarna"
-    },
-    {
-        prompt: "Who is Ravana's righteous brother who joins Rama?",
-        options: ["Vibhishana", "Kumbhakarna", "Indrajit", "Akampana"],
-        correct: "Vibhishana"
+
+function buildRamayanaTriviaBank() {
+    var bank = [];
+    var i;
+    var j;
+    var fact;
+    var promptVariants = [
+        "{q}",
+        "Ramayana trivia: {q}",
+        "Choose the correct answer: {q}",
+        "In the Ramayana, {q}"
+    ];
+
+    for (i = 0; i < ramayanaTriviaFacts.length; i++) {
+        fact = ramayanaTriviaFacts[i];
+        for (j = 0; j < 4; j++) {
+            bank.push({
+                prompt: promptVariants[j].replace("{q}", fact[0]),
+                options: [fact[1]].concat(fact[2]).sort(function () { return Math.random() - 0.5; }),
+                correct: fact[1]
+            });
+        }
     }
+
+    return bank.slice(0, 100);
+}
+
+var ramayanaTriviaBank = buildRamayanaTriviaBank();
+
+var ramayanaGuessPool = [
+    "Rama", "Sita", "Lakshmana", "Hanuman", "Ravana", "Dasharatha", "Bharata", "Shatrughna", "Kaikeyi", "Kausalya",
+    "Sumitra", "Janaka", "Vibhishana", "Kumbhakarna", "Indrajit", "Meghanada", "Sugriva", "Vali", "Angada", "Jatayu",
+    "Shabari", "Surpanakha", "Trijata", "Mandodari", "Maricha", "Ayodhya", "Lanka", "Mithila", "Kishkindha", "Panchavati",
+    "Dandaka Forest", "Ashoka Vatika", "Rama Setu", "Pushpaka Vimana", "Sarayu River", "Chitrakoot"
 ];
 
 var timelineNodeTitles = {
@@ -246,7 +167,8 @@ var timelineNodeTitles = {
     65: "Search for Sita",
     66: "Bharata's Plea",
     67: "Ayodhya Return Ending",
-    68: "Sandals Promise"
+    68: "Sandals Promise",
+    69: "Dasharatha's Demand"
 };
 
 var timelineLevels = [
@@ -278,7 +200,7 @@ var timelineLevels = [
     [42],
     [43],
     [44, 45, 46],
-    [47],
+    [47, 69],
     [53],
     [54]
 ];
@@ -354,6 +276,8 @@ var timelineEdges = [
     { from: 43, to: 45, label: "Wrong answer" },
     { from: 43, to: 46, label: "Wrong answer" },
     { from: 44, to: 47, label: "Meet Hanuman" },
+    { from: 47, to: 69, label: "Unlock new storyline" },
+    { from: 69, to: 67, label: "Return and rule" },
     { from: 47, to: 53, label: "Continue" },
     { from: 53, to: 54, label: "Begin rescue" }
 ];
@@ -407,29 +331,16 @@ function getMiniGameTacticBonus(challengeType) {
 }
 
 function getChallengeOdds(challengeType) {
-    var effectiveStats = getEffectiveStats();
-    var baseOdds = 35;
-
     if (challengeType === "fight") {
-        baseOdds = 70 + (effectiveStats.strength * 10) + (effectiveStats.speedAgility * 5);
-    } else if (challengeType === "duel") {
-        baseOdds = 28 + (effectiveStats.defense * 8) + (effectiveStats.weaponMastery * 8);
-    } else if (challengeType === "brawl") {
-        baseOdds = 28 + (effectiveStats.stamina * 8) + (effectiveStats.strength * 8);
-    } else if (challengeType === "shooting") {
-        baseOdds = 28 + (effectiveStats.stamina * 8) + (effectiveStats.weaponMastery * 8);
-    } else if (challengeType === "chase") {
-        baseOdds = 30 + (effectiveStats.speedAgility * 8);
-    } else if (challengeType === "maze") {
-        baseOdds = 28 + (effectiveStats.speedAgility * 6) + (effectiveStats.magicalPower * 6) + (effectiveStats.smarts * 10);
-    } else if (challengeType === "journeyTrivia") {
-        baseOdds = 25 + (effectiveStats.smarts * 10) + (effectiveStats.magicalPower * 4) + (effectiveStats.luck * 4);
-    } else if (challengeType === "guessing") {
-        baseOdds = 15 + (effectiveStats.luck * 6);
-    } else if (challengeType === "exploration") {
-        baseOdds = 30 + (effectiveStats.luck * 5) + (effectiveStats.smarts * 4);
+        return 70;
     }
-    return clampOdds(Math.min(85, baseOdds + getMiniGameTacticBonus(challengeType)));
+    if (challengeType === "journeyTrivia") {
+        return 50;
+    }
+    if (challengeType === "guessing") {
+        return 35;
+    }
+    return 40;
 }
 
 function getAllOddsSummary() {
@@ -571,19 +482,11 @@ function registerTrade() {
 }
 
 function runGuessingGame(guess) {
-    var secret = 1 + Math.floor(Math.random() * 10);
-    var gap = Math.abs(secret - guess);
-    if (guess === secret) {
-        awardPowerup("luck", 3);
-        grantGold(45, "perfect guess");
-        return "Perfect guess! The hidden number was " + secret + ". +3 Luck and +45 gold.";
+    var secret = randomFrom(ramayanaGuessPool);
+    if (guess && guess.toLowerCase() === secret.toLowerCase()) {
+        return "Correct! The hidden answer was " + secret + ".";
     }
-    if (gap === 1) {
-        awardPowerup("luck", 1);
-        grantGold(12, "close guess");
-        return "So close! The hidden number was " + secret + ". +1 Luck and +12 gold.";
-    }
-    return "Missed. The hidden number was " + secret + ". Better fortune next time.";
+    return "Not quite. The hidden answer was " + secret + ".";
 }
 
 function applyExplorationPowerup(powerupName) {
@@ -680,34 +583,23 @@ function processCharacterReply(replyStyle) {
         playful: "You reply playfully, keeping spirits high."
     };
     var offerFight = randomizer() < 45;
-    var demanded = randomFrom(Object.keys(trainingShopCatalog));
     characterConversationState.followUp = tone[replyStyle] + " " +
         characterConversationState.character + " reacts thoughtfully." +
         (offerFight ? " A sparring challenge is offered!" : " They share a tactical tip for your journey.");
     characterConversationState.fightOffered = offerFight;
-    characterConversationState.demandedSigil = demanded;
 }
 
 function resolveCharacterFight() {
     var mods = { Hanuman: -5, Sugriva: 0, Lakshmana: 5, Angada: 2 };
     var odds = clampOdds(getChallengeOdds("fight") + (mods[characterConversationState.character] || 0));
-    var rewardGold = 20 + Math.floor(Math.random() * 36);
     if (randomizer() < odds) {
-        characterConversationState.rewardGold = rewardGold;
-        grantGold(rewardGold, "won sparring bout vs " + characterConversationState.character);
-        addArtifact(characterConversationState.character + "'s Respect Token");
+        characterConversationState.rewardGold = 0;
         characterConversationState.followUp = "You win the spar! " + characterConversationState.character +
-            " salutes your skill and awards " + rewardGold + " gold.";
+            " salutes your skill and offers advice for battle.";
     } else {
         characterConversationState.rewardGold = 0;
-        if (spendSigil(characterConversationState.demandedSigil)) {
-            characterConversationState.followUp = "You lose the spar and pay 1 " +
-                characterConversationState.demandedSigil + " as promised.";
-        } else {
-            pendingSigilDebt = characterConversationState.demandedSigil;
-            characterConversationState.followUp = "You lose the spar. They demand a " +
-                pendingSigilDebt + ", but you do not have one. Visit the shop immediately.";
-        }
+        characterConversationState.followUp = "You lose the spar, and " + characterConversationState.character +
+            " urges you to keep refining your form.";
     }
 }
 
@@ -838,31 +730,14 @@ function sampleChoicesExcluding(correctValue) {
 }
 
 function buildJourneyTriviaState() {
-    var pool = ramayanaTriviaBank.slice();
-    var questions = [];
-    var questionIndex;
-    var randomIndex;
-
-    while (questions.length < 5 && pool.length > 0) {
-        randomIndex = Math.floor(Math.random() * pool.length);
-        questions.push(pool[randomIndex]);
-        pool.splice(randomIndex, 1);
-    }
-
-    for (questionIndex = 0; questionIndex < questions.length; questionIndex++) {
-        questions[questionIndex] = {
-            prompt: questions[questionIndex].prompt,
-            correct: questions[questionIndex].correct,
-            options: questions[questionIndex].options.slice().sort(function () {
-                return Math.random() - 0.5;
-            })
-        };
-    }
-
     journeyTriviaState = {
         currentQuestion: 0,
+        askedCount: 0,
         score: 0,
-        questions: questions
+        wrong: 0,
+        questions: ramayanaTriviaBank.slice().sort(function () {
+            return Math.random() - 0.5;
+        })
     };
 }
 
@@ -1084,6 +959,8 @@ function saveOldState() {
         miniGameScores: JSON.parse(JSON.stringify(miniGameScores)),
         miniGameSession: miniGameSession ? JSON.parse(JSON.stringify(miniGameSession)) : null,
         journeyTriviaState: journeyTriviaState ? JSON.parse(JSON.stringify(journeyTriviaState)) : null,
+        perfectTriviaSessionsInRow: perfectTriviaSessionsInRow,
+        dasharathaStoryUnlocked: dasharathaStoryUnlocked,
         miniGameReturnScene: miniGameReturnScene,
         playerGold: playerGold,
         tradeCount: tradeCount,
@@ -1123,6 +1000,8 @@ function undoChoice() {
     miniGameScores = oldState.miniGameScores || miniGameScores;
     miniGameSession = oldState.miniGameSession || null;
     journeyTriviaState = oldState.journeyTriviaState || null;
+    perfectTriviaSessionsInRow = oldState.perfectTriviaSessionsInRow || 0;
+    dasharathaStoryUnlocked = !!oldState.dasharathaStoryUnlocked;
     miniGameReturnScene = typeof oldState.miniGameReturnScene === "number" ? oldState.miniGameReturnScene : null;
     playerGold = oldState.playerGold || 0;
     tradeCount = oldState.tradeCount || 0;
@@ -1239,6 +1118,8 @@ function restart() {
     };
     miniGameSession = null;
     journeyTriviaState = null;
+    perfectTriviaSessionsInRow = 0;
+    dasharathaStoryUnlocked = false;
     miniGameReturnScene = null;
     playerGold = 0;
     tradeCount = 0;
@@ -1984,31 +1865,16 @@ function showScene() {
         storyCard.innerHTML =
             "<h2>Meeting Hanuman</h2>" +
             "<p>Grateful for your help, Sugriva brings forward his wisest and most loyal companion: Hanuman. Hanuman bows before you and offers his strength in the search for Sita.</p>" +
-            "<p>A powerful new alliance has begun. The training grounds now run like a full war-camp with stories, sparring, wagers, and tactical lessons.</p>" +
-            "<p><strong>Special reward:</strong> every mini-game win grants a relic. Collect all 20 relics to unlock the title <strong>King</strong>.</p>" +
-            "<p><strong>Economy:</strong> mini-games, duels, and story victories now award gold. Gold buys sigils in the training shop if you lose a spar and owe one.</p>" +
-            "<p><strong>Your gold:</strong> " + playerGold + " | <strong>Sigil satchel:</strong> " + getSatchelSummary() + "</p>" +
-            "<p><strong>Mini-game scoreboard:</strong> Duel " + miniGameScores.duel +
-            " | Brawl " + miniGameScores.brawl +
-            " | Shooting " + miniGameScores.shooting +
-            " | Chase " + miniGameScores.chase +
-            " | Maze " + miniGameScores.maze +
-            " | Trivia " + miniGameScores.journeyTrivia + "</p>" +
+            "<p>The war-camp is focused now: conversation, sparring, and two games to sharpen your mind.</p>" +
+            "<p><strong>Trivia streak (perfect sessions in a row):</strong> " + perfectTriviaSessionsInRow + "/20</p>" +
             "<div id='choices'>" +
-            "<button onclick='makeChoice(55)'>Duel (Swords)</button>" +
-            "<button onclick='makeChoice(56)'>Brawl (Wrestling)</button>" +
-            "<button onclick='makeChoice(57)'>Shooting Range (Bows)</button>" +
-            "<button onclick='makeChoice(58)'>Chase (Race)</button>" +
-            "<button onclick='makeChoice(59)'>Maze (Trivia)</button>" +
             "<button onclick='makeChoice(70)'>Journey Trivia</button>" +
             "<button onclick='makeChoice(93)'>Guessing Game</button>" +
-            "<button onclick='makeChoice(94)'>Exploration</button>" +
             "<button onclick='makeChoice(80)'>Talk to Hanuman</button>" +
             "<button onclick='makeChoice(81)'>Talk to Sugriva</button>" +
             "<button onclick='makeChoice(82)'>Talk to Lakshmana</button>" +
             "<button onclick='makeChoice(83)'>Talk to Angada</button>" +
-            "<button onclick='makeChoice(90)'>Open Sigil Shop</button>" +
-            (miniGameReturnScene !== null ? "<button onclick='makeChoice(76)'>Return to Main Story</button>" : "") +
+            (dasharathaStoryUnlocked ? "<button onclick='makeChoice(69)'>New Storyline: Dasharatha's Demand</button>" : "") +
             "<button onclick='makeDecision(1)'>Continue Main Story</button>" +
             "</div>";
     } else if (currentScene === 55) {
@@ -2103,23 +1969,21 @@ function showScene() {
             "</div>";
     } else if (currentScene === 70) {
         storyCard.innerHTML =
-            "<h2>Mini-game: Journey Trivia</h2>" +
-            "<p>Answer Ramayana lore questions from changing pools. Get at least 4 out of 5 to win a relic, stats, and extra gold.</p>" +
-            "<p><strong>Current journey trivia win odds bonus:</strong> " + getChallengeOdds("journeyTrivia") + "%</p>" +
-            "<p><strong>Total trivia score:</strong> " + miniGameScores.journeyTrivia + "</p>" +
+            "<h2>Game: Ramayana Trivia (100 Questions)</h2>" +
+            "<p>Each session draws from a 100-question bank. The session continues until you get <strong>3 wrong</strong>.</p>" +
+            "<p><strong>Perfect streak:</strong> " + perfectTriviaSessionsInRow + "/20 sessions with zero wrong answers.</p>" +
             "<div id='choices'>" +
-            "<button onclick='makeChoice(71)'>Start Journey Trivia</button>" +
+            "<button onclick='makeChoice(71)'>Start Trivia Session</button>" +
             "<button onclick='makeChoice(47)'>Back to Hanuman</button>" +
             "</div>";
     } else if (currentScene === 93) {
         storyCard.innerHTML =
-            "<h2>Mini-game: Guessing Game</h2>" +
-            "<p>A mystic asks you to guess a hidden number from 1 to 10. Exact guesses grant major luck growth.</p>" +
-            "<p><strong>Luck-assisted odds hint:</strong> " + getChallengeOdds("guessing") + "%</p>" +
+            "<h2>Game: Ramayana Guessing</h2>" +
+            "<p>Guess a hidden Ramayana answer (character, place, or object).</p>" +
+            "<p>Examples: Rama, Lanka, Pushpaka Vimana, Ayodhya.</p>" +
+            "<input id='guessInput' type='text' placeholder='Type your guess here' />" +
             "<div id='choices'>" +
-            "<button onclick='makeChoice(130)'>Guess 1-3</button>" +
-            "<button onclick='makeChoice(131)'>Guess 4-6</button>" +
-            "<button onclick='makeChoice(132)'>Guess 7-10</button>" +
+            "<button onclick='makeChoice(130)'>Submit Guess</button>" +
             "<button onclick='makeChoice(47)'>Back to Hanuman</button>" +
             "</div>";
     } else if (currentScene === 94) {
@@ -2142,7 +2006,7 @@ function showScene() {
         storyCard.innerHTML =
             "<h2>Journey Trivia Question " + (journeyTriviaState.currentQuestion + 1) + "</h2>" +
             "<p><strong>" + journeyTriviaState.questions[journeyTriviaState.currentQuestion].prompt + "</strong></p>" +
-            "<p><strong>Current score:</strong> " + journeyTriviaState.score + "/" + journeyTriviaState.currentQuestion + "</p>" +
+            "<p><strong>Correct:</strong> " + journeyTriviaState.score + " | <strong>Wrong:</strong> " + journeyTriviaState.wrong + "/3</p>" +
             "<div id='choices'>" +
             journeyTriviaState.questions[journeyTriviaState.currentQuestion].options.map(function (optionText) {
                 return "<button onclick='makeChoice(" + (optionText === journeyTriviaState.questions[journeyTriviaState.currentQuestion].correct ? 72 : 73) + ")'>" + optionText + "</button>";
@@ -2152,7 +2016,7 @@ function showScene() {
     } else if (currentScene === 72) {
         storyCard.innerHTML =
             "<h2>Correct!</h2>" +
-            "<p>You answered that Ramayana question correctly.</p>" +
+            "<p>You answered correctly. Keep going until you reach 3 wrong answers.</p>" +
             "<div id='choices'>" +
             "<button onclick='makeChoice(74)'>Next Question</button>" +
             "<button onclick='makeChoice(70)'>Back to Trivia Menu</button>" +
@@ -2160,10 +2024,19 @@ function showScene() {
     } else if (currentScene === 73) {
         storyCard.innerHTML =
             "<h2>Not Quite</h2>" +
-            "<p>That answer is incorrect, but you can still recover this run.</p>" +
+            "<p>That answer is incorrect. A session ends once you reach 3 wrong answers.</p>" +
             "<div id='choices'>" +
             "<button onclick='makeChoice(74)'>Continue</button>" +
             "<button onclick='makeChoice(70)'>Back to Trivia Menu</button>" +
+            "</div>";
+    } else if (currentScene === 69) {
+        storyCard.innerHTML =
+            "<h2>Dasharatha's Demand</h2>" +
+            "<p>Your 20 perfect trivia sessions have spread through the camps and cities alike. Messengers arrive from Ayodhya with an urgent royal summons.</p>" +
+            "<p>King Dasharatha commands you to return at once and take the throne, declaring that your wisdom now belongs in the kingdom's court.</p>" +
+            "<div id='choices'>" +
+            "<button onclick='makeChoice(67)'>Return to Ayodhya and become king</button>" +
+            "<button onclick='makeChoice(47)'>Remain with the rescue campaign for now</button>" +
             "</div>";
     } else if (currentScene === 53) {
         storyCard.innerHTML =
@@ -2619,30 +2492,15 @@ function makeChoice(choice) {
             currentScene = 47;
         }
     } else if (currentScene === 47) {
-        if (choice === 55) {
-            currentScene = 55;
-        } else if (choice === 56) {
-            currentScene = 56;
-        } else if (choice === 57) {
-            currentScene = 57;
-        } else if (choice === 58) {
-            currentScene = 58;
-        } else if (choice === 59) {
-            currentScene = 59;
-        } else if (choice === 70) {
+        if (choice === 70) {
             currentScene = 70;
         } else if (choice === 93) {
             currentScene = 93;
-        } else if (choice === 94) {
-            currentScene = 94;
         } else if (choice === 80 || choice === 81 || choice === 82 || choice === 83) {
             beginCharacterConversation(trainingCharacters[choice - 80]);
             currentScene = 77;
-        } else if (choice === 90) {
-            currentScene = 79;
-        } else if (choice === 76 && miniGameReturnScene !== null) {
-            currentScene = miniGameReturnScene;
-            miniGameReturnScene = null;
+        } else if (choice === 69 && dasharathaStoryUnlocked) {
+            currentScene = 69;
         }
     } else if (currentScene === 77) {
         if (choice === 84) {
@@ -2763,11 +2621,13 @@ function makeChoice(choice) {
         }
     } else if (currentScene === 93) {
         if (choice === 130) {
-            alert(runGuessingGame(1 + Math.floor(Math.random() * 3)));
-        } else if (choice === 131) {
-            alert(runGuessingGame(4 + Math.floor(Math.random() * 3)));
-        } else if (choice === 132) {
-            alert(runGuessingGame(7 + Math.floor(Math.random() * 4)));
+            var guessInput = document.getElementById("guessInput");
+            var userGuess = guessInput ? guessInput.value.trim() : "";
+            if (!userGuess) {
+                alert("Please type a Ramayana guess first.");
+            } else {
+                alert(runGuessingGame(userGuess));
+            }
         } else if (choice === 47) {
             currentScene = 47;
         }
@@ -2782,22 +2642,26 @@ function makeChoice(choice) {
             journeyTriviaState.score += 1;
             currentScene = 72;
         } else if (choice === 73) {
+            journeyTriviaState.wrong += 1;
             currentScene = 73;
         } else if (choice === 70) {
             currentScene = 70;
         }
     } else if (currentScene === 72 || currentScene === 73) {
         if (choice === 74) {
+            journeyTriviaState.askedCount += 1;
             journeyTriviaState.currentQuestion += 1;
-            if (journeyTriviaState.currentQuestion >= journeyTriviaState.questions.length) {
-                miniGameScores.journeyTrivia += journeyTriviaState.score;
-                if (journeyTriviaState.score >= 5) {
-                    awardPowerup("smarts", 2);
-                    awardPowerup("magicalPower", 1);
-                    awardPowerup("luck", 1);
-                    alert(awardMiniGameReward("Journey Trivia"));
-                    grantGold(35, "journey trivia excellence");
+            if (journeyTriviaState.wrong >= 3 || journeyTriviaState.currentQuestion >= journeyTriviaState.questions.length) {
+                if (journeyTriviaState.wrong === 0) {
+                    perfectTriviaSessionsInRow += 1;
+                } else {
+                    perfectTriviaSessionsInRow = 0;
                 }
+                if (perfectTriviaSessionsInRow >= 20) {
+                    dasharathaStoryUnlocked = true;
+                }
+                alert("Trivia session complete. Correct: " + journeyTriviaState.score + ", Wrong: " + journeyTriviaState.wrong +
+                    ". Perfect streak: " + perfectTriviaSessionsInRow + "/20.");
                 journeyTriviaState = null;
                 currentScene = 47;
             } else {
@@ -2805,6 +2669,12 @@ function makeChoice(choice) {
             }
         } else if (choice === 70) {
             currentScene = 70;
+        }
+    } else if (currentScene === 69) {
+        if (choice === 67) {
+            currentScene = 67;
+        } else if (choice === 47) {
+            currentScene = 47;
         }
     } else if (currentScene === 54) {
         if (choice === 75) {

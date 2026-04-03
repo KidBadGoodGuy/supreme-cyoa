@@ -1687,7 +1687,7 @@ function showScene() {
             "<p>You can continue with Hanuman's council activities or lead the next mission immediately.</p>" +
             "<div id='choices'>" +
             "<button onclick='makeChoice(47)'>Return to Hanuman's camp</button>" +
-            "<button onclick='makeChoice(91)'>Lead the next story mission</button>" +
+            "<button onclick='makeDecision(3)'>Lead the next story mission</button>" +
             "</div>";
     } else if (currentScene === 77) {
         storyCard.innerHTML =
@@ -2080,10 +2080,7 @@ function makeChoice(choice) {
     } else if (currentScene === 54) {
         if (choice === 47) {
             currentScene = 47;
-        } else if (choice === 91) {
-            grantGold(60, "advanced the rescue campaign");
-            alert("You lead a successful raid and secure 60 gold for the war effort. More Part 2 scenes can be added here next.");
-        }
+        } 
     }
     if (previousScene !== currentScene) {
         takenTransitions.push(previousScene + "->" + currentScene);
@@ -2096,7 +2093,9 @@ function makeDecision(decision){
     if (decision === 1){
             currentScene = 53;
     } else if (decision === 2){
-        currentScene = 54; // begin the rescue
+        currentScene = 54; // begin the rescue 1
+    } else if (decision === 3){
+        currentScene = 55; // begin the rescue 2
     }
     showScene();
 }

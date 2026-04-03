@@ -1852,7 +1852,7 @@ function showScene() {
             "<button onclick='makeChoice(82)'>Talk to Lakshmana</button>" +
             "<button onclick='makeChoice(83)'>Talk to Angada</button>" +
             (dasharathaStoryUnlocked ? "<button onclick='makeChoice(69)'>New Storyline: Dasharatha's Demand</button>" : "") +
-            "<button onclick='makeDecision(1)'>Continue Main Story</button>" +
+            "<button onclick='makeChoice(76)'>Return to Main Story</button>" +
             "</div>";
     } else if (currentScene === 55) {
         storyCard.innerHTML =
@@ -2513,6 +2513,9 @@ function makeChoice(choice) {
         } else if (choice === 80 || choice === 81 || choice === 82 || choice === 83) {
             beginCharacterConversation(trainingCharacters[choice - 80]);
             currentScene = 77;
+        } else if (choice === 76) {
+            miniGameReturnScene = null;
+            currentScene = 53;
         } else if (choice === 69 && dasharathaStoryUnlocked) {
             currentScene = 69;
         }

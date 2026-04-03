@@ -97,22 +97,12 @@ body::after {
 }
 
 
-#backgroundMusic {
-  position: fixed;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-  pointer-events: none;
-  left: -9999px;
-  top: -9999px;
-}
-
 #soundtrackBadge {
   position: fixed;
   top: 16px;
   left: 16px;
   z-index: 20;
-  display: inline-flex;
+  display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 8px;
@@ -130,38 +120,18 @@ body::after {
 }
 
 .soundtrack-label {
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   text-transform: uppercase;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.14em;
   color: rgba(255, 235, 194, 0.78);
 }
 
-#currentTrackName {
-  font-size: 0.95rem;
-  color: #ffecc7;
-  text-shadow: 0 0 12px rgba(255, 204, 112, 0.28);
-}
-
-#soundtrackControls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-#soundtrackControls label {
-  font-size: 0.68rem;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  color: rgba(255, 235, 194, 0.72);
-}
-
-#musicToggleButton {
-  padding: 6px 10px;
-  font-size: 0.76rem;
-}
-
-#volumeControl {
-  width: 110px;
+#backgroundMusic {
+  width: min(320px, 60vw);
+  height: 34px;
+  border-radius: 10px;
+  accent-color: #f6c26f;
+  filter: drop-shadow(0 4px 8px rgba(8, 2, 12, 0.35));
 }
 
 #undoButton {
@@ -822,8 +792,8 @@ blockquote,
     max-width: calc(100vw - 20px);
   }
 
-  #currentTrackName {
-    font-size: 0.85rem;
+  #backgroundMusic {
+    width: min(260px, calc(100vw - 40px));
   }
 }
 

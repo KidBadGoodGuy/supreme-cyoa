@@ -21,20 +21,7 @@ var artifactLoreCatalog = {};
 var trainingCharacters = ["Hanuman", "Sugriva", "Lakshmana", "Angada"];
 var characterConversationState = null;
 var guessGameState = null;
-var hasReachedWarCouncil = false;
 var inventoryModalOpen = false;
-var musicAutoplayRetryBound = false;
-
-var soundtrackMap = {
-    exile: {
-        file: "Sacred Path Of Rama.mp3",
-        label: "Sacred Path Of Rama"
-    },
-    warCouncil: {
-        file: "Lanka Burns At Dawn.mp3",
-        label: "Lanka Burns At Dawn"
-    }
-};
 
 var ramayanaTriviaFacts = [
     ["Who wrote the Ramayana, according to tradition?", "Valmiki", ["Vyasa", "Kalidasa", "Tulsidas"]],
@@ -843,7 +830,6 @@ function restart() {
     dasharathaStoryUnlocked = false;
     characterConversationState = null;
     guessGameState = null;
-    hasReachedWarCouncil = false;
     receiptScenes = [];
     receiptChoices = [];
     oldStates = [];
@@ -854,142 +840,6 @@ function restart() {
     setUndoButton();
     updatePlayerStatsCard();
     updateInventoryCard();
-}
-
-function updateMusicControls() {
-    var audio = document.getElementById("backgroundMusic");
-    var toggleButton = document.getElementById("musicToggleButton");
-
-    if (!audio || !toggleButton) {
-        return;
-    }
-
-    toggleButton.textContent = audio.paused ? "Play" : "Pause";
-}
-
-function syncBackgroundMusic() {
-    var audio = document.getElementById("backgroundMusic");
-    var trackName = document.getElementById("currentTrackName");
-    var volumeControl = document.getElementById("volumeControl");
-    var selectedTrack = hasReachedWarCouncil ? soundtrackMap.warCouncil : soundtrackMap.exile;
-    var selectedSrc;
-    var playPromise;
-
-    if (!audio) {
-        return;
-    }
-
-    selectedSrc = selectedTrack.file;
-
-    if (!audio.getAttribute("src") || audio.getAttribute("src") !== selectedSrc) {
-        audio.setAttribute("src", selectedSrc);
-        audio.load();
-    }
-
-    audio.loop = true;
-    audio.autoplay = true;
-    audio.defaultMuted = false;
-    audio.muted = false;
-    audio.playsInline = true;
-
-    if (volumeControl) {
-        audio.volume = Number(volumeControl.value);
-    }
-
-    if (trackName) {
-        trackName.textContent = selectedTrack.label;
-    }
-
-    playPromise = audio.play();
-
-    if (playPromise && typeof playPromise.catch === "function") {
-        playPromise.then(function () {
-            updateMusicControls();
-        }).catch(function () {
-            updateMusicControls();
-        });
-    } else {
-        updateMusicControls();
-    }
-}
-
-function toggleMusicPlayback() {
-    var audio = document.getElementById("backgroundMusic");
-
-    if (!audio) {
-        return;
-    }
-
-    if (audio.paused) {
-        audio.muted = false;
-        audio.defaultMuted = false;
-        audio.play().then(function () {
-            updateMusicControls();
-        }).catch(function () {
-            updateMusicControls();
-        });
-        return;
-    }
-
-    audio.pause();
-    updateMusicControls();
-}
-
-function updateMusicVolume() {
-    var audio = document.getElementById("backgroundMusic");
-    var volumeControl = document.getElementById("volumeControl");
-
-    if (!audio || !volumeControl) {
-        return;
-    }
-
-    audio.volume = Number(volumeControl.value);
-}
-
-function updateWarCouncilMusicProgress(sceneId) {
-    if (sceneId >= 54) {
-        hasReachedWarCouncil = true;
-    }
-}
-
-function bindMusicAutoplayRetry() {
-    var retryEvents;
-    var i;
-
-    if (musicAutoplayRetryBound) {
-        return;
-    }
-
-    musicAutoplayRetryBound = true;
-    retryEvents = ["pointerdown", "keydown", "touchstart"];
-
-    function retryPlayback() {
-        var audio = document.getElementById("backgroundMusic");
-        var playPromise;
-
-        if (!audio || !audio.paused) {
-            return;
-        }
-
-        audio.muted = false;
-        audio.defaultMuted = false;
-        playPromise = audio.play();
-
-        if (playPromise && typeof playPromise.then === "function") {
-            playPromise.then(function () {
-                var j;
-                for (j = 0; j < retryEvents.length; j++) {
-                    document.removeEventListener(retryEvents[j], retryPlayback);
-                }
-            }).catch(function () {
-                updateMusicControls();
-            });
-        }
-    }
-
-    for (i = 0; i < retryEvents.length; i++) {
-        document.addEventListener(retryEvents[i], retryPlayback);
-    }
 }
 
 function startAdventure() {
@@ -1005,7 +855,6 @@ function startAdventure() {
     takenTransitions = [];
     characterConversationState = null;
     guessGameState = null;
-    hasReachedWarCouncil = false;
     currentScene = 1;
     updatePlayerStatsCard();
     showScene();
@@ -1931,9 +1780,6 @@ function showScene() {
              "</div>";
     }
 
-    updateWarCouncilMusicProgress(currentScene);
-
-    syncBackgroundMusic();
     addSceneToReceipt();
     renderTimeline(timelineModalOpen);
     setUndoButton();
@@ -2332,34 +2178,13 @@ function makeDecision(decision){
         takenTransitions.push(previousScene + "->" + currentScene);
     }
 
-    updateWarCouncilMusicProgress(currentScene);
     showScene();
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-    var volumeControl = document.getElementById("volumeControl");
-    var musicToggleButton = document.getElementById("musicToggleButton");
-    var audio = document.getElementById("backgroundMusic");
     renderTimeline(timelineModalOpen);
     updatePlayerStatsCard();
     updateInventoryCard();
-
-    syncBackgroundMusic();
-    bindMusicAutoplayRetry();
-    updateMusicControls();
-
-    if (musicToggleButton) {
-        musicToggleButton.addEventListener("click", toggleMusicPlayback);
-    }
-
-    if (volumeControl) {
-        volumeControl.addEventListener("input", updateMusicVolume);
-    }
-
-    if (audio) {
-        audio.addEventListener("play", updateMusicControls);
-        audio.addEventListener("pause", updateMusicControls);
-    }
 
     var startButton = document.getElementById("startBtn");
     var playerNameInput = document.getElementById("playerName");

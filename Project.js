@@ -1747,6 +1747,11 @@ function showScene() {
             ((characterConversationState && characterConversationState.fightOffered) ? "<button onclick='makeChoice(87)'>Accept Sparring Fight</button><button onclick='makeChoice(88)'>Decline Fight</button>" : "") +
             "<button onclick='makeChoice(47)'>Back to Training Hub</button>" +
             "</div>";
+    } else if (currentScene === 55){
+        storyCard.innerHTML =
+            "<h2>Part 2: The Rescue</h2>" +
+            "<p>Hanuman plans to cross the ocean to Lanka.</P>" +
+             "</div>";
     }
 
     if (currentScene === 54) {

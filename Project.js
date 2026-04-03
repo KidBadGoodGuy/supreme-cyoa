@@ -2095,7 +2095,7 @@ function makeDecision(decision){
     } else if (decision === 2){
         currentScene = 54; // begin the rescue 1
     } else if (decision === 3){
-        currentScene = 55; // begin the rescue 2
+        currentScene = 54; // lead the next story mission
     }
     showScene();
 }

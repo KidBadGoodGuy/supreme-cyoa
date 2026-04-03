@@ -970,6 +970,13 @@ function startAdventure() {
     currentScene = 1;
     updatePlayerStatsCard();
     showScene();
+
+    window.requestAnimationFrame(function () {
+        var storyCard = document.getElementById("storyCard");
+        if (storyCard) {
+            storyCard.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+    });
 }
 
 function isTerminalScene(sceneId) {

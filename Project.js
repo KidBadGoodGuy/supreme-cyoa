@@ -815,6 +815,12 @@ function syncBackgroundMusic() {
     }
 }
 
+function updateWarCouncilMusicProgress(sceneId) {
+    if (sceneId === 54) {
+        hasReachedWarCouncil = true;
+    }
+}
+
 function startAdventure() {
     playerName = document.getElementById("playerName").value.trim();
 
@@ -1754,9 +1760,7 @@ function showScene() {
              "</div>";
     }
 
-    if (currentScene === 54) {
-        hasReachedWarCouncil = true;
-    }
+    updateWarCouncilMusicProgress(currentScene);
 
     syncBackgroundMusic();
     addSceneToReceipt();
@@ -2150,6 +2154,7 @@ function makeDecision(decision){
     } else if (decision === 3){
         currentScene = 54; // lead the next story mission
     }
+    updateWarCouncilMusicProgress(currentScene);
     showScene();
 }
 

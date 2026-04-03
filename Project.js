@@ -858,13 +858,7 @@ function startAdventure() {
     currentScene = 1;
     updatePlayerStatsCard();
     showScene();
-
-    window.requestAnimationFrame(function () {
-        var storyCard = document.getElementById("storyCard");
-        if (storyCard) {
-            storyCard.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-    });
+    focusStoryCard();
 }
 
 function isTerminalScene(sceneId) {
@@ -906,6 +900,18 @@ function makeWrappedTextLines(text, maxCharsPerLine) {
     }
 
     return lines;
+}
+
+function focusStoryCard() {
+    var storyCard = document.getElementById("storyCard");
+
+    if (!storyCard) {
+        return;
+    }
+
+    window.requestAnimationFrame(function () {
+        storyCard.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
 }
 
 
@@ -2161,6 +2167,7 @@ function makeChoice(choice) {
     }
 
     showScene();
+    focusStoryCard();
 }
 
 function makeDecision(decision){
@@ -2179,6 +2186,7 @@ function makeDecision(decision){
     }
 
     showScene();
+    focusStoryCard();
 }
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -2212,6 +2220,12 @@ document.addEventListener("DOMContentLoaded", function () {
             closeTimelineModal();
             closePlayerStatsModal();
             closeInventoryModal();
+        }
+    });
+
+    window.addEventListener("resize", function () {
+        if (currentScene > 0) {
+            focusStoryCard();
         }
     });
 });

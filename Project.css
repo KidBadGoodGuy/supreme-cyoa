@@ -275,6 +275,8 @@ p {
 #storyCard {
   padding: 38px clamp(20px, 4vw, 40px);
   min-height: 180px;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
   text-align: center;
 }
 

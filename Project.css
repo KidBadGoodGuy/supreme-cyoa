@@ -115,7 +115,7 @@ body::after {
   display: inline-flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 2px;
+  gap: 8px;
   padding: 10px 14px;
   border-radius: 14px;
   border: 1px solid rgba(255, 223, 162, 0.42);
@@ -142,27 +142,26 @@ body::after {
   text-shadow: 0 0 12px rgba(255, 204, 112, 0.28);
 }
 
-.soundtrack-mode-label {
-  margin-top: 6px;
-  font-size: 0.64rem;
+#soundtrackControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#soundtrackControls label {
+  font-size: 0.68rem;
   text-transform: uppercase;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.16em;
   color: rgba(255, 235, 194, 0.72);
 }
 
-#autoplayModeSelect {
-  width: 100%;
-  font-size: 0.78rem;
-  padding: 6px 8px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 221, 164, 0.38);
-  background: rgba(33, 18, 41, 0.78);
-  color: #ffecc7;
+#musicToggleButton {
+  padding: 6px 10px;
+  font-size: 0.76rem;
 }
 
-#autoplayModeSelect:focus {
-  outline: 2px solid rgba(255, 214, 133, 0.68);
-  outline-offset: 2px;
+#volumeControl {
+  width: 110px;
 }
 
 #undoButton {

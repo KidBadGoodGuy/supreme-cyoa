@@ -15,9 +15,18 @@
 <body>
   <div id="soundtrackBadge">
     <label for="backgroundMusic" class="soundtrack-label">Background Music</label>
-    <audio id="backgroundMusic" controls preload="metadata" controlslist="nodownload noplaybackrate" disablepictureinpicture disableremoteplayback>
+    <audio id="backgroundMusic" controls autoplay muted preload="metadata" controlslist="nodownload noplaybackrate" disablepictureinpicture disableremoteplayback>
       <source src="Sacred Path Of Rama.mp3" type="audio/mpeg">
     </audio>
+    <label for="musicVolume" class="soundtrack-label">Volume</label>
+    <select id="musicVolume" aria-label="Select background music volume">
+      <option value="0">Muted (0%)</option>
+      <option value="0.2">Low (20%)</option>
+      <option value="0.4" selected>Medium (40%)</option>
+      <option value="0.6">High (60%)</option>
+      <option value="0.8">Very High (80%)</option>
+      <option value="1">Max (100%)</option>
+    </select>
   </div>
   <button id="undoButton" onclick="undoChoice()" type="button" disabled>Undo</button>
   <button id="timelineButton" onclick="openTimelineModal()" type="button">Timeline</button>

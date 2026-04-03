@@ -22,6 +22,29 @@ var trainingCharacters = ["Hanuman", "Sugriva", "Lakshmana", "Angada"];
 var characterConversationState = null;
 var guessGameState = null;
 var inventoryModalOpen = false;
+var defaultSoundtrackSrc = "Sacred Path Of Rama.mp3";
+var lankaSoundtrackSrc = "Lanka Burns At Dawn.mp3";
+
+function updateBackgroundMusicForScene() {
+    var backgroundMusic = document.getElementById("backgroundMusic");
+    var targetTrack = currentScene === 54 ? lankaSoundtrackSrc : defaultSoundtrackSrc;
+
+    if (!backgroundMusic) {
+        return;
+    }
+
+    if (!backgroundMusic.src || backgroundMusic.src.indexOf(targetTrack) === -1) {
+        backgroundMusic.src = targetTrack;
+        backgroundMusic.load();
+    }
+
+    if (currentScene === 54) {
+        backgroundMusic.currentTime = 0;
+        backgroundMusic.play().catch(function () {
+            return null;
+        });
+    }
+}
 
 var ramayanaTriviaFacts = [
     ["Who wrote the Ramayana, according to tradition?", "Valmiki", ["Vyasa", "Kalidasa", "Tulsidas"]],
@@ -1191,6 +1214,7 @@ function showScene() {
     var shouldAutoOpenTimeline;
     var choicesContainer;
 
+    updateBackgroundMusicForScene();
 
     if (currentScene === 1) {
         storyCard.innerHTML =
@@ -2188,6 +2212,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     var startButton = document.getElementById("startBtn");
     var playerNameInput = document.getElementById("playerName");
+    var backgroundMusic = document.getElementById("backgroundMusic");
+    var musicVolume = document.getElementById("musicVolume");
 
     if (startButton) {
         startButton.addEventListener("click", startAdventure);
@@ -2197,6 +2223,17 @@ document.addEventListener("DOMContentLoaded", function () {
         playerNameInput.addEventListener("keydown", function (event) {
             if (event.key === "Enter") {
                 startAdventure();
+            }
+        });
+    }
+
+    if (backgroundMusic && musicVolume) {
+        backgroundMusic.volume = parseFloat(musicVolume.value);
+        musicVolume.addEventListener("change", function () {
+            var selectedVolume = parseFloat(musicVolume.value);
+            if (!isNaN(selectedVolume)) {
+                backgroundMusic.volume = selectedVolume;
+                backgroundMusic.muted = selectedVolume === 0;
             }
         });
     }

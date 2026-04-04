@@ -655,7 +655,7 @@ function beginCharacterConversation(characterName) {
             "Lakshmana studies you: 'Your next decision should protect the weakest first.'"
         ],
         Angada: [
-            "Angada laughs: 'I am Vali's son, but I choose my own path every day.'",
+            "Angada laughs: 'You killed my father, but I can respect your spirit.'",
             "Angada points to the field: 'Skill is memory inside the body.'"
         ]
     };
@@ -1946,7 +1946,7 @@ function showScene() {
     } else if (currentScene === 56){
         storyCard.innerHTML =
             "<h2>Hanuman's Leap</h2>" +
-            "<p>You agree to let Hanuman make the leap across the ocean to Lanka. He takes a running start and soars into the sky, flying higher and farther than anyone has ever seen.</p>" +
+            "<p>Hanuman makes the leap across the ocean to Lanka. He takes a running start and soars into the sky, flying higher and farther than anyone has ever seen.</p>" +
             "<button onclick = makeDecision(6)>Continue</button>" +
              "</div>";
     } else if (currentScene === 57){
@@ -2348,12 +2348,22 @@ function makeDecision(decision){
 
     if (decision === 1){
             currentScene = 53;
-    } else if (decision === 2){
+    } else if (currentScene === 53 && decision === 2){
         currentScene = 54; // begin the rescue 1
-    } else if (decision === 3){
+    } else if (currentScene === 54 && decision === 3){
         currentScene = 55; // lead the next story mission
+    } else if (currentScene === 55){
+        if (decision === 4){
+            currentScene = 56;
+        } else if (decision === 5){
+            currentScene = 57;
+        }
+    } else if (currentScene === 57 && decision === 7){
+        currentScene = 56;
+    } else if (currentScene === 56){
+        else if (decision === 8){}
+        else if (decision === 9){}
     }
-
     if (previousScene !== currentScene) {
         takenTransitions.push(previousScene + "->" + currentScene);
     }

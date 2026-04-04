@@ -1917,7 +1917,7 @@ function showScene() {
         }
     } else if (currentScene === 54) {
         storyCard.innerHTML =
-            "<h2>Part 2: War Council</h2>" +
+            "<h2>War Council</h2>" +
             "<p>The rescue campaign begins. Scouts bring reports from coastlines, forests, and hidden roads toward Lanka.</p>" +
             "<p>You can continue with Hanuman's council activities or lead the next mission immediately.</p>" +
             "<div id='choices'>" +
@@ -1938,8 +1938,23 @@ function showScene() {
             "</div>";
     } else if (currentScene === 55){
         storyCard.innerHTML =
-            "<h2>Part 2: The Rescue</h2>" +
-            "<p>Hanuman plans to cross the ocean to Lanka.</P>" +
+            "<h2>The Journey Across The Ocean</h2>" +
+            "<p>The rescue council all strategize on how to save Sita. The bear king, Jambavan, suggests Hanuman uses his powers and fly to Lanka to save Sita. Do you agree?</p>" +
+            "<button onclick = makeDecision(4)>Agree</button>" +
+            "<button onclick = makeDecision(5)>Disagree</button>" +
+             "</div>";
+    } else if (currentScene === 56){
+        storyCard.innerHTML =
+            "<h2>Hanuman's Leap</h2>" +
+            "<p>You agree to let Hanuman make the leap across the ocean to Lanka. He takes a running start and soars into the sky, flying higher and farther than anyone has ever seen.</p>" +
+            "<button onclick = makeDecision(6)>Continue</button>" +
+             "</div>";
+    } else if (currentScene === 57){
+        storyCard.innerHTML =
+            "<h2>You disagree./h2>" +
+            "<p>You claim it is too dangerous of a journey. But Hanuman disagrees.</p>" +
+            "<P><q> " + playerName +", you must trust me. If we don't have trust in each other, then this alliance will not work out.</q></p>"
+            "<button onclick = makeDecision(7)>Continue</button>" +
              "</div>";
     }
 

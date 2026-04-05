@@ -620,10 +620,6 @@ function clampOdds(value) {
     return value;
 }
 
-function getEffectiveStats() {
-    return {};
-}
-
 function getChallengeOdds(challengeType) {
     if (challengeType === "fight") {
         return 70;
@@ -637,28 +633,8 @@ function getChallengeOdds(challengeType) {
     return 40;
 }
 
-function getAllOddsSummary() {
-    return {
-        fight: getChallengeOdds("fight"),
-        journeyTrivia: getChallengeOdds("journeyTrivia"),
-        guessing: getChallengeOdds("guessing")
-    };
-}
-
-function getRewardItemByName(itemName) {
-    return null;
-}
-
-function readRelicKnowledge(itemName) {
-    return;
-}
-
 function getArtifactLoreByName(artifactName) {
     return artifactLoreCatalog[artifactName] || "A mysterious Ramayana artifact. Its full lore is still unknown.";
-}
-
-function readArtifactLore(artifactName) {
-    return getArtifactLoreByName(artifactName);
 }
 
 var storytellingQuestions = [
@@ -837,28 +813,6 @@ function resolveCharacterFight() {
     }
 }
 
-function sampleChoicesExcluding(correctValue) {
-    var pool = receiptChoices.filter(function (choiceText) {
-        return choiceText !== correctValue;
-    });
-    var options = [correctValue];
-    var randomIndex;
-
-    while (options.length < 3 && pool.length > 0) {
-        randomIndex = Math.floor(Math.random() * pool.length);
-        options.push(pool[randomIndex]);
-        pool.splice(randomIndex, 1);
-    }
-
-    while (options.length < 3) {
-        options.push("Unknown");
-    }
-
-    return options.sort(function () {
-        return Math.random() - 0.5;
-    });
-}
-
 function buildJourneyTriviaState() {
     journeyTriviaState = {
         currentQuestion: 0,
@@ -873,10 +827,6 @@ function buildJourneyTriviaState() {
 }
 
 function updatePlayerStatsCard() {
-    return;
-}
-
-function openPlayerStatsModal() {
     return;
 }
 
@@ -942,14 +892,6 @@ function handleInventoryModalBackdrop(event) {
     if (event.target && event.target.id === "inventoryModal") {
         closeInventoryModal();
     }
-}
-
-function handlePlayerStatsModalBackdrop(event) {
-    return;
-}
-
-function awardPowerup(statName, amount) {
-    return;
 }
 
 function addArtifact(artifactName) {
@@ -1147,17 +1089,6 @@ function startAdventure() {
     updatePlayerStatsCard();
     showScene();
     focusStoryCard();
-}
-
-function isTerminalScene(sceneId) {
-    return sceneId === 17 || sceneId === 18 || sceneId === 21 || sceneId === 38 ||
-        sceneId === 39 || sceneId === 45 || sceneId === 46 || sceneId === 52 ||
-        sceneId === 67;
-}
-
-function isMiniGameScene(sceneId) {
-    return sceneId === 47 || sceneId === 70 || sceneId === 71 || sceneId === 72 ||
-        sceneId === 73 || sceneId === 77 || sceneId === 93 || sceneId === 101 || sceneId === 102;
 }
 
 function escapeHtml(text) {
@@ -1562,8 +1493,6 @@ function handleTimelineModalBackdrop(event) {
 
 function showScene() {
     var storyCard = document.getElementById("storyCard");
-    var shouldAutoOpenTimeline;
-    var choicesContainer;
 
     updateBackgroundMusicForScene();
 

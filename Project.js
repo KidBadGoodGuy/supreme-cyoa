@@ -22,6 +22,7 @@ var trainingCharacters = ["Hanuman", "Sugriva", "Lakshmana", "Angada"];
 var characterConversationState = null;
 var guessGameState = null;
 var storytellingGameState = null;
+var explorationState = null;
 var triviaSessionCount = 0;
 var triviaSessionQuestionLimit = 10;
 var inventoryModalOpen = false;
@@ -33,7 +34,8 @@ var applyingSceneRoute = false;
 var routableSceneIds = [
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
     27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
-    52, 53, 54, 55, 65, 66, 67, 68, 69, 70, 71, 72, 73, 77, 93, 95, 96, 97, 98, 99, 100
+    52, 53, 54, 55, 56, 57, 58, 59, 60, 65, 66, 67, 68, 69, 70, 71, 72, 73, 77, 93, 95, 96, 97, 98,
+    99, 100, 101, 102
 ];
 
 function parseRouteFromHash() {
@@ -367,6 +369,11 @@ var timelineNodeTitles = {
     53: "Part 2 Intro",
     54: "Part 2 Start",
     55: "Part 2: The Rescue",
+    56: "Hanuman's Leap",
+    57: "Risk Debate",
+    58: "Surasa's Test",
+    59: "Sita in Ashoka Vatika",
+    60: "Traveler Debrief",
     65: "Search for Sita",
     66: "Bharata's Plea",
     67: "Ayodhya Return Ending",
@@ -383,7 +390,9 @@ var timelineNodeTitles = {
     97: "Kishkindha Lore Artifact",
     98: "Negotiation Duel",
     99: "Storytelling Game",
-    100: "Storytelling Result"
+    100: "Storytelling Result",
+    101: "Ocean Exploration",
+    102: "Expedition Discovery"
 };
 
 artifactLoreCatalog = {
@@ -395,8 +404,37 @@ artifactLoreCatalog = {
     "Kishkindha Cave Mural Tablet": "A carved tablet showing old vanara heroes. Its scenes teach alliance, strategy, and patience before war.",
     "Sugriva Alliance Oath": "A signed oath of friendship and mutual duty between Rama and Sugriva, sealed under witness of fire and honor.",
     "Camp Story Scroll": "A strategy scroll from Hanuman's camp, recording how stories carry morale across long campaigns.",
-    "Ocean Wind Compass": "A brass compass tuned by vanara navigators to keep rescue teams coordinated near Lanka's coast."
+    "Ocean Wind Compass": "A brass compass tuned by vanara navigators to keep rescue teams coordinated near Lanka's coast.",
+    "Surasa's Trial Pearl": "A moon-white pearl said to form when Surasa tests a hero's humility. Maritime retellings treat it as proof that wisdom can pass any divine gate.",
+    "Sita's Ashoka Leaf Token": "A pressed leaf from Ashoka Vatika marked with Sita's blessing. Commentarial traditions read it as a living witness to endurance, memory, and hope.",
+    "Hanuman's Debrief Seal": "A wax seal used on Hanuman's first return report after Lanka reconnaissance. Camp chronicles frame it as the start of the decisive rescue phase.",
+    "Setubandha Survey Tablet": "An etched planning tablet naming Nala, Nila, and tidal rhythms for bridge work. It mirrors engineering motifs found in later Ramayana traditions.",
+    "Jambavan's Tide Chart": "A bark chart mapping moon phases, currents, and safe launch windows. Vanara lore credits Jambavan for combining memory, astronomy, and command timing.",
+    "Trijata's Dream Chronicle": "A palm-leaf record of Trijata's prophetic dream foretelling Rama's victory. Devotional tellings preserve it as Lanka's internal testimony of dharma.",
+    "Chudamani Transmission Case": "A lacquered case said to have carried Sita's chudamani across the sea. Performative retellings use it to symbolize proof, trust, and mission success.",
+    "Rama Setu Coral Core": "A coral-lined stone core from Setu planning grounds. Later scholastic narratives cite it while describing sacred geography and cooperative labor."
 };
+
+var explorationRegions = [
+    {
+        key: "shoals",
+        title: "Shoals of Setubandha",
+        summary: "Reef ridges and tidal flats where the bridge campaign is planned.",
+        artifacts: ["Setubandha Survey Tablet", "Jambavan's Tide Chart", "Rama Setu Coral Core"]
+    },
+    {
+        key: "lanka",
+        title: "Skies Above Lanka",
+        summary: "Stealth corridors used during reconnaissance over Lanka's walls.",
+        artifacts: ["Trijata's Dream Chronicle", "Chudamani Transmission Case", "Surasa's Trial Pearl"]
+    },
+    {
+        key: "ashoka",
+        title: "Ashoka Garden Paths",
+        summary: "Hidden pathways surrounding Sita's guarded grove.",
+        artifacts: ["Sita's Ashoka Leaf Token", "Hanuman's Debrief Seal", "Chudamani Transmission Case"]
+    }
+];
 
 var timelineLevels = [
     [1, 2],
@@ -428,8 +466,9 @@ var timelineLevels = [
     [43],
     [44, 45, 46],
     [47, 69, 95, 96, 97],
-    [70, 93, 77, 53],
-    [71, 72, 73, 54, 55, 98, 99, 100]
+    [70, 93, 77, 53, 101],
+    [71, 72, 73, 54, 55, 98, 99, 100, 102],
+    [56, 57, 58, 59, 60]
 ];
 
 var timelineEdges = [
@@ -517,9 +556,13 @@ var timelineEdges = [
     { from: 47, to: 70, label: "Journey trivia" },
     { from: 47, to: 93, label: "Guessing game" },
     { from: 47, to: 99, label: "Storytelling game" },
+    { from: 47, to: 101, label: "Ocean exploration" },
     { from: 99, to: 100, label: "Submit story answer" },
     { from: 100, to: 99, label: "Next story question" },
     { from: 100, to: 47, label: "Back to hub" },
+    { from: 101, to: 102, label: "Explore region" },
+    { from: 102, to: 101, label: "Explore again" },
+    { from: 102, to: 47, label: "Back to hub" },
     { from: 47, to: 77, label: "Talk to ally" },
     { from: 77, to: 47, label: "Back to hub" },
     { from: 69, to: 67, label: "Return and rule" },
@@ -537,6 +580,14 @@ var timelineEdges = [
     { from: 53, to: 54, label: "Begin rescue" },
     { from: 54, to: 47, label: "Return to camp" },
     { from: 54, to: 55, label: "Lead the next story mission" },
+    { from: 55, to: 56, label: "Commit leap plan" },
+    { from: 55, to: 57, label: "Question the risk" },
+    { from: 57, to: 56, label: "Accept and proceed" },
+    { from: 56, to: 58, label: "Enter Surasa's test" },
+    { from: 58, to: 59, label: "Continue to Lanka" },
+    { from: 59, to: 60, label: "Carry Sita's message" },
+    { from: 60, to: 54, label: "Report to council" },
+    { from: 60, to: 47, label: "Report to traveler" },
     { from: 69, to: 47, label: "Remain with the rescue campaign" },
     { from: 72, to: 47, label: "Session complete" },
     { from: 73, to: 47, label: "Session complete" },
@@ -700,6 +751,33 @@ function runGuessingGame(guess) {
 
 function randomFrom(list) {
     return list[Math.floor(Math.random() * list.length)];
+}
+
+function startExplorationRun(regionKey) {
+    var i;
+    var region;
+    var discoveredArtifact;
+
+    for (i = 0; i < explorationRegions.length; i++) {
+        if (explorationRegions[i].key === regionKey) {
+            region = explorationRegions[i];
+            break;
+        }
+    }
+
+    if (!region) {
+        region = explorationRegions[0];
+    }
+
+    discoveredArtifact = randomFrom(region.artifacts);
+    addArtifact(discoveredArtifact);
+
+    explorationState = {
+        regionTitle: region.title,
+        regionSummary: region.summary,
+        artifactName: discoveredArtifact,
+        lore: getArtifactLoreByName(discoveredArtifact)
+    };
 }
 
 function beginCharacterConversation(characterName) {
@@ -1031,6 +1109,7 @@ function restart() {
     characterConversationState = null;
     guessGameState = null;
     storytellingGameState = null;
+    explorationState = null;
     triviaSessionCount = 0;
     receiptScenes = [];
     receiptChoices = [];
@@ -1061,6 +1140,7 @@ function startAdventure() {
     characterConversationState = null;
     guessGameState = null;
     storytellingGameState = null;
+    explorationState = null;
     triviaSessionCount = 0;
     currentScene = 1;
     updatePlayerStatsCard();
@@ -1076,7 +1156,7 @@ function isTerminalScene(sceneId) {
 
 function isMiniGameScene(sceneId) {
     return sceneId === 47 || sceneId === 70 || sceneId === 71 || sceneId === 72 ||
-        sceneId === 73 || sceneId === 77 || sceneId === 93;
+        sceneId === 73 || sceneId === 77 || sceneId === 93 || sceneId === 101 || sceneId === 102;
 }
 
 function escapeHtml(text) {
@@ -1909,6 +1989,7 @@ function showScene() {
             "<button onclick='makeChoice(70)'>Journey Trivia</button>" +
             "<button onclick='makeChoice(93)'>Guessing Game</button>" +
             "<button onclick='makeChoice(99)'>Storytelling Game</button>" +
+            "<button onclick='makeChoice(101)'>Ocean Exploration Minigame</button>" +
             "<button onclick='makeChoice(80)'>Talk to Hanuman</button>" +
             "<button onclick='makeChoice(81)'>Talk to Sugriva</button>" +
             "<button onclick='makeChoice(82)'>Talk to Lakshmana</button>" +
@@ -2026,10 +2107,9 @@ function showScene() {
     } else if (currentScene === 56) {
         storyCard.innerHTML =
             "<h2>Hanuman's Leap</h2>" +
-            "<p>Hanuman launches across the ocean, carrying your hopes and strategy to Lanka's gates.</p>" +
+            "<p>Hanuman launches across the ocean, carrying your hopes and strategy to Lanka's gates. Midway, the sea darkens as a divine envoy rises from the waves.</p>" +
             "<div id='choices'>" +
-            "<button onclick='makeChoice(54)'>Return to War Council</button>" +
-            "<button onclick='makeChoice(47)'>Back to Camp Hub</button>" +
+            "<button onclick='makeChoice(58)'>Face the ocean envoy</button>" +
             "</div>";
     } else if (currentScene === 57) {
         storyCard.innerHTML =
@@ -2038,6 +2118,34 @@ function showScene() {
             "<p><q>" + playerName + ", strategy without faith breaks alliances. Let us move as one.</q></p>" +
             "<div id='choices'>" +
             "<button onclick='makeDecision(7)'>Accept and proceed</button>" +
+            "</div>";
+    } else if (currentScene === 58) {
+        addArtifact("Surasa's Trial Pearl");
+        storyCard.innerHTML =
+            "<h2>Surasa in the Ocean</h2>" +
+            "<p>Surasa rises from the ocean, declaring that the gods sent her to test Hanuman's resolve before Lanka is reached.</p>" +
+            "<p>Hanuman bows, expands, then shrinks in wisdom to pass through her challenge without violence. Surasa blesses the mission and grants passage.</p>" +
+            "<div id='choices'>" +
+            "<button onclick='makeChoice(59)'>Continue toward Lanka</button>" +
+            "</div>";
+    } else if (currentScene === 59) {
+        addArtifact("Sita's Ashoka Leaf Token");
+        storyCard.innerHTML =
+            "<h2>Meeting Sita in the Garden</h2>" +
+            "<p>In Ashoka Vatika, Hanuman finds Sita under guarded trees. He offers Rama's sign and receives her message of steadfast faith.</p>" +
+            "<p>Sita gives a sacred token so the rescue camp will know this meeting is true.</p>" +
+            "<div id='choices'>" +
+            "<button onclick='makeChoice(60)'>Fly back with Sita's message</button>" +
+            "</div>";
+    } else if (currentScene === 60) {
+        addArtifact("Hanuman's Debrief Seal");
+        storyCard.innerHTML =
+            "<h2>Return Flight and Debrief</h2>" +
+            "<p>Hanuman returns across the sea and lands before you, brave traveler. He reports Surasa's divine test, Sita's condition, and Lanka's defenses.</p>" +
+            "<p>The camp now has verified intelligence and renewed purpose.</p>" +
+            "<div id='choices'>" +
+            "<button onclick='makeChoice(54)'>Report to War Council</button>" +
+            "<button onclick='makeChoice(47)'>Return to Camp Hub</button>" +
             "</div>";
     } else if (currentScene === 98) {
         storyCard.innerHTML =
@@ -2069,6 +2177,30 @@ function showScene() {
             "<div id='choices'>" +
             "<button onclick='makeChoice(191)'>Next Story Prompt</button>" +
             "<button onclick='makeChoice(47)'>Back to Hanuman</button>" +
+            "</div>";
+    } else if (currentScene === 101) {
+        storyCard.innerHTML =
+            "<h2>Minigame: Ocean Exploration Archives</h2>" +
+            "<p>Explore Ramayana hotspots to recover lore-rich artifacts. Each expedition grants one random relic tied to epic knowledge traditions.</p>" +
+            "<div id='choices'>" +
+            "<button onclick='makeChoice(210)'>Explore Shoals of Setubandha</button>" +
+            "<button onclick='makeChoice(211)'>Explore Skies Above Lanka</button>" +
+            "<button onclick='makeChoice(212)'>Explore Ashoka Garden Paths</button>" +
+            "<button onclick='makeChoice(47)'>Back to Hanuman</button>" +
+            "</div>";
+    } else if (currentScene === 102) {
+        if (!explorationState) {
+            startExplorationRun("shoals");
+        }
+        storyCard.innerHTML =
+            "<h2>Exploration Discovery</h2>" +
+            "<p><strong>Region:</strong> " + escapeHtml(explorationState.regionTitle) + "</p>" +
+            "<p>" + escapeHtml(explorationState.regionSummary) + "</p>" +
+            "<p><strong>Artifact recovered:</strong> " + escapeHtml(explorationState.artifactName) + "</p>" +
+            "<p>" + escapeHtml(explorationState.lore) + "</p>" +
+            "<div id='choices'>" +
+            "<button onclick='makeChoice(101)'>Run Another Expedition</button>" +
+            "<button onclick='makeChoice(47)'>Return to Camp Hub</button>" +
             "</div>";
     }
 
@@ -2359,6 +2491,8 @@ function makeChoice(choice) {
             currentScene = 93;
         } else if (choice === 99) {
             currentScene = 99;
+        } else if (choice === 101) {
+            currentScene = 101;
         } else if (choice === 80 || choice === 81 || choice === 82 || choice === 83) {
             beginCharacterConversation(trainingCharacters[choice - 80]);
             currentScene = 77;
@@ -2435,6 +2569,25 @@ function makeChoice(choice) {
         } else if (choice === 47) {
             currentScene = 47;
         }
+    } else if (currentScene === 101) {
+        if (choice === 210) {
+            startExplorationRun("shoals");
+            currentScene = 102;
+        } else if (choice === 211) {
+            startExplorationRun("lanka");
+            currentScene = 102;
+        } else if (choice === 212) {
+            startExplorationRun("ashoka");
+            currentScene = 102;
+        } else if (choice === 47) {
+            currentScene = 47;
+        }
+    } else if (currentScene === 102) {
+        if (choice === 101) {
+            currentScene = 101;
+        } else if (choice === 47) {
+            currentScene = 47;
+        }
     } else if (currentScene === 71) {
         if (choice === 72) {
             journeyTriviaState.score += 1;
@@ -2478,7 +2631,25 @@ function makeChoice(choice) {
     } else if (currentScene === 54) {
         if (choice === 47) {
             currentScene = 47;
-        } 
+        }
+    } else if (currentScene === 56) {
+        if (choice === 58) {
+            currentScene = 58;
+        }
+    } else if (currentScene === 58) {
+        if (choice === 59) {
+            currentScene = 59;
+        }
+    } else if (currentScene === 59) {
+        if (choice === 60) {
+            currentScene = 60;
+        }
+    } else if (currentScene === 60) {
+        if (choice === 54) {
+            currentScene = 54;
+        } else if (choice === 47) {
+            currentScene = 47;
+        }
     }
     if (previousScene !== currentScene) {
         takenTransitions.push(previousScene + "->" + currentScene);

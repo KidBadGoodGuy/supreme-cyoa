@@ -126,9 +126,9 @@ body::after {
   z-index: 22;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 12px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   padding: 8px 10px 8px 112px;
   border-radius: 18px;
   border: 1px solid rgba(255, 223, 162, 0.42);
@@ -139,6 +139,42 @@ body::after {
   box-shadow:
     inset 0 0 0 1px rgba(255, 241, 214, 0.1),
     0 12px 28px rgba(14, 6, 20, 0.45);
+}
+
+#navbarToggle {
+  width: auto;
+  min-width: 46px;
+  min-height: 42px;
+  padding: 6px 11px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 223, 162, 0.45);
+  background: rgba(35, 18, 34, 0.82);
+  color: #fff3d4;
+  font-size: 1.28rem;
+  line-height: 1;
+  box-shadow: 0 6px 14px rgba(14, 6, 20, 0.38);
+}
+
+#navbarToggle:hover,
+#navbarToggle:focus-visible {
+  transform: translateY(-1px);
+  background: rgba(243, 201, 120, 0.2);
+  border-color: rgba(255, 230, 173, 0.7);
+}
+
+#topNavbar #navLinks,
+#topNavbar #soundtrackBadge {
+  display: none;
+}
+
+#topNavbar.nav-open {
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+#topNavbar.nav-open #navLinks,
+#topNavbar.nav-open #soundtrackBadge {
+  display: flex;
 }
 
 #updateBadge {
@@ -1039,10 +1075,25 @@ blockquote,
   #topNavbar {
     top: max(6px, env(safe-area-inset-top));
     width: calc(100vw - 10px);
+    justify-content: flex-end;
+    border-radius: 14px;
+    padding: 7px;
+    gap: 8px;
     justify-content: center;
     border-radius: 12px;
     padding: 6px;
     gap: 6px;
+  }
+
+  #navbarToggle {
+    min-width: 42px;
+    min-height: 38px;
+    padding: 5px 9px;
+    font-size: 1.15rem;
+  }
+
+  #topNavbar.nav-open {
+    justify-content: center;
   }
 
   #navLinks,

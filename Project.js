@@ -152,6 +152,20 @@ var epicSagaPhases = [
     { start: 81, label: "Final Departure" },
     { start: 87, label: "Later Traditions" }
 ];
+var lankaWarStartSceneId = epicSagaStartId + 14;
+var epicSagaExpandedNarratives = {
+    37: "<p>Conches thunder across Lanka as Ravana finally rides out in full war armor. His banner cuts through smoke, and every regiment on both sides falls into deadly silence.</p><p>Vibhishana points at weak points in Ravana's formation while Sugriva and Angada spread the vanara ranks to avoid being trapped by chariot lines.</p>",
+    38: "<p>Ravana's opening strike tears through the frontline. Lakshmana intercepts the next volley and drives forward, forcing Ravana's charioteer to wheel hard along the shattered battlements.</p><p>The clash turns personal—oaths, grief, and duty all collide in a single storm of arrows.</p>",
+    39: "<p>A devastating astral weapon crashes into Lakshmana, and he collapses. For a moment the war seems to stop breathing.</p><p>Rama kneels beside him, and the entire command line shifts from attack to survival. Orders race outward: defend, hold, and buy time.</p>",
+    40: "<p>Sushena identifies the only cure: Sanjeevani before night ends. Hanuman launches north with impossible speed while the army forms a living shield around Lakshmana.</p><p>Ravana's forces sense panic and press hard at every gate.</p>",
+    41: "<p>High in the Himalayas, Hanuman cannot identify the herb quickly enough. Refusing delay, he uproots the mountain itself and turns back toward Lanka under moonlight.</p><p>The battlefield watches the sky as if waiting for dawn to move.</p>",
+    42: "<p>Hanuman returns with the mountain. The healers prepare the herb, and Lakshmana rises again to a roar that shakes the coast.</p><p>Morale flips instantly: despair becomes momentum.</p>",
+    43: "<p>Now Rama advances. Celestial weapons meet in streaks of fire and wind, ripping trenches through the war plain.</p><p>Each time Ravana seems finished, his strength renews and the duel resets in a harsher form.</p>",
+    44: "<p>Vibhishana shouts Ravana's hidden vulnerability across the noise. Rama steadies, invokes Brahmastra, and releases the final arrow.</p><p>Ravana falls, and the war-line stills as if the island itself has exhaled.</p>",
+    53: "<p>Sita is brought from Ashoka grove under guard and honor. The camp grows quiet as Rama speaks in the language of kingship before witnesses.</p><p>The moment is not private—it's a public reckoning of duty, pain, and reputation after war.</p>",
+    54: "<p>The fire-trial is prepared as devas, vanaras, and rakshasas all watch. Sita steps forward with unshaken composure and invokes truth as her witness.</p><p>Flame answers without harm, and the gathered armies bow to what they have seen.</p>",
+    55: "<p>Agni restores Sita unharmed and radiant. Rama accepts her before all, ending the last doubt among the ranks.</p><p>The war chapter closes; the return chapter begins.</p>"
+};
 var routableSceneIds = [
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
     27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
@@ -587,6 +601,8 @@ function renderEpicSagaScene(storyCard) {
     var beatText;
     var phaseLabel;
     var isPhaseStart;
+    var expandedNarrative;
+    var extraChoices = "";
 
     if (!isEpicSagaScene(currentScene)) {
         return false;
@@ -595,16 +611,27 @@ function renderEpicSagaScene(storyCard) {
     beatText = epicSagaBeats[beatIndex];
     phaseLabel = getEpicSagaPhaseLabel(beatIndex);
     isPhaseStart = isEpicSagaPhaseStart(beatIndex);
+    expandedNarrative = epicSagaExpandedNarratives[beatIndex] || "";
+
+    if (beatIndex >= 37 && beatIndex <= 55) {
+        extraChoices += "<button onclick='makeChoice(62)'>Call a war-camp reflection</button>";
+    }
+
+    if (beatIndex >= 45 && beatIndex <= 58) {
+        extraChoices += "<button onclick='makeChoice(54)'>Regroup at the war council</button>";
+    }
 
     storyCard.innerHTML =
         "<h1>Part 3: Epic Chronicle</h1>" +
-        (isPhaseStart ? "<h2>" + phaseLabel + "</h2>" : "<h2>" + phaseLabel + " — Scene " + (beatIndex + 1) + "</h2>") +
+        "<h2>" + phaseLabel + "</h2>" +
         "<p>" + beatText + "</p>" +
-        "<p><em>Chronicle order:</em> Scene " + (beatIndex + 1) + " of " + epicSagaBeats.length + " in the canonical sequence.</p>" +
+        expandedNarrative +
         "<div id='choices'>" +
         (isEpicSagaScene(nextSceneId)
             ? "<button onclick='makeChoice(" + nextSceneId + ")'>Continue</button>"
             : "<button onclick='restart()'>Restart the Journey</button>") +
+        extraChoices +
+        "<button onclick='makeChoice(47)'>Return to Camp Hub</button>" +
         "</div>";
 
     return true;
@@ -1231,6 +1258,10 @@ function addArtifact(artifactName) {
     }
 
     updateInventoryCard();
+}
+
+function hasArtifact(artifactName) {
+    return inventoryArtifacts.indexOf(artifactName) !== -1;
 }
 
 function clearStoryCard() {
@@ -2394,13 +2425,17 @@ function showScene() {
             disableUndo.title = "No longer works in this Part.";
         }
     } else if (currentScene === 54) {
+        var sitaConfirmed = hasArtifact("Sita's Ashoka Leaf Token");
         storyCard.innerHTML =
             "<h2>War Council</h2>" +
-            "<p>The rescue campaign begins. Scouts bring reports from coastlines, forests, and hidden roads toward Lanka.</p>" +
-            "<p>You can continue with Hanuman's council activities or lead the next mission immediately.</p>" +
+            (sitaConfirmed
+                ? "<p>Hanuman's report and Sita's token are now confirmed. The council shifts from search operations to full invasion planning against Lanka's defenses.</p><p>You can return to camp support activities or immediately open the Lanka battle campaign.</p>"
+                : "<p>The rescue campaign begins. Scouts bring reports from coastlines, forests, and hidden roads toward Lanka.</p><p>You can continue with Hanuman's council activities or lead the next mission immediately.</p>") +
             "<div id='choices'>" +
             "<button onclick='makeChoice(47)'>Return to Hanuman's camp</button>" +
-            "<button onclick='makeDecision(3)'>Lead the next story mission</button>" +
+            (sitaConfirmed
+                ? "<button onclick='makeChoice(" + lankaWarStartSceneId + ")'>Launch the Lanka war campaign</button>"
+                : "<button onclick='makeDecision(3)'>Lead the next story mission</button>") +
             "</div>";
     } else if (currentScene === 77) {
         storyCard.innerHTML =
@@ -2461,9 +2496,9 @@ function showScene() {
         storyCard.innerHTML =
             "<h2>Return Flight and Debrief</h2>" +
             "<p>Hanuman returns across the sea and lands before you, brave traveler. He reports Surasa's divine test, Sita's condition, and Lanka's defenses.</p>" +
-            "<p>The camp now has verified intelligence and renewed purpose. Rama now launches the full campaign in fully ordered scenes from the ocean crossing to later traditions.</p>" +
+            "<p>The camp now has verified intelligence and renewed purpose. With Sita's message secured, the next chapter is the direct war march into Lanka.</p>" +
             "<div id='choices'>" +
-            "<button onclick='makeChoice(" + epicSagaStartId + ")'>Begin the ordered Lanka campaign</button>" +
+            "<button onclick='makeChoice(" + lankaWarStartSceneId + ")'>Begin the Lanka war campaign</button>" +
             "<button onclick='makeChoice(54)'>Report to War Council</button>" +
             "<button onclick='makeChoice(47)'>Return to Camp Hub</button>" +
             "</div>";
@@ -2982,6 +3017,8 @@ function makeChoice(choice) {
     } else if (currentScene === 54) {
         if (choice === 47) {
             currentScene = 47;
+        } else if (choice === lankaWarStartSceneId && hasArtifact("Sita's Ashoka Leaf Token")) {
+            currentScene = lankaWarStartSceneId;
         }
     } else if (currentScene === 56) {
         if (choice === 58) {
@@ -3000,11 +3037,17 @@ function makeChoice(choice) {
             currentScene = 54;
         } else if (choice === 47) {
             currentScene = 47;
+        } else if (choice === lankaWarStartSceneId) {
+            currentScene = lankaWarStartSceneId;
         } else if (choice === epicSagaStartId) {
             currentScene = epicSagaStartId;
         }
-    } else if (isEpicSagaScene(currentScene) && isEpicSagaScene(choice) && choice === currentScene + 1) {
-        currentScene = choice;
+    } else if (isEpicSagaScene(currentScene)) {
+        if (isEpicSagaScene(choice) && choice === currentScene + 1) {
+            currentScene = choice;
+        } else if (choice === 54 || choice === 47 || choice === 62) {
+            currentScene = choice;
+        }
     }
     if (previousScene !== currentScene) {
         takenTransitions.push(previousScene + "->" + currentScene);

@@ -31,6 +31,38 @@
         });
     }
 
+
+    function setupNavbarToggle() {
+        var navbarToggle = document.getElementById("navbarToggle");
+        var topNavbar = document.getElementById("topNavbar");
+
+        if (!navbarToggle || !topNavbar) {
+            return;
+        }
+
+        navbarToggle.addEventListener("click", function () {
+            var isOpen = topNavbar.classList.toggle("nav-open");
+            navbarToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+        });
+
+        document.addEventListener("click", function (event) {
+            if (!window.matchMedia("(max-width: 768px)").matches) {
+                return;
+            }
+
+            if (!topNavbar.classList.contains("nav-open")) {
+                return;
+            }
+
+            if (topNavbar.contains(event.target)) {
+                return;
+            }
+
+            topNavbar.classList.remove("nav-open");
+            navbarToggle.setAttribute("aria-expanded", "false");
+        });
+    }
+
     var peopleEntries = [
         {
             name: "Rama",
@@ -151,6 +183,7 @@
         var peopleCategory = document.getElementById("peopleCategory");
 
         renderPeople("all");
+        setupNavbarToggle();
 
         peopleCategory.addEventListener("change", function (event) {
             renderPeople(event.target.value);

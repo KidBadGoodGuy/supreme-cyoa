@@ -22,7 +22,7 @@ The story is rendered dynamically by JavaScript and branches by scene ID transit
   - Timeline button
   - Inventory button with item count
   - Background music controls and volume dropdown
-- Fixed top-left update badge (`Update 6` currently)
+- Fixed top-left update badge (`Update 12` currently)
 - Intro card + start button
 - Story card with Undo button
 - Timeline modal with zoom/reveal
@@ -57,4 +57,3 @@ The game tracks:
 - Minigame state objects
 - Inventory artifact collection
 - Story unlock counters (e.g., perfect trivia streak)
-

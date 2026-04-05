@@ -44,6 +44,277 @@ var routableSceneIds = [
     52, 53, 54, 55, 61, 62, 63, 65, 66, 67, 68, 69, 70, 71, 72, 73, 77, 93, 95,
     96, 97, 98, 99, 100, 101, 102
 ];
+var linearSceneOrder = routableSceneIds.slice().sort(function (a, b) { return a - b; });
+
+var chapterCatalog = [
+    { id: "bala", label: "Bala Kanda", chapter: "Ayodhya Crisis", scenes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 52] },
+    { id: "aranya", label: "Aranya Kanda", chapter: "Forest Trials", scenes: [19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 48, 49, 50, 65, 66, 67, 68, 95, 96, 98] },
+    { id: "kishkindha", label: "Kishkindha Kanda", chapter: "Alliance and Training", scenes: [40, 41, 42, 43, 44, 45, 46, 47, 61, 62, 63, 69, 70, 71, 72, 73, 77, 93, 97, 99, 100] },
+    { id: "sundara", label: "Sundara Kanda", chapter: "Rescue Campaign", scenes: [53, 54, 55, 101, 102] }
+];
+
+var chapterJumpEnabled = true;
+
+function getChapterMetaForScene(sceneId) {
+    var i;
+    var chapter;
+
+    for (i = 0; i < chapterCatalog.length; i++) {
+        chapter = chapterCatalog[i];
+        if (chapter.scenes.indexOf(sceneId) !== -1) {
+            return chapter;
+        }
+    }
+
+    return {
+        id: "misc",
+        label: "Interlude",
+        chapter: "Interlude",
+        scenes: [sceneId]
+    };
+}
+
+function getSceneLocationLabel(sceneId) {
+    if (sceneId <= 4) {
+        return "Ayodhya Palace";
+    }
+    if (sceneId <= 39 || sceneId === 65 || sceneId === 66 || sceneId === 67 || sceneId === 68 || sceneId === 95 || sceneId === 96 || sceneId === 98) {
+        return "Dandaka Forest";
+    }
+    if (sceneId >= 40 && sceneId <= 100) {
+        return "Kishkindha War-Camp";
+    }
+    if (sceneId >= 101) {
+        return "Ayodhya → Lanka Sea Route";
+    }
+    return "Ayodhya → Forest Frontier";
+}
+
+function getSceneCharacters(sceneId) {
+    var cast = ["Rama"];
+
+    if (sceneId >= 4) {
+        cast.push("Sita");
+    }
+    if (sceneId >= 6) {
+        cast.push("Lakshmana");
+    }
+    if (sceneId >= 29 && sceneId <= 39) {
+        cast.push("Ravana", "Jatayu");
+    }
+    if (sceneId >= 40) {
+        cast.push("Hanuman", "Sugriva");
+    }
+    if (sceneId === 66 || sceneId === 67 || sceneId === 68) {
+        cast.push("Bharata");
+    }
+
+    return cast;
+}
+
+function getLinearIndex(sceneId) {
+    return linearSceneOrder.indexOf(sceneId);
+}
+
+function jumpToScene(sceneId) {
+    var previousScene;
+
+    sceneId = parseInt(sceneId, 10);
+    if (isNaN(sceneId) || !isRoutableScene(sceneId) || sceneId === currentScene) {
+        return;
+    }
+
+    previousScene = currentScene;
+    saveOldState();
+    currentScene = sceneId;
+    finishSceneDecision(previousScene);
+}
+
+function jumpToChapter(chapterId) {
+    var i;
+
+    if (!chapterJumpEnabled) {
+        return;
+    }
+
+    for (i = 0; i < chapterCatalog.length; i++) {
+        if (chapterCatalog[i].id === chapterId) {
+            jumpToScene(chapterCatalog[i].scenes[0]);
+            return;
+        }
+    }
+}
+
+function navigateLinearScene(step) {
+    var currentIndex = getLinearIndex(currentScene);
+    var nextIndex = currentIndex + step;
+
+    if (currentIndex === -1 || nextIndex < 0 || nextIndex >= linearSceneOrder.length) {
+        return;
+    }
+
+    jumpToScene(linearSceneOrder[nextIndex]);
+}
+
+function applyNarrativeFlowEnhancements() {
+    var storyCard = document.getElementById("storyCard");
+    var heading;
+    var choices;
+    var recap;
+    var transition;
+    var recapText;
+    var transitionText;
+    var sceneParagraphs;
+    var i;
+    var extraWrapper;
+
+    if (!storyCard || currentScene <= 0) {
+        return;
+    }
+
+    heading = storyCard.querySelector("h2");
+    choices = storyCard.querySelector("#choices");
+
+    if (heading) {
+        if (!storyCard.querySelector(".story-transition-line") && takenTransitions.length > 0) {
+            transitionText = "Transition: After " + (timelineNodeTitles[parseInt((takenTransitions[takenTransitions.length - 1] || "0->0").split("->")[0], 10)] || "the previous trial") + ", the path opens into " + (timelineNodeTitles[currentScene] || "a new chapter") + ".";
+            transition = document.createElement("p");
+            transition.className = "story-transition-line";
+            transition.textContent = transitionText;
+            heading.insertAdjacentElement("afterend", transition);
+        }
+
+        if (!storyCard.querySelector(".story-mini-recap") && receiptScenes.length > 1) {
+            recapText = receiptScenes[receiptScenes.length - 2].split(" - ")[0] || "Previous scene";
+            recap = document.createElement("p");
+            recap.className = "story-mini-recap";
+            recap.innerHTML = "<strong>Mini recap:</strong> You previously completed <em>" + escapeHtml(recapText) + "</em>.";
+            heading.insertAdjacentElement("afterend", recap);
+        }
+    }
+
+    sceneParagraphs = Array.prototype.slice.call(storyCard.querySelectorAll(":scope > p"));
+
+    if (sceneParagraphs.length < 2) {
+        recap = document.createElement("p");
+        recap.className = "story-flow-filler";
+        recap.textContent = "Chronological note: This moment links directly to the next scene in your journey and keeps the timeline moving toward Lanka.";
+        if (choices) {
+            storyCard.insertBefore(recap, choices);
+        } else {
+            storyCard.appendChild(recap);
+        }
+    }
+
+    sceneParagraphs = Array.prototype.slice.call(storyCard.querySelectorAll(":scope > p"));
+    if (sceneParagraphs.length > 4) {
+        extraWrapper = document.createElement("details");
+        extraWrapper.className = "extended-scene-notes";
+        extraWrapper.innerHTML = "<summary>Extended scene notes</summary>";
+        for (i = 4; i < sceneParagraphs.length; i++) {
+            extraWrapper.appendChild(sceneParagraphs[i]);
+        }
+        if (choices) {
+            storyCard.insertBefore(extraWrapper, choices);
+        } else {
+            storyCard.appendChild(extraWrapper);
+        }
+    }
+}
+
+function renderStoryNavigationLayer() {
+    var storyCard = document.getElementById("storyCard");
+    var heading = storyCard ? storyCard.querySelector("h2") : null;
+    var existing = document.getElementById("storyNavigationShell");
+    var chapterMeta;
+    var sceneCounter;
+    var progressPct;
+    var tocItems;
+    var currentIndex;
+
+    if (!storyCard || currentScene <= 0) {
+        if (existing) {
+            existing.remove();
+        }
+        return;
+    }
+
+    chapterMeta = getChapterMetaForScene(currentScene);
+    currentIndex = getLinearIndex(currentScene);
+    sceneCounter = (currentIndex + 1) + " / " + linearSceneOrder.length;
+    progressPct = ((currentIndex + 1) / linearSceneOrder.length) * 100;
+    tocItems = chapterCatalog.map(function (chapter) {
+        return "<button type='button' class='toc-link" + (chapter.id === chapterMeta.id ? " active" : "") + "' onclick='jumpToChapter(\"" + chapter.id + "\")'>" +
+            chapter.label + " · " + chapter.chapter + "</button>";
+    }).join("");
+
+    if (existing) {
+        existing.remove();
+    }
+
+    storyCard.classList.add("scene-card-layout");
+
+    storyCard.insertAdjacentHTML("afterbegin",
+        "<section id='storyNavigationShell'>" +
+        "<aside id='sceneSidebar'>" +
+        "<h3>Table of Contents</h3>" +
+        tocItems +
+        "<label for='chapterJump'>Jump to chapter</label>" +
+        "<select id='chapterJump' onchange='jumpToChapter(this.value)'>" +
+        chapterCatalog.map(function (chapter) {
+            return "<option value='" + chapter.id + "'" + (chapter.id === chapterMeta.id ? " selected" : "") + ">" + chapter.label + "</option>";
+        }).join("") +
+        "</select>" +
+        "<label for='sceneJump'>Jump to scene</label>" +
+        "<select id='sceneJump' onchange='jumpToScene(this.value)'>" +
+        linearSceneOrder.map(function (sceneId) {
+            return "<option value='" + sceneId + "'" + (sceneId === currentScene ? " selected" : "") + ">Scene " + sceneId + ": " + (timelineNodeTitles[sceneId] || "Scene") + "</option>";
+        }).join("") +
+        "</select>" +
+        "</aside>" +
+        "<div id='storyNavMain'>" +
+        "<div class='scene-meta-grid'>" +
+        "<div><strong>Kanda:</strong> " + chapterMeta.label + "</div>" +
+        "<div><strong>Chapter:</strong> " + chapterMeta.chapter + "</div>" +
+        "<div><strong>Scene:</strong> " + sceneCounter + "</div>" +
+        "<div><strong>Location:</strong> " + getSceneLocationLabel(currentScene) + "</div>" +
+        "</div>" +
+        "<div class='scene-progress-wrap'><div class='scene-progress-bar' style='width:" + progressPct.toFixed(1) + "%'></div></div>" +
+        "<div class='immersion-row'><strong>Characters:</strong> " + getSceneCharacters(currentScene).join(", ") + "</div>" +
+        "<div class='immersion-row'><strong>Timeline:</strong> Scene " + currentScene + " of " + linearSceneOrder[linearSceneOrder.length - 1] + " · " + (progressPct.toFixed(1)) + "% completed</div>" +
+        "<div class='immersion-row'><strong>Story Map:</strong> Ayodhya → Dandaka Forest → Kishkindha → Ocean Crossing → Lanka</div>" +
+        "<div class='next-prev-controls'>" +
+        "<button type='button' onclick='navigateLinearScene(-1)' " + (currentIndex <= 0 ? "disabled" : "") + ">◀ Previous</button>" +
+        "<button type='button' onclick='navigateLinearScene(1)' " + (currentIndex >= linearSceneOrder.length - 1 ? "disabled" : "") + ">Next ▶</button>" +
+        "</div>" +
+        "</div>" +
+        "</section>");
+
+    if (heading) {
+        document.getElementById("storyNavMain").appendChild(heading);
+    }
+
+    Array.prototype.slice.call(storyCard.childNodes).forEach(function (node) {
+        var navMain = document.getElementById("storyNavMain");
+        var toolbar = document.getElementById("storyCardToolbar");
+        var navShell = document.getElementById("storyNavigationShell");
+        if (node === toolbar || node === navShell) {
+            return;
+        }
+        if (navMain && node.parentNode === storyCard) {
+            navMain.appendChild(node);
+        }
+    });
+}
+
+function enhanceStoryExperience() {
+    if (currentScene > 0 && visitedSceneIds.indexOf(currentScene) === -1) {
+        visitedSceneIds.push(currentScene);
+    }
+
+    renderStoryNavigationLayer();
+    applyNarrativeFlowEnhancements();
+}
 
 function parseRouteFromHash() {
     var hash = window.location.hash || "";
@@ -2288,6 +2559,7 @@ function showScene() {
             "</div>";
     }
 
+    enhanceStoryExperience();
     ensureStoryCardToolbar();
     addSceneToReceipt();
     syncHashWithCurrentScene();
@@ -2744,7 +3016,7 @@ function makeDecision(decision){
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-    console.log("Update 22");
+    console.log("Update 23");
     document.body.setAttribute("data-resolution-tier", resolutionTier);
     validateSequentialSceneOrder();
     applyResolutionTierStyling();
@@ -2838,11 +3110,24 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     document.addEventListener("keydown", function (event) {
+        var tagName = event.target && event.target.tagName ? event.target.tagName.toLowerCase() : "";
+        var isTypingTarget = tagName === "input" || tagName === "textarea" || (event.target && event.target.isContentEditable);
+
         if (event.key === "Escape") {
             toggleNavbarMenu(false);
             closeTimelineModal();
             closePlayerStatsModal();
             closeInventoryModal();
+        }
+
+        if (currentScene > 0 && !isTypingTarget) {
+            if (event.key === "ArrowLeft") {
+                event.preventDefault();
+                navigateLinearScene(-1);
+            } else if (event.key === "ArrowRight") {
+                event.preventDefault();
+                navigateLinearScene(1);
+            }
         }
     });
 

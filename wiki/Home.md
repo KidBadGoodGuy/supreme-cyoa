@@ -35,6 +35,7 @@ This wiki is intentionally implementation-aware so future edits can be made safe
 
 ## Features (recent)
 
+- Added a **Story Navigator layer**: Scene counter/progress bar, next/previous controls, keyboard arrow navigation, jump-to-scene/chapter menus, chapter-grouped table of contents, and a jump sidebar with Kanda labels.
 - Updated companion dialogue behavior so scenes keep ambient companion flavor text without adding a pause/reflection button to choices.
 - Added an **Epic Chronicle linear campaign** (starting after Scene 60) that walks through the Lanka war, Sita's restoration, return to Ayodhya, Uttara Kanda events, final departure, and later traditions in strict chronological order.
 - Expanded post-launch Lanka scenes with detailed prose, tactical branching buttons, and a **War Profile** system that tracks morale/mercy/renown and doctrine choices across the war arc.

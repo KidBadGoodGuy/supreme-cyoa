@@ -22,7 +22,7 @@ This wiki documents the game exactly as it exists in the repository right now, i
 
 ## Snapshot
 
-- Current visible update badge in app UI: **Update 6**
+- Current visible update badge in app UI: **Update 8**
 - Main entry page: `index.html`
 - Story logic file: `Project.js`
 - Styling file: `Project.css`
@@ -31,3 +31,7 @@ This wiki documents the game exactly as it exists in the repository right now, i
 ## Notes
 
 This wiki is intentionally implementation-aware so future edits can be made safely without breaking scene flow, timeline highlighting, or inventory/trivia systems.
+
+## Features (recent)
+
+- Added a **Companion Dialogue Interlude system**: every scene with choices now includes extra ambient dialogue and a "Pause for companion dialogue" option that opens a dedicated reflection scene, then returns the player to where they left off.

@@ -11,6 +11,7 @@ var takenTransitions = [];
 var timelineModalOpen = false;
 var timelineZoom = 1;
 var timelineRevealAll = false;
+var dialogueInterludeReturnScene = null;
 var journeyTriviaState = null;
 var perfectTriviaSessionsInRow = 0;
 var dasharathaStoryUnlocked = false;
@@ -37,7 +38,7 @@ var routableSceneIds = [
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
     27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
     52, 53, 54, 55, 56, 57, 58, 59, 60, 65, 66, 67, 68, 69, 70, 71, 72, 73, 77, 93, 95, 96, 97, 98,
-    99, 100, 101, 102
+    99, 100, 101, 102, 103, 104, 105
 ];
 
 function parseRouteFromHash() {
@@ -434,7 +435,10 @@ var timelineNodeTitles = {
     99: "Storytelling Game",
     100: "Storytelling Result",
     101: "Ocean Exploration",
-    102: "Expedition Discovery"
+    102: "Expedition Discovery",
+    103: "Forest Reflection Interlude",
+    104: "War-Camp Reflection Interlude",
+    105: "Strategy Tent Reflection Interlude"
 };
 
 artifactLoreCatalog = {
@@ -509,7 +513,7 @@ var timelineLevels = [
     [44, 45, 46],
     [47, 69, 95, 96, 97],
     [70, 93, 77, 53, 101],
-    [71, 72, 73, 54, 55, 98, 99, 100, 102],
+    [71, 72, 73, 54, 55, 98, 99, 100, 102, 103, 104, 105],
     [56, 57, 58, 59, 60]
 ];
 
@@ -633,6 +637,12 @@ var timelineEdges = [
     { from: 69, to: 47, label: "Remain with the rescue campaign" },
     { from: 72, to: 47, label: "Session complete" },
     { from: 73, to: 47, label: "Session complete" },
+    { from: 1, to: 103, label: "Pause for forest reflection" },
+    { from: 103, to: 1, label: "Return to prior path" },
+    { from: 54, to: 104, label: "Pause for war-camp reflection" },
+    { from: 104, to: 54, label: "Return to prior path" },
+    { from: 47, to: 105, label: "Pause for strategy reflection" },
+    { from: 105, to: 47, label: "Return to prior path" },
 ];
 
 timelineEdges = timelineEdges.map(function (edge) {
@@ -643,6 +653,51 @@ timelineEdges = timelineEdges.map(function (edge) {
         type: edge.type
     };
 });
+
+function getAmbientDialogueForScene(sceneId) {
+    if (sceneId >= 53 && sceneId <= 60) {
+        return "<strong>Camp Dialogue:</strong> Hanuman says, \"Every report and every small decision keeps Sita's hope alive.\" Lakshmana adds, \"Stay steady; disciplined choices win long campaigns.\"";
+    }
+
+    if (sceneId === 47 || sceneId === 70 || sceneId === 71 || sceneId === 72 || sceneId === 73 || sceneId === 77 || sceneId === 93 || sceneId === 99 || sceneId === 100 || sceneId === 101 || sceneId === 102) {
+        return "<strong>Training Dialogue:</strong> Sugriva leans over the map, \"Strategy grows stronger when we speak openly.\" Angada grins, \"A short discussion now can save a hard battle later.\"";
+    }
+
+    return "<strong>Travel Dialogue:</strong> Sita quietly says, \"Even in exile, compassion must guide us.\" Lakshmana replies, \"Then let every step be careful and brave.\"";
+}
+
+function addAmbientDialogueAndChoice(storyCard) {
+    var choicesContainer;
+    var existingButton;
+    var reflectionButton;
+
+    if (!storyCard || currentScene <= 0 || currentScene === 103 || currentScene === 104 || currentScene === 105) {
+        return;
+    }
+
+    choicesContainer = storyCard.querySelector("#choices");
+    if (!choicesContainer) {
+        return;
+    }
+
+    if (!storyCard.querySelector(".ambient-dialogue")) {
+        storyCard.innerHTML = storyCard.innerHTML.replace(
+            "<div id='choices'>",
+            "<p class='ambient-dialogue'>" + getAmbientDialogueForScene(currentScene) + "</p><div id='choices'>"
+        );
+        choicesContainer = storyCard.querySelector("#choices");
+    }
+
+    existingButton = choicesContainer.querySelector("button[data-ambient-dialogue='1']");
+    if (!existingButton) {
+        reflectionButton = document.createElement("button");
+        reflectionButton.setAttribute("type", "button");
+        reflectionButton.setAttribute("data-ambient-dialogue", "1");
+        reflectionButton.setAttribute("onclick", "makeChoice(300)");
+        reflectionButton.textContent = "Pause for companion dialogue";
+        choicesContainer.appendChild(reflectionButton);
+    }
+}
 
 
 function randomizer() {
@@ -980,6 +1035,7 @@ function saveOldState() {
         journeyTriviaState: journeyTriviaState ? JSON.parse(JSON.stringify(journeyTriviaState)) : null,
         perfectTriviaSessionsInRow: perfectTriviaSessionsInRow,
         dasharathaStoryUnlocked: dasharathaStoryUnlocked,
+        dialogueInterludeReturnScene: dialogueInterludeReturnScene,
         characterConversationState: characterConversationState ? JSON.parse(JSON.stringify(characterConversationState)) : null,
         guessGameState: guessGameState ? JSON.parse(JSON.stringify(guessGameState)) : null,
         receiptScenes: receiptScenes.slice(),
@@ -1008,6 +1064,7 @@ function undoChoice() {
     journeyTriviaState = oldState.journeyTriviaState || null;
     perfectTriviaSessionsInRow = oldState.perfectTriviaSessionsInRow || 0;
     dasharathaStoryUnlocked = !!oldState.dasharathaStoryUnlocked;
+    dialogueInterludeReturnScene = oldState.dialogueInterludeReturnScene || null;
     characterConversationState = oldState.characterConversationState || null;
     guessGameState = oldState.guessGameState || null;
     receiptScenes = oldState.receiptScenes;
@@ -1088,6 +1145,7 @@ function restart() {
     playerStats = {};
     inventoryItems = [];
     journeyTriviaState = null;
+    dialogueInterludeReturnScene = null;
     perfectTriviaSessionsInRow = 0;
     dasharathaStoryUnlocked = false;
     characterConversationState = null;
@@ -2227,8 +2285,33 @@ function showScene() {
             "<button onclick='makeChoice(101)'>Run Another Expedition</button>" +
             "<button onclick='makeChoice(47)'>Return to Camp Hub</button>" +
             "</div>";
+    } else if (currentScene === 103) {
+        storyCard.innerHTML =
+            "<h2>Forest Reflection Interlude</h2>" +
+            "<p>You pause beneath swaying branches. Sita speaks first: <q>Promise me we stay truthful even when fear is loud.</q></p>" +
+            "<p>Lakshmana nods and answers, <q>Then we guard both each other and our purpose. We do not drift from dharma.</q></p>" +
+            "<div id='choices'>" +
+            "<button onclick='makeChoice(301)'>Return to the previous scene</button>" +
+            "</div>";
+    } else if (currentScene === 104) {
+        storyCard.innerHTML =
+            "<h2>War-Camp Reflection Interlude</h2>" +
+            "<p>At the edge of the command tent, Hanuman reports quietly: <q>Morale is strong, but everyone listens for your next word.</q></p>" +
+            "<p>You answer with calm resolve, and the nearby scouts repeat the plan line by line until the whole camp moves as one.</p>" +
+            "<div id='choices'>" +
+            "<button onclick='makeChoice(301)'>Return to the previous scene</button>" +
+            "</div>";
+    } else if (currentScene === 105) {
+        storyCard.innerHTML =
+            "<h2>Strategy Tent Reflection Interlude</h2>" +
+            "<p>Sugriva spreads a fresh map and says, <q>Every story we share here becomes courage for someone on the front line.</q></p>" +
+            "<p>Angada adds, <q>Give us one clear direction, and we'll turn it into action before dawn.</q></p>" +
+            "<div id='choices'>" +
+            "<button onclick='makeChoice(301)'>Return to the previous scene</button>" +
+            "</div>";
     }
 
+    addAmbientDialogueAndChoice(storyCard);
     ensureStoryCardToolbar();
     addSceneToReceipt();
     syncHashWithCurrentScene();
@@ -2258,6 +2341,20 @@ function makeChoice(choice) {
     }
 
     saveOldState();
+
+    if (choice === 300 && currentScene > 0 && currentScene !== 103 && currentScene !== 104 && currentScene !== 105) {
+        dialogueInterludeReturnScene = currentScene;
+        if (currentScene >= 53 && currentScene <= 60) {
+            currentScene = 104;
+        } else if (currentScene === 47 || currentScene === 70 || currentScene === 71 || currentScene === 72 || currentScene === 73 || currentScene === 77 || currentScene === 93 || currentScene === 99 || currentScene === 100 || currentScene === 101 || currentScene === 102) {
+            currentScene = 105;
+        } else {
+            currentScene = 103;
+        }
+    } else if (choice === 301 && (currentScene === 103 || currentScene === 104 || currentScene === 105)) {
+        currentScene = dialogueInterludeReturnScene || 1;
+        dialogueInterludeReturnScene = null;
+    } else
 
     if (currentScene === 1 || currentScene === 2) {
         if (choice === 3) {

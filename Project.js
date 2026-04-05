@@ -1586,7 +1586,7 @@ function updateTimelineZoomLabel() {
 }
 
 function adjustTimelineZoom(change) {
-    timelineZoom = Math.max(1, Math.min(2.5, timelineZoom + change));
+    timelineZoom = Math.max(1, Math.min(5, timelineZoom + change));
     updateTimelineZoomLabel();
     renderTimeline(timelineModalOpen);
 }
@@ -3015,7 +3015,7 @@ function makeDecision(decision){
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-    console.log("Update 25");
+    console.log("Update 26");
     document.body.setAttribute("data-resolution-tier", resolutionTier);
     validateSequentialSceneOrder();
     applyResolutionTierStyling();

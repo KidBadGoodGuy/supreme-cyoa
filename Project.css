@@ -1277,3 +1277,159 @@ blockquote,
     font-size: 0.64rem;
   }
 }
+
+
+#storyCard.scene-card-layout {
+  width: min(1200px, 100%);
+}
+
+#storyNavigationShell {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) 1fr;
+  gap: 18px;
+  margin: 14px 16px 10px;
+}
+
+#sceneSidebar {
+  border: 1px solid rgba(255, 223, 162, 0.28);
+  border-radius: 16px;
+  padding: 14px;
+  background: rgba(24, 14, 30, 0.62);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: sticky;
+  top: 84px;
+  max-height: 72vh;
+  overflow: auto;
+}
+
+#sceneSidebar h3 {
+  margin: 0 0 4px;
+  font-size: 1.05rem;
+}
+
+#sceneSidebar label {
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 239, 198, 0.9);
+}
+
+#sceneSidebar select,
+.toc-link {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 223, 162, 0.35);
+  background: rgba(31, 16, 34, 0.85);
+  color: var(--text);
+  padding: 8px 10px;
+}
+
+.toc-link {
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.84rem;
+}
+
+.toc-link.active {
+  border-color: rgba(255, 223, 162, 0.75);
+  background: rgba(243, 201, 120, 0.17);
+}
+
+#storyNavMain {
+  max-width: 760px;
+  margin-inline: auto;
+  font-size: 1.08rem;
+  line-height: 1.85;
+}
+
+.scene-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 16px;
+  margin-bottom: 12px;
+  font-size: 0.95rem;
+}
+
+.scene-progress-wrap {
+  width: 100%;
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(255, 235, 194, 0.2);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.scene-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #f3c978, #ffdca6);
+}
+
+.immersion-row {
+  margin: 6px 0;
+  font-size: 0.96rem;
+  color: rgba(248, 241, 228, 0.92);
+}
+
+.next-prev-controls {
+  display: flex;
+  gap: 10px;
+  margin: 14px 0 18px;
+}
+
+.next-prev-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+#storyNavMain h1 {
+  font-size: 2rem;
+  margin: 14px 0 10px;
+}
+
+#storyNavMain h2 {
+  font-size: 1.6rem;
+  margin: 10px 0 12px;
+}
+
+#storyNavMain p {
+  margin: 0 0 16px;
+  max-width: 70ch;
+}
+
+.story-transition-line,
+.story-mini-recap,
+.story-flow-filler {
+  border-left: 3px solid rgba(255, 223, 162, 0.6);
+  padding-left: 12px;
+  color: rgba(255, 238, 210, 0.92);
+}
+
+.extended-scene-notes {
+  margin: 10px 0 16px;
+  border: 1px solid rgba(255, 223, 162, 0.28);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(24, 14, 30, 0.45);
+}
+
+.extended-scene-notes summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+@media (max-width: 980px) {
+  #storyNavigationShell {
+    grid-template-columns: 1fr;
+  }
+
+  #sceneSidebar {
+    position: static;
+    max-height: none;
+  }
+
+  .scene-meta-grid {
+    grid-template-columns: 1fr;
+  }
+}

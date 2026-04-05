@@ -37,6 +37,7 @@ From Hanuman hub, player can access:
 - Ally conversation/training
 - Ocean exploration
 - Main rescue storyline continuation
+- Companion dialogue interludes (context-sensitive reflection scenes that return to the prior scene)
 
 ### Part 2: Rescue sequence
 
@@ -59,6 +60,7 @@ From Hanuman hub, player can access:
 
 - Lore artifact injections: 95, 96, 97
 - Negotiation duel: 98
+- Dialogue interludes: 61, 62, 63
 - Guessing game: 93
 - Storytelling game/result: 99, 100
 - Ocean exploration loop: 101, 102
@@ -86,4 +88,3 @@ When adding any scene in the future:
 3. Add timeline title + levels + edges
 4. Add to `routableSceneIds` if route restoration is desired
 5. Ensure receipts/timeline consistency is preserved
-

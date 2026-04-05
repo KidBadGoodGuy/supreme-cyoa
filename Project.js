@@ -121,6 +121,24 @@ function applySceneFromHash() {
     applyingSceneRoute = false;
 }
 
+function toggleNavbarMenu(forceOpen) {
+    var navbar = document.getElementById("topNavbar");
+    var toggleButton = document.getElementById("navbarToggle");
+    var shouldOpen = typeof forceOpen === "boolean" ? forceOpen : true;
+
+    if (!navbar || !toggleButton) {
+        return;
+    }
+
+    if (typeof forceOpen !== "boolean") {
+        shouldOpen = !navbar.classList.contains("nav-open");
+    }
+
+    navbar.classList.toggle("nav-open", shouldOpen);
+    toggleButton.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
+    toggleButton.textContent = shouldOpen ? "✕" : "☰";
+}
+
 function updateBackgroundMusicForScene() {
     var backgroundMusic = document.getElementById("backgroundMusic");
     var trackName = document.getElementById("currentTrackName");
@@ -2815,12 +2833,32 @@ document.addEventListener("DOMContentLoaded", function () {
     var playerNameInput = document.getElementById("playerName");
     var backgroundMusic = document.getElementById("backgroundMusic");
     var musicVolume = document.getElementById("musicVolume");
+    var navbarToggle = document.getElementById("navbarToggle");
+    var topNavbar = document.getElementById("topNavbar");
 
     if (startButton) {
         startButton.addEventListener("click", startAdventure);
     }
 
     setupScrollRevealTransitions();
+
+    if (navbarToggle && topNavbar) {
+        navbarToggle.addEventListener("click", function () {
+            toggleNavbarMenu();
+        });
+
+        document.addEventListener("click", function (event) {
+            if (!topNavbar.classList.contains("nav-open")) {
+                return;
+            }
+
+            if (topNavbar.contains(event.target)) {
+                return;
+            }
+
+            toggleNavbarMenu(false);
+        });
+    }
 
     if (playerNameInput) {
         playerNameInput.addEventListener("keydown", function (event) {
@@ -2868,6 +2906,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     document.addEventListener("keydown", function (event) {
         if (event.key === "Escape") {
+            toggleNavbarMenu(false);
             closeTimelineModal();
             closePlayerStatsModal();
             closeInventoryModal();

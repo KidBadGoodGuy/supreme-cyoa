@@ -34,6 +34,106 @@ var activeSoundtrackSrc = "";
 var applyingSceneRoute = false;
 var scrollRevealObserver = null;
 var resolutionTier = "hd";
+var epicSagaStartId = 103;
+var epicSagaBeats = [
+    "Rama becomes emotional and praises Hanuman.",
+    "The monkey army celebrates and prepares for war 🐒⚔️.",
+    "The army marches south toward the ocean.",
+    "They reach the seashore opposite Lanka.",
+    "Rama prays to the ocean god for passage.",
+    "The ocean god does not respond immediately.",
+    "Rama becomes angry and threatens to dry the ocean with arrows.",
+    "The ocean god appears and advises building a bridge.",
+    "Nala reveals he can build a bridge.",
+    "The Vanaras gather stones and trees.",
+    "The Rama Setu bridge construction begins.",
+    "Stones float when Rama's name is written on them.",
+    "The bridge is completed across the sea 🌊.",
+    "The army crosses into Lanka.",
+    "Ravana is informed of Rama's arrival.",
+    "Ravana consults his ministers.",
+    "Vibhishana advises returning Sita.",
+    "Ravana rejects the advice angrily.",
+    "Vibhishana defects and joins Rama.",
+    "Rama accepts Vibhishana and crowns him future king of Lanka.",
+    "War preparations begin on both sides.",
+    "Monkey generals attack Lanka gates.",
+    "Giant Rakshasas fight back.",
+    "Indrajit enters battle.",
+    "Indrajit uses Nagapasha snake weapon.",
+    "Rama and Lakshmana are bound by serpent arrows.",
+    "Garuda arrives and frees them.",
+    "Fighting resumes.",
+    "Rakshasa general after general is defeated.",
+    "Kumbhakarna is awakened.",
+    "Kumbhakarna enters battlefield like a giant.",
+    "He devastates monkey army.",
+    "Rama finally kills Kumbhakarna with divine arrows.",
+    "Indrajit performs secret ritual for invincibility.",
+    "Lakshmana interrupts ritual.",
+    "Lakshmana kills Indrajit.",
+    "Ravana is grief-stricken and enraged.",
+    "Ravana personally enters battle.",
+    "He strikes Lakshmana with a powerful weapon.",
+    "Lakshmana falls unconscious.",
+    "Doctor Sushena recommends Sanjeevani herb.",
+    "Hanuman flies to the Himalayas.",
+    "Unable to identify the herb, Hanuman lifts the entire mountain 🏔️.",
+    "Hanuman returns with the mountain.",
+    "Lakshmana is revived.",
+    "Rama and Ravana face off.",
+    "Massive celestial weapons are exchanged.",
+    "Ravana's heads regrow repeatedly.",
+    "Vibhishana reveals Ravana's weakness.",
+    "Rama uses Brahmastra.",
+    "Ravana is killed ⚔️.",
+    "The gods appear and praise Rama.",
+    "Vibhishana is crowned king of Lanka.",
+    "Sita is brought before Rama.",
+    "Rama speaks formally, emphasizing duty.",
+    "Sita undergoes Agni Pariksha (trial by fire) 🔥.",
+    "The fire god returns Sita unharmed.",
+    "Rama accepts her publicly.",
+    "The gods reveal Rama's divine nature.",
+    "The Pushpaka Vimana (flying chariot) is used.",
+    "Rama, Sita, and Lakshmana return north.",
+    "They stop at various locations.",
+    "They meet Bharata waiting in exile clothes.",
+    "Rama returns to Ayodhya.",
+    "Rama is crowned king 👑.",
+    "The era of Rama Rajya (ideal rule) begins.",
+    "Peace and prosperity spread throughout the kingdom.",
+    "Rumors spread about Sita's stay in Lanka.",
+    "Rama reluctantly sends pregnant Sita to the forest.",
+    "Sita takes refuge in sage Valmiki's hermitage.",
+    "Sita gives birth to twin sons.",
+    "The twins are named Lava and Kusha.",
+    "Lava and Kusha grow up learning the Ramayana.",
+    "Rama performs the Ashwamedha Yajna.",
+    "Lava and Kusha capture the sacrificial horse.",
+    "Rama's army fights them.",
+    "Eventually their identity is revealed.",
+    "Sita returns to court.",
+    "Sita calls upon the Earth goddess.",
+    "The earth opens and Sita returns to the ground 🌎.",
+    "Rama is heartbroken.",
+    "Rama rules for many years.",
+    "The time for final departure arrives.",
+    "Lakshmana enters the Sarayu river first.",
+    "Rama walks into the river with citizens.",
+    "Rama returns to his divine form as Vishnu.",
+    "Vanaras and allies ascend to the heavens.",
+    "Hanuman remains immortal on Earth.",
+    "Vibhishana continues ruling Lanka.",
+    "Lava rules Shravasti.",
+    "Kusha rules Kushavati.",
+    "The Ramayana spreads across world cultures.",
+    "Rama becomes the archetype of the ideal king.",
+    "Hanuman worship grows widely.",
+    "Festivals like Diwali celebrate Rama's return 🪔.",
+    "Dussehra commemorates Ravana's defeat.",
+    "Ram Navami celebrates Rama's birth."
+];
 var routableSceneIds = [
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
     27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
@@ -76,7 +176,7 @@ function buildHashRoute(sceneId, isTimelineOpen) {
 }
 
 function isRoutableScene(sceneId) {
-    return routableSceneIds.indexOf(sceneId) !== -1;
+    return routableSceneIds.indexOf(sceneId) !== -1 || (sceneId >= epicSagaStartId && sceneId < epicSagaStartId + epicSagaBeats.length);
 }
 
 function syncHashWithCurrentScene() {
@@ -441,6 +541,44 @@ var timelineNodeTitles = {
     102: "Expedition Discovery"
 };
 
+function isEpicSagaScene(sceneId) {
+    return sceneId >= epicSagaStartId && sceneId < epicSagaStartId + epicSagaBeats.length;
+}
+
+function renderEpicSagaScene(storyCard) {
+    var beatIndex = currentScene - epicSagaStartId;
+    var nextSceneId = currentScene + 1;
+
+    if (!isEpicSagaScene(currentScene)) {
+        return false;
+    }
+
+    storyCard.innerHTML =
+        "<h2>Epic Chronicle " + (beatIndex + 1) + "</h2>" +
+        "<p>" + epicSagaBeats[beatIndex] + "</p>" +
+        "<div id='choices'>" +
+        (isEpicSagaScene(nextSceneId)
+            ? "<button onclick='makeChoice(" + nextSceneId + ")'>Continue</button>"
+            : "<button onclick='restart()'>Restart the Journey</button>") +
+        "</div>";
+
+    return true;
+}
+
+function appendEpicSagaTimeline() {
+    var i;
+    var sagaSceneId;
+    var previousSceneId = 60;
+
+    for (i = 0; i < epicSagaBeats.length; i++) {
+        sagaSceneId = epicSagaStartId + i;
+        timelineNodeTitles[sagaSceneId] = "Epic Chronicle " + (i + 1);
+        timelineLevels.push([sagaSceneId]);
+        timelineEdges.push({ from: previousSceneId, to: sagaSceneId, label: "Continue" });
+        previousSceneId = sagaSceneId;
+    }
+}
+
 artifactLoreCatalog = {
     "Maricha's Gleaming Horn Fragment": "A polished shard from Maricha's illusory golden deer. It reminds you that dazzling beauty can conceal grave danger.",
     "Forest Hermit's Palm-Leaf Note": "A weathered leaf manuscript warning travelers to trust dharma over appearances when the forest turns strangely silent.",
@@ -645,6 +783,8 @@ var timelineEdges = [
     { from: 47, to: 63, label: "Pause for strategy reflection" },
     { from: 63, to: 47, label: "Return to prior path" },
 ];
+
+appendEpicSagaTimeline();
 
 timelineEdges = timelineEdges.map(function (edge) {
     return {
@@ -2220,8 +2360,9 @@ function showScene() {
         storyCard.innerHTML =
             "<h2>Return Flight and Debrief</h2>" +
             "<p>Hanuman returns across the sea and lands before you, brave traveler. He reports Surasa's divine test, Sita's condition, and Lanka's defenses.</p>" +
-            "<p>The camp now has verified intelligence and renewed purpose.</p>" +
+            "<p>The camp now has verified intelligence and renewed purpose. Rama now launches the full campaign from shore to final coronation.</p>" +
             "<div id='choices'>" +
+            "<button onclick='makeChoice(" + epicSagaStartId + ")'>Begin the full Lanka campaign</button>" +
             "<button onclick='makeChoice(54)'>Report to War Council</button>" +
             "<button onclick='makeChoice(47)'>Return to Camp Hub</button>" +
             "</div>";
@@ -2280,6 +2421,7 @@ function showScene() {
             "<button onclick='makeChoice(101)'>Run Another Expedition</button>" +
             "<button onclick='makeChoice(47)'>Return to Camp Hub</button>" +
             "</div>";
+    } else if (renderEpicSagaScene(storyCard)) {
     } else if (currentScene === 61) {
         storyCard.innerHTML =
             "<h2>Forest Reflection Interlude</h2>" +
@@ -2767,7 +2909,11 @@ function makeChoice(choice) {
             currentScene = 54;
         } else if (choice === 47) {
             currentScene = 47;
+        } else if (choice === epicSagaStartId) {
+            currentScene = epicSagaStartId;
         }
+    } else if (isEpicSagaScene(currentScene) && isEpicSagaScene(choice) && choice === currentScene + 1) {
+        currentScene = choice;
     }
     if (previousScene !== currentScene) {
         takenTransitions.push(previousScene + "->" + currentScene);

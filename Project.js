@@ -33,6 +33,7 @@ var activeSoundtrackSrc = "";
 var applyingSceneRoute = false;
 var scrollRevealObserver = null;
 var resolutionTier = "hd";
+var appUpdateVersion = 15;
 var epicSagaStartId = 103;
 var sceneSequenceValidation = {
     isValid: true,
@@ -3089,6 +3090,7 @@ function makeDecision(decision){
 }
 
 document.addEventListener("DOMContentLoaded", function () {
+    console.log("Update " + appUpdateVersion);
     document.body.setAttribute("data-resolution-tier", resolutionTier);
     validateSequentialSceneOrder();
     applyResolutionTierStyling();

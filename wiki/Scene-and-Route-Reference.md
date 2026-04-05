@@ -60,7 +60,7 @@ From Hanuman hub, player can access:
 
 - Lore artifact injections: 95, 96, 97
 - Negotiation duel: 98
-- Dialogue interludes: 103, 104, 105
+- Dialogue interludes: 61, 62, 63
 - Guessing game: 93
 - Storytelling game/result: 99, 100
 - Ocean exploration loop: 101, 102

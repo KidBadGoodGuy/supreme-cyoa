@@ -37,8 +37,8 @@ var resolutionTier = "hd";
 var routableSceneIds = [
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
     27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
-    52, 53, 54, 55, 56, 57, 58, 59, 60, 65, 66, 67, 68, 69, 70, 71, 72, 73, 77, 93, 95, 96, 97, 98,
-    99, 100, 101, 102, 103, 104, 105
+    52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 65, 66, 67, 68, 69, 70, 71, 72, 73, 77, 93, 95,
+    96, 97, 98, 99, 100, 101, 102
 ];
 
 function parseRouteFromHash() {
@@ -436,9 +436,9 @@ var timelineNodeTitles = {
     100: "Storytelling Result",
     101: "Ocean Exploration",
     102: "Expedition Discovery",
-    103: "Forest Reflection Interlude",
-    104: "War-Camp Reflection Interlude",
-    105: "Strategy Tent Reflection Interlude"
+    61: "Forest Reflection Interlude",
+    62: "War-Camp Reflection Interlude",
+    63: "Strategy Tent Reflection Interlude"
 };
 
 artifactLoreCatalog = {
@@ -513,7 +513,7 @@ var timelineLevels = [
     [44, 45, 46],
     [47, 69, 95, 96, 97],
     [70, 93, 77, 53, 101],
-    [71, 72, 73, 54, 55, 98, 99, 100, 102, 103, 104, 105],
+    [71, 72, 73, 54, 55, 98, 99, 100, 102, 61, 62, 63],
     [56, 57, 58, 59, 60]
 ];
 
@@ -637,12 +637,12 @@ var timelineEdges = [
     { from: 69, to: 47, label: "Remain with the rescue campaign" },
     { from: 72, to: 47, label: "Session complete" },
     { from: 73, to: 47, label: "Session complete" },
-    { from: 1, to: 103, label: "Pause for forest reflection" },
-    { from: 103, to: 1, label: "Return to prior path" },
-    { from: 54, to: 104, label: "Pause for war-camp reflection" },
-    { from: 104, to: 54, label: "Return to prior path" },
-    { from: 47, to: 105, label: "Pause for strategy reflection" },
-    { from: 105, to: 47, label: "Return to prior path" },
+    { from: 1, to: 61, label: "Pause for forest reflection" },
+    { from: 61, to: 1, label: "Return to prior path" },
+    { from: 54, to: 62, label: "Pause for war-camp reflection" },
+    { from: 62, to: 54, label: "Return to prior path" },
+    { from: 47, to: 63, label: "Pause for strategy reflection" },
+    { from: 63, to: 47, label: "Return to prior path" },
 ];
 
 timelineEdges = timelineEdges.map(function (edge) {
@@ -671,7 +671,7 @@ function addAmbientDialogueAndChoice(storyCard) {
     var existingButton;
     var reflectionButton;
 
-    if (!storyCard || currentScene <= 0 || currentScene === 103 || currentScene === 104 || currentScene === 105) {
+    if (!storyCard || currentScene <= 0 || currentScene === 61 || currentScene === 62 || currentScene === 63) {
         return;
     }
 
@@ -2285,7 +2285,7 @@ function showScene() {
             "<button onclick='makeChoice(101)'>Run Another Expedition</button>" +
             "<button onclick='makeChoice(47)'>Return to Camp Hub</button>" +
             "</div>";
-    } else if (currentScene === 103) {
+    } else if (currentScene === 61) {
         storyCard.innerHTML =
             "<h2>Forest Reflection Interlude</h2>" +
             "<p>You pause beneath swaying branches. Sita speaks first: <q>Promise me we stay truthful even when fear is loud.</q></p>" +
@@ -2293,7 +2293,7 @@ function showScene() {
             "<div id='choices'>" +
             "<button onclick='makeChoice(301)'>Return to the previous scene</button>" +
             "</div>";
-    } else if (currentScene === 104) {
+    } else if (currentScene === 62) {
         storyCard.innerHTML =
             "<h2>War-Camp Reflection Interlude</h2>" +
             "<p>At the edge of the command tent, Hanuman reports quietly: <q>Morale is strong, but everyone listens for your next word.</q></p>" +
@@ -2301,7 +2301,7 @@ function showScene() {
             "<div id='choices'>" +
             "<button onclick='makeChoice(301)'>Return to the previous scene</button>" +
             "</div>";
-    } else if (currentScene === 105) {
+    } else if (currentScene === 63) {
         storyCard.innerHTML =
             "<h2>Strategy Tent Reflection Interlude</h2>" +
             "<p>Sugriva spreads a fresh map and says, <q>Every story we share here becomes courage for someone on the front line.</q></p>" +
@@ -2342,16 +2342,16 @@ function makeChoice(choice) {
 
     saveOldState();
 
-    if (choice === 300 && currentScene > 0 && currentScene !== 103 && currentScene !== 104 && currentScene !== 105) {
+    if (choice === 300 && currentScene > 0 && currentScene !== 61 && currentScene !== 62 && currentScene !== 63) {
         dialogueInterludeReturnScene = currentScene;
         if (currentScene >= 53 && currentScene <= 60) {
-            currentScene = 104;
+            currentScene = 62;
         } else if (currentScene === 47 || currentScene === 70 || currentScene === 71 || currentScene === 72 || currentScene === 73 || currentScene === 77 || currentScene === 93 || currentScene === 99 || currentScene === 100 || currentScene === 101 || currentScene === 102) {
-            currentScene = 105;
+            currentScene = 63;
         } else {
-            currentScene = 103;
+            currentScene = 61;
         }
-    } else if (choice === 301 && (currentScene === 103 || currentScene === 104 || currentScene === 105)) {
+    } else if (choice === 301 && (currentScene === 61 || currentScene === 62 || currentScene === 63)) {
         currentScene = dialogueInterludeReturnScene || 1;
         dialogueInterludeReturnScene = null;
     } else

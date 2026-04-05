@@ -134,6 +134,19 @@ var epicSagaBeats = [
     "Dussehra commemorates Ravana's defeat.",
     "Ram Navami celebrates Rama's birth."
 ];
+var epicSagaPhases = [
+    { start: 0, label: "Crossing to Lanka" },
+    { start: 14, label: "War Begins in Lanka" },
+    { start: 21, label: "Early Battles" },
+    { start: 29, label: "Major War Episodes" },
+    { start: 37, label: "Lakshmana Wounded" },
+    { start: 45, label: "Final Battle" },
+    { start: 53, label: "Sita's Rescue" },
+    { start: 59, label: "Return to Ayodhya" },
+    { start: 67, label: "After the Main Ramayana" },
+    { start: 81, label: "Final Departure" },
+    { start: 87, label: "Later Traditions" }
+];
 var routableSceneIds = [
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
     27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
@@ -548,14 +561,23 @@ function isEpicSagaScene(sceneId) {
 function renderEpicSagaScene(storyCard) {
     var beatIndex = currentScene - epicSagaStartId;
     var nextSceneId = currentScene + 1;
+    var beatText;
+    var phaseLabel;
+    var isPhaseStart;
 
     if (!isEpicSagaScene(currentScene)) {
         return false;
     }
 
+    beatText = epicSagaBeats[beatIndex];
+    phaseLabel = getEpicSagaPhaseLabel(beatIndex);
+    isPhaseStart = isEpicSagaPhaseStart(beatIndex);
+
     storyCard.innerHTML =
-        "<h2>Epic Chronicle " + (beatIndex + 1) + "</h2>" +
-        "<p>" + epicSagaBeats[beatIndex] + "</p>" +
+        "<h1>Part 3: Epic Chronicle</h1>" +
+        (isPhaseStart ? "<h2>" + phaseLabel + "</h2>" : "<h2>" + phaseLabel + " — Scene " + (beatIndex + 1) + "</h2>") +
+        "<p>" + beatText + "</p>" +
+        "<p><em>Chronicle order:</em> Scene " + (beatIndex + 1) + " of " + epicSagaBeats.length + " in the canonical sequence.</p>" +
         "<div id='choices'>" +
         (isEpicSagaScene(nextSceneId)
             ? "<button onclick='makeChoice(" + nextSceneId + ")'>Continue</button>"
@@ -572,11 +594,41 @@ function appendEpicSagaTimeline() {
 
     for (i = 0; i < epicSagaBeats.length; i++) {
         sagaSceneId = epicSagaStartId + i;
-        timelineNodeTitles[sagaSceneId] = "Epic Chronicle " + (i + 1);
+        timelineNodeTitles[sagaSceneId] = "Epic: " + buildEpicSceneTitle(i);
         timelineLevels.push([sagaSceneId]);
         timelineEdges.push({ from: previousSceneId, to: sagaSceneId, label: "Continue" });
         previousSceneId = sagaSceneId;
     }
+}
+
+function buildEpicSceneTitle(beatIndex) {
+    var cleaned = epicSagaBeats[beatIndex].replace(/[.]/g, "");
+    var words = cleaned.split(" ");
+    return words.slice(0, 5).join(" ");
+}
+
+function getEpicSagaPhaseLabel(beatIndex) {
+    var i;
+
+    for (i = epicSagaPhases.length - 1; i >= 0; i--) {
+        if (beatIndex >= epicSagaPhases[i].start) {
+            return epicSagaPhases[i].label;
+        }
+    }
+
+    return "Epic Chronicle";
+}
+
+function isEpicSagaPhaseStart(beatIndex) {
+    var i;
+
+    for (i = 0; i < epicSagaPhases.length; i++) {
+        if (beatIndex === epicSagaPhases[i].start) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 artifactLoreCatalog = {
@@ -2360,9 +2412,9 @@ function showScene() {
         storyCard.innerHTML =
             "<h2>Return Flight and Debrief</h2>" +
             "<p>Hanuman returns across the sea and lands before you, brave traveler. He reports Surasa's divine test, Sita's condition, and Lanka's defenses.</p>" +
-            "<p>The camp now has verified intelligence and renewed purpose. Rama now launches the full campaign from shore to final coronation.</p>" +
+            "<p>The camp now has verified intelligence and renewed purpose. Rama now launches the full campaign in fully ordered scenes from the ocean crossing to later traditions.</p>" +
             "<div id='choices'>" +
-            "<button onclick='makeChoice(" + epicSagaStartId + ")'>Begin the full Lanka campaign</button>" +
+            "<button onclick='makeChoice(" + epicSagaStartId + ")'>Begin the ordered Lanka campaign</button>" +
             "<button onclick='makeChoice(54)'>Report to War Council</button>" +
             "<button onclick='makeChoice(47)'>Return to Camp Hub</button>" +
             "</div>";

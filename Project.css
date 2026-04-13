@@ -1455,26 +1455,6 @@ blockquote,
   font-size: 1.1rem;
 }
 
-.story-flow-filler {
-  border-left: 3px solid rgba(255, 223, 162, 0.6);
-  padding-left: 12px;
-  color: rgba(255, 238, 210, 0.92);
-}
-
-.extended-scene-notes {
-  margin: 10px 0 16px;
-  border: 1px solid rgba(255, 223, 162, 0.28);
-  border-radius: 12px;
-  padding: 10px 12px;
-  background: rgba(24, 14, 30, 0.45);
-}
-
-.extended-scene-notes summary {
-  cursor: pointer;
-  font-weight: 600;
-}
-
-
 @media (max-width: 768px) {
   #storyNavMain {
     font-size: 1.125rem;

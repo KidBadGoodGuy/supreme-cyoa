@@ -1,836 +1,213 @@
-var currentScene=0;
-var playerName="";
-var broughtLakshmana=false;
-var wentAlone=false;
-var receiptScenes=[];
-var receiptChoices=[];
-var oldStates=[];
-var visitedSceneIds=[];
-var takenTransitions=[];
-var timelineModalOpen=false;
-var timelineZoom=1;
-var timelineRevealAll=false;
-var playerStats={};
-var inventoryItems=[];
-var inventoryArtifacts=[];
-var artifactLoreCatalog={};
-var defaultSoundtrackSrc="Sacred Path Of Rama.mp3";
-var lankaSoundtrackSrc="Lanka Burns At Dawn.mp3";
-var rescueSoundtrackMode=false;
-var activeSoundtrackSrc="";
-var applyingSceneRoute=false;
-var scrollRevealObserver=null;
-var resolutionTier="hd";
-var sceneSequenceValidation={isValid:true,message:"",missingSceneId:null};
-var legacySceneSequenceCeiling=102;
-var routableSceneIds=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,52,53,54,55,65,66,67,68,95,96,97,98];
-var linearSceneOrder=routableSceneIds.slice().sort(function(a,b){return a-b;
-});
-var chapterCatalog=[{id:"bala",label:"Bala Kanda",chapter:"Ayodhya Crisis",scenes:[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,52]},{id:"aranya",label:"Aranya Kanda",chapter:"Forest Trials",scenes:[19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,48,49,50,65,66,67,68,95,96,98]},{id:"kishkindha",label:"Kishkindha Kanda",chapter:"Alliance",scenes:[40,41,42,43,44,45,46,47,97]},{id:"sundara",label:"Sundara Kanda",chapter:"Rescue Campaign",scenes:[53,54,55]}];
-var chapterJumpEnabled=true;
-var forestSceneIds=[65,66,67,68,95,96,98];
-function getChapterMetaForScene(sceneId){return chapterCatalog.find(function(chapter){return chapter.scenes.indexOf(sceneId)!==-1;
-})||{id:"misc",label:"Interlude",chapter:"Interlude",scenes:[sceneId]};
-}function getSceneLocationLabel(sceneId){if(sceneId<=4){return"Ayodhya Palace";
-}if(sceneId<=39||forestSceneIds.indexOf(sceneId)!==-1){return"Dandaka Forest";
-}if(sceneId>=40&&sceneId<=100){return"Kishkindha War-Camp";
-}if(sceneId>=101){return"Ayodhya → Lanka Sea Route";
-}return"Ayodhya → Forest Frontier";
-}function getSceneCharacters(sceneId){var cast=["Rama"];
-if(sceneId>=4){cast.push("Sita");
-}if(sceneId>=6){cast.push("Lakshmana");
-}if(sceneId>=29&&sceneId<=39){cast.push("Ravana","Jatayu");
-}if(sceneId>=40){cast.push("Hanuman","Sugriva");
-}if(sceneId===66||sceneId===67||sceneId===68){cast.push("Bharata");
-}return cast;
-}function getLinearIndex(sceneId){return linearSceneOrder.indexOf(sceneId);
-}function jumpToScene(sceneId){var previousScene;
-sceneId=parseInt(sceneId,10);
-if(isNaN(sceneId)||!isRoutableScene(sceneId)||sceneId===currentScene){return;
-}previousScene=currentScene;
-saveOldState();
-currentScene=sceneId;
-finishSceneDecision(previousScene);
-}function jumpToChapter(chapterId){var chapter;
-if(!chapterJumpEnabled){return;
-}chapter=chapterCatalog.find(function(chapterEntry){return chapterEntry.id===chapterId;
-});
-if(chapter){jumpToScene(chapter.scenes[0]);
-}}function navigateLinearScene(step){var currentIndex=getLinearIndex(currentScene);
-var nextIndex=currentIndex+step;
-if(currentIndex!==-1&&nextIndex>=0&&nextIndex<linearSceneOrder.length){jumpToScene(linearSceneOrder[nextIndex]);
-	}}function applyNarrativeFlowEnhancements(){return;
-	}function renderStoryNavigationLayer(){var storyCard=document.getElementById("storyCard");
-var existing=document.getElementById("storyNavigationShell");
-var navMain;
-if(!storyCard){return;
-}if(existing){navMain=document.getElementById("storyNavMain");
-if(navMain){while(navMain.firstChild){storyCard.appendChild(navMain.firstChild);
-}}existing.remove();
-}storyCard.classList.remove("scene-card-layout");
-if(currentScene<=0){return;
-}}function enhanceStoryExperience(){if(currentScene>0&&visitedSceneIds.indexOf(currentScene)===-1){visitedSceneIds.push(currentScene);
-}renderStoryNavigationLayer();
-applyNarrativeFlowEnhancements();
-}function parseRouteFromHash(){var hash=window.location.hash||"";
-var route={sceneId:null,timelineOpen:false};
-var sceneMatch=hash.match(/^#scene-(\d+)(\?timeline=1)?$/);
-if(!hash){return route;
-}if(sceneMatch){route.sceneId=parseInt(sceneMatch[1],10);
-route.timelineOpen=!!sceneMatch[2];
-}else if(hash==="#timeline"){route.timelineOpen=true;
-}return route;
-}function buildHashRoute(sceneId,isTimelineOpen){return sceneId>0?"#scene-"+sceneId+(isTimelineOpen?"?timeline=1":""):(isTimelineOpen?"#timeline":"");
-}function isRoutableScene(sceneId){return routableSceneIds.indexOf(sceneId)!==-1;
-}function syncHashWithCurrentScene(){var nextHash=buildHashRoute(currentScene,timelineModalOpen);
-if(applyingSceneRoute){return;
-}if(window.location.hash!==nextHash){history.replaceState(null,"",nextHash||window.location.pathname+window.location.search);
-}}function applySceneFromHash(){var route=parseRouteFromHash();
-var routeScene=route.sceneId;
-var playerNameInput;
-var shouldOpenTimeline=route.timelineOpen;
-applyingSceneRoute=true;
-if(routeScene!==null&&isRoutableScene(routeScene)&&routeScene!==currentScene){playerNameInput=document.getElementById("playerName");
-if(!playerName&&playerNameInput){playerName=playerNameInput.value.trim();
-}if(!playerName){playerName="Traveler";
-}currentScene=routeScene;
-showScene();
-}if(shouldOpenTimeline&&!timelineModalOpen){openTimelineModal();
-}else if(!shouldOpenTimeline&&timelineModalOpen){closeTimelineModal();
-}applyingSceneRoute=false;
-}function toggleNavbarMenu(forceOpen){var navbar=document.getElementById("topNavbar");
-var toggleButton=document.getElementById("navbarToggle");
-var isMobileNavbar=window.matchMedia("(max-width: 768px)").matches;
-var shouldOpen=typeof forceOpen==="boolean"?forceOpen:true;
-if(!navbar||!toggleButton){return;
-}if(!isMobileNavbar){navbar.classList.add("nav-open");
-toggleButton.setAttribute("aria-expanded","true");
-toggleButton.textContent="✕";
-return;
-}if(typeof forceOpen!=="boolean"){shouldOpen=!navbar.classList.contains("nav-open");
-}navbar.classList.toggle("nav-open",shouldOpen);
-toggleButton.setAttribute("aria-expanded",shouldOpen?"true":"false");
-toggleButton.textContent=shouldOpen?"✕":"☰";
-}function syncNavbarLayout(){var isMobileNavbar=window.matchMedia("(max-width: 768px)").matches;
-toggleNavbarMenu(isMobileNavbar?false:true);
-}function updateBackgroundMusicForScene(){var backgroundMusic=document.getElementById("backgroundMusic");
-var trackName=document.getElementById("currentTrackName");
-var targetTrack;
-if(!backgroundMusic){return;
-}if(currentScene===0){rescueSoundtrackMode=false;
-}if(currentScene===54){rescueSoundtrackMode=true;
-}targetTrack=rescueSoundtrackMode?lankaSoundtrackSrc:defaultSoundtrackSrc;
-if(activeSoundtrackSrc!==targetTrack){backgroundMusic.src=targetTrack;
-backgroundMusic.load();
-activeSoundtrackSrc=targetTrack;
-}if(backgroundMusic.paused){backgroundMusic.play().catch(function(){return null;
-});
-}if(trackName){trackName.textContent=targetTrack.replace(".mp3","");
-}}function getResolutionTier(){var screenWidth=window.screen&&window.screen.width?window.screen.width:window.innerWidth;
-var screenHeight=window.screen&&window.screen.height?window.screen.height:window.innerHeight;
-var pixelArea=screenWidth*screenHeight;
-if(pixelArea>=7900000){return"uhd";
-}if(pixelArea>=3600000){return"qhd";
-}if(pixelArea>=2000000){return"fhd";
-}return"hd";
-}function applyResolutionTierStyling(){var nextTier=getResolutionTier();
-var body=document.body;
-var badge=document.getElementById("updateBadge");
-var tierChanged=resolutionTier!==nextTier;
-if(!body){return;
-}if(tierChanged){resolutionTier=nextTier;
-body.setAttribute("data-resolution-tier",nextTier);
-}if(badge){badge.setAttribute("data-resolution-label",nextTier.toUpperCase());
-}}var timelineNodeTitles={1:"The Exile",2:"Exile Begins",3:"Argue Back",4:"Accept Exile",5:"Go Alone",6:"Go With Them",7:"Surphanaka Encounter",8:"Surphanaka Encounter (Alone)",9:"Fight Surphanaka",10:"Protect Sita",11:"Negotiate",12:"Accept Proposal",13:"Reject Proposal",14:"Victory",15:"Negotiation Fails",16:"Meet Ravana",17:"Evil King Ending",18:"Game Over",19:"Golden Deer",20:"Bring Lakshmana?",21:"Ignore Deer Ending",22:"Track Deer (Together)",23:"Track Deer (Alone)",24:"Shoot Deer",25:"Maricha's Cry",26:"Ravana's Chance",27:"Lakshmana Line",28:"Ravana's Trick",29:"Sita Abducted",30:"Jatayu Sees Ravana",31:"Sita Taken",32:"Jatayu Rescue Quiz",33:"Jatayu Rescues Sita",34:"Jatayu Falls",35:"Jatayu Falls",36:"Fight Ravana",37:"Sita Taken",38:"Forest Duel Ending",39:"Lakshmana Saves Sita",40:"Meet Sugriva",41:"Sugriva's Plea",42:"Exile Vow",43:"Vali Challenge",44:"Vali Falls",45:"Missed Shot",46:"Missed Shot",47:"Meet Hanuman",48:"Jatayu Quiz 2",49:"Jatayu Quiz 3",50:"Final Struggle",51:"Fate Decision",52:"Peaceful Ending",53:"Part 2 Intro",54:"Part 2 Start",55:"Part 2: The Rescue",65:"Search for Sita",66:"Bharata's Plea",67:"Ayodhya Return Ending",68:"Sandals Promise",95:"Deer Lore Artifact",96:"Jatayu Lore Artifact",97:"Kishkindha Lore Artifact",98:"Negotiation Duel"};
-artifactLoreCatalog={"Maricha's Gleaming Horn Fragment":"A polished shard from Maricha's illusory golden deer. It reminds you that dazzling beauty can conceal grave danger.","Forest Hermit's Palm-Leaf Note":"A weathered leaf manuscript warning travelers to trust dharma over appearances when the forest turns strangely silent.","Jatayu's Wind-Sworn Plume":"A strong feather from Jatayu's wings, honoring the bird-king's courage in challenging Ravana to protect Sita.","Jatayu's Feather":"A fallen feather from the battlefield in the sky, preserved as a vow to remember sacrifice in the face of tyranny.","Rama's Sandals (Paduka)":"The sacred Paduka symbolizing rightful rule, duty, and Bharata's pledge to govern Ayodhya only in Rama's name.","Kishkindha Cave Mural Tablet":"A carved tablet showing old vanara heroes. Its scenes teach alliance, strategy, and patience before war.","Sugriva Alliance Oath":"A signed oath of friendship and mutual duty between Rama and Sugriva, sealed under witness of fire and honor.","Camp Story Scroll":"A strategy scroll from Hanuman's camp, recording how stories carry morale across long campaigns.","Ocean Wind Compass":"A brass compass tuned by vanara navigators to keep rescue teams coordinated near Lanka's coast.","Surasa's Trial Pearl":"A moon-white pearl said to form when Surasa tests a hero's humility. Maritime retellings treat it as proof that wisdom can pass any divine gate.","Sita's Ashoka Leaf Token":"A pressed leaf from Ashoka Vatika marked with Sita's blessing. Commentarial traditions read it as a living witness to endurance, memory, and hope.","Hanuman's Debrief Seal":"A wax seal used on Hanuman's first return report after Lanka reconnaissance. Camp chronicles frame it as the start of the decisive rescue phase.","Setubandha Survey Tablet":"An etched planning tablet naming Nala, Nila, and tidal rhythms for bridge work. It mirrors engineering motifs found in later Ramayana traditions.","Jambavan's Tide Chart":"A bark chart mapping moon phases, currents, and safe launch windows. Vanara lore credits Jambavan for combining memory, astronomy, and command timing.","Trijata's Dream Chronicle":"A palm-leaf record of Trijata's prophetic dream foretelling Rama's victory. Devotional tellings preserve it as Lanka's internal testimony of dharma.","Chudamani Transmission Case":"A lacquered case said to have carried Sita's chudamani across the sea. Performative retellings use it to symbolize proof, trust, and mission success.","Rama Setu Coral Core":"A coral-lined stone core from Setu planning grounds. Later scholastic narratives cite it while describing sacred geography and cooperative labor."};
-var timelineLevels=[[1,2],[3],[4],[5,6],[7,8],[9,10,11,12,13],[14,15,16,52,18],[17,19],[20,21],[22,23],[24],[25],[26,27],[28],[29,39],[30],[31,32],[48,34,35],[49],[50],[33,37],[36,65],[38,66],[67,68],[40,41],[42],[43],[44,45,46],[47,95,96,97],[53],[54,55,98]];
-var timelineEdges=[{from:1,to:3,label:"Argue back"},{from:1,to:4,label:"Accept exile"},{from:2,to:3,label:"Argue back"},{from:2,to:4,label:"Accept exile"},{from:3,to:4,label:"Continue"},{from:4,to:5,label:"Go alone"},{from:4,to:6,label:"Go with them"},{from:5,to:8,label:"Continue"},{from:6,to:7,label:"Continue"},{from:7,to:12,label:"Accept marriage"},{from:7,to:9,label:"Fight"},{from:7,to:10,label:"Protect Sita"},{from:7,to:11,label:"Negotiate"},{from:8,to:12,label:"Accept"},{from:8,to:13,label:"Reject"},{from:13,to:9,label:"Fight"},{from:11,to:15,label:"Try again"},{from:11,to:98,label:"Negotiate then duel"},{from:98,to:14,label:"Win duel",type:"chance"},{from:98,to:18,label:"Lose duel",type:"chance"},{from:15,to:9,label:"Fight"},{from:9,to:14,label:"Fight (win w/party)",type:"chance"},{from:9,to:52,label:"Fight (win alone)",type:"chance"},{from:9,to:18,label:"Fight (lose)",type:"chance"},{from:10,to:19,label:"Continue"},{from:14,to:19,label:"Continue"},{from:12,to:16,label:"Meet Ravana"},{from:16,to:17,label:"Claim throne"},{from:19,to:95,label:"Investigate glimmer"},{from:19,to:20,label:"Chase deer"},{from:19,to:21,label:"Ignore deer"},{from:95,to:20,label:"Chase anyway"},{from:95,to:21,label:"Stay alert"},{from:20,to:22,label:"Bring Lakshmana"},{from:20,to:23,label:"Leave with Sita"},{from:22,to:24,label:"Keep following"},{from:23,to:24,label:"Keep following"},{from:24,to:25,label:"Continue"},{from:25,to:26,label:"Lakshmana came"},{from:25,to:27,label:"Lakshmana stayed"},{from:26,to:29,label:"Continue"},{from:27,to:28,label:"Continue"},{from:28,to:29,label:"Ravana succeeds",type:"chance"},{from:28,to:39,label:"Lakshmana returns",type:"chance"},{from:29,to:30,label:"Continue"},{from:30,to:96,label:"Check feathers"},{from:30,to:31,label:"Do nothing"},{from:30,to:32,label:"Try rescue"},{from:96,to:31,label:"Do nothing"},{from:96,to:32,label:"Try rescue"},{from:32,to:48,label:"Q1 right"},{from:32,to:34,label:"Q1 wrong"},{from:32,to:35,label:"Q1 wrong"},{from:48,to:49,label:"Q2 right"},{from:48,to:34,label:"Q2 wrong"},{from:48,to:35,label:"Q2 wrong"},{from:49,to:50,label:"Q3 right"},{from:49,to:34,label:"Q3 wrong"},{from:49,to:35,label:"Q3 wrong"},{from:50,to:33,label:"Fate win",type:"chance"},{from:50,to:34,label:"Fate lose",type:"chance"},{from:33,to:36,label:"Go after Ravana"},{from:36,to:38,label:"Fight Ravana"},{from:34,to:37,label:"Continue"},{from:35,to:37,label:"Continue"},{from:31,to:65,label:"Keep searching"},{from:37,to:65,label:"Keep searching"},{from:65,to:66,label:"Return to hut"},{from:66,to:67,label:"Accept return"},{from:66,to:68,label:"Decline return"},{from:68,to:40,label:"Continue exile"},{from:40,to:97,label:"Explore cave mural"},{from:40,to:41,label:"Hear request"},{from:97,to:41,label:"Hear request"},{from:41,to:42,label:"Consider plan"},{from:42,to:43,label:"Set trap"},{from:43,to:44,label:"Correct answer"},{from:43,to:45,label:"Wrong answer"},{from:43,to:46,label:"Wrong answer"},{from:44,to:47,label:"Meet Hanuman"},{from:47,to:53,label:"Continue main story"},{from:53,to:54,label:"Begin rescue"},{from:54,to:47,label:"Return to camp"},{from:54,to:55,label:"Lead the next story mission"}];
-function validateSequentialSceneOrder(){var sceneIds=Object.keys(timelineNodeTitles).map(function(sceneId){return parseInt(sceneId,10);
-}).filter(function(sceneId){return!isNaN(sceneId)&&sceneId>legacySceneSequenceCeiling;
-}).sort(function(a,b){return a-b;
-});
-var expectedSceneId=legacySceneSequenceCeiling+1;
-var i;
-sceneSequenceValidation.isValid=true;
-sceneSequenceValidation.message="";
-sceneSequenceValidation.missingSceneId=null;
-for(i=0;
-i<sceneIds.length;
-i++){if(sceneIds[i]!==expectedSceneId){sceneSequenceValidation.isValid=false;
-sceneSequenceValidation.missingSceneId=expectedSceneId;
-sceneSequenceValidation.message="Scene sequence broken. Missing Scene "+expectedSceneId+" before Scene "+sceneIds[i]+". Create missing scenes in order before adding later ones.";
-break;
-}expectedSceneId++;
-}if(!sceneSequenceValidation.isValid){console.error(sceneSequenceValidation.message);
-}}function guardSequentialSceneOrder(){if(sceneSequenceValidation.isValid){return true;
-}alert(sceneSequenceValidation.message);
-return false;
-}timelineEdges=timelineEdges.map(function(edge){return{from:edge.from,to:edge.to,label:timelineNodeTitles[edge.to]||("Scene "+edge.to),type:edge.type};
-});
-function randomizer(){return Math.floor(Math.random()*101);
-}function clampOdds(value){if(value<5){return 5;
-}if(value>95){return 95;
-}return value;
-}function getChallengeOdds(challengeType){if(challengeType==="fight"){return 70;
-}return 40;
-}function getArtifactLoreByName(artifactName){return artifactLoreCatalog[artifactName]||"A mysterious Ramayana artifact. Its full lore is still unknown.";
-}function updatePlayerStatsCard(){return;
-}function closePlayerStatsModal(){return;
-}function updateInventoryCard(){var inventoryButton=document.getElementById("inventoryButton");
-if(!inventoryButton){return;
-}inventoryButton.textContent="Inventory ("+inventoryArtifacts.length+")";
-}function openInventoryModal(){var modal=document.getElementById("inventoryModal");
-var inventoryList=document.getElementById("inventoryList");
-var emptyMessage=document.getElementById("inventoryEmpty");
-var i;
-var listHtml="";
-var artifactName;
-if(!modal||!inventoryList||!emptyMessage){return;
-}if(inventoryArtifacts.length===0){emptyMessage.style.display="block";
-inventoryList.innerHTML="";
-}else{emptyMessage.style.display="none";
-for(i=0;
-i<inventoryArtifacts.length;
-i++){artifactName=inventoryArtifacts[i];
-listHtml+="<li class='inventory-item'>"+"<h4>"+escapeHtml(artifactName)+"</h4>"+"<p>"+escapeHtml(getArtifactLoreByName(artifactName))+"</p>"+"</li>";
-}inventoryList.innerHTML=listHtml;
-}modal.classList.add("open");
-modal.setAttribute("aria-hidden","false");
-}function closeInventoryModal(){var modal=document.getElementById("inventoryModal");
-if(!modal){return;
-}modal.classList.remove("open");
-modal.setAttribute("aria-hidden","true");
-}function handleInventoryModalBackdrop(event){if(event.target&&event.target.id==="inventoryModal"){closeInventoryModal();
-}}function addArtifact(artifactName){if(inventoryArtifacts.indexOf(artifactName)===-1){inventoryArtifacts.push(artifactName);
-}updateInventoryCard();
-}function clearStoryCard(){document.getElementById("storyCard").innerHTML="<div id='storyCardToolbar'><button id='undoButton' onclick='undoChoice()' type='button' disabled aria-label='Undo last choice'><svg viewBox='0 0 24 24' role='img' aria-hidden='true' focusable='false'><path d='M9 7H4V2'/><path d='M4 7l5-5'/><path d='M4 7h9a7 7 0 1 1 0 14h-2'/></svg><span>Undo</span></button></div><!-- this is where the story will be displayed --><div id='choices'></div>";
-}function ensureStoryCardToolbar(){var storyCard=document.getElementById("storyCard");
-if(!storyCard||storyCard.querySelector("#storyCardToolbar")){return;
-}storyCard.insertAdjacentHTML("afterbegin","<div id='storyCardToolbar'><button id='undoButton' onclick='undoChoice()' type='button' disabled aria-label='Undo last choice'><svg viewBox='0 0 24 24' role='img' aria-hidden='true' focusable='false'><path d='M9 7H4V2'/><path d='M4 7l5-5'/><path d='M4 7h9a7 7 0 1 1 0 14h-2'/></svg><span>Undo</span></button></div>");
-}function setUndoButton(){var undoButton=document.getElementById("undoButton");
-if(!undoButton){return;
-}undoButton.disabled=oldStates.length===0;
+var currentScene = "intro";
+var playerName = "Traveler";
+var storyHistory = [];
+
+var scenes = {
+  intro: function () {
+    return "<h2>Welcome, " + escapeHtml(playerName) + "</h2>"
+      + "<p>You are Rama of Ayodhya. Exile has been decreed, and every decision now changes the path ahead.</p>"
+      + "<div id='choices'>"
+      + "<button type='button' onclick=\"choose('acceptExile')\">Accept exile calmly</button>"
+      + "<button type='button' onclick=\"choose('argueExile')\">Argue against the order</button>"
+      + "</div>";
+  },
+  argueExile: function () {
+    return "<h2>You argue in the court</h2>"
+      + "<p>Your protest shakes the hall, but the old promise to Kaikeyi cannot be undone. Exile still stands.</p>"
+      + "<div id='choices'>"
+      + "<button type='button' onclick=\"choose('forestDeparture')\">Leave for the forest</button>"
+      + "</div>";
+  },
+  acceptExile: function () {
+    return "<h2>You accept the exile</h2>"
+      + "<p>You choose duty over comfort. Sita and Lakshmana prepare to walk beside you into the forest.</p>"
+      + "<div id='choices'>"
+      + "<button type='button' onclick=\"choose('forestDeparture')\">Begin the forest journey</button>"
+      + "</div>";
+  },
+  forestDeparture: function () {
+    return "<h2>Forest Crossroads</h2>"
+      + "<p>Far from Ayodhya, a golden deer appears near your hut. Sita asks you to follow it.</p>"
+      + "<div id='choices'>"
+      + "<button type='button' onclick=\"choose('chaseDeer')\">Chase the golden deer</button>"
+      + "<button type='button' onclick=\"choose('ignoreDeer')\">Ignore it and stay together</button>"
+      + "</div>";
+  },
+  chaseDeer: function () {
+    return "<h2>The trap is sprung</h2>"
+      + "<p>The deer was Maricha in disguise. Ravana uses the moment to seize Sita and flee south.</p>"
+      + "<div id='choices'>"
+      + "<button type='button' onclick=\"choose('alliance')\">Seek allies and continue</button>"
+      + "</div>";
+  },
+  ignoreDeer: function () {
+    return "<h2>Danger avoided</h2>"
+      + "<p>You resist the illusion. Ravana loses his opening, and your family remains safe.</p>"
+      + "<div id='choices'>"
+      + "<button type='button' onclick='restart()'>Restart</button>"
+      + "</div>";
+  },
+  alliance: function () {
+    return "<h2>Alliance with Sugriva and Hanuman</h2>"
+      + "<p>You forge an alliance, gather scouts, and prepare a southern campaign to rescue Sita.</p>"
+      + "<div id='choices'>"
+      + "<button type='button' onclick=\"choose('finale')\">Launch the Lanka campaign</button>"
+      + "</div>";
+  },
+  finale: function () {
+    return "<h2>Final Duel</h2>"
+      + "<p>With Hanuman's intelligence and your allies at your side, you defeat Ravana and restore order.</p>"
+      + "<div id='choices'>"
+      + "<button type='button' onclick='restart()'>Play again</button>"
+      + "</div>";
+  }
+};
+
+function escapeHtml(text) {
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;");
 }
-function saveOldState(){oldStates.push({currentScene:currentScene,broughtLakshmana:broughtLakshmana,wentAlone:wentAlone,inventoryArtifacts:inventoryArtifacts.slice(),playerStats:JSON.parse(JSON.stringify(playerStats)),inventoryItems:inventoryItems.slice(),receiptScenes:receiptScenes.slice(),receiptChoices:receiptChoices.slice(),visitedSceneIds:visitedSceneIds.slice(),takenTransitions:takenTransitions.slice()});
-setUndoButton();
-}function undoChoice(){var oldState;
-if(oldStates.length===0){return;
-}oldState=oldStates.pop();
-currentScene=oldState.currentScene;
-broughtLakshmana=oldState.broughtLakshmana;
-wentAlone=oldState.wentAlone;
-inventoryArtifacts=oldState.inventoryArtifacts;
-playerStats=oldState.playerStats;
-inventoryItems=oldState.inventoryItems||[];
-receiptScenes=oldState.receiptScenes;
-receiptChoices=oldState.receiptChoices;
-visitedSceneIds=oldState.visitedSceneIds;
-takenTransitions=oldState.takenTransitions;
-if(currentScene===0){clearStoryCard();
-syncHashWithCurrentScene();
-renderTimeline(timelineModalOpen);
-setUndoButton();
-return;
-}showScene();
-}function addSceneToReceipt(){var storyCard=document.getElementById("storyCard");
-var heading=storyCard.querySelector("h2");
-var paragraphs=storyCard.querySelectorAll("p");
-var sceneText=heading?heading.textContent.trim():"Scene";
-var i;
-for(i=0;
-i<paragraphs.length;
-i++){sceneText+=" - "+paragraphs[i].textContent.trim();
-}if(receiptScenes[receiptScenes.length-1]!==sceneText){receiptScenes.push(sceneText);
-}}function makeReceipt(){var storyCard=document.getElementById("storyCard");
-var receipt="";
-var i;
-if(currentScene!==17&&currentScene!==18&&currentScene!==21&&currentScene!==31&&currentScene!==37&&currentScene!==38&&currentScene!==39&&currentScene!==45&&currentScene!==46&&currentScene!==52&&currentScene!==67&&currentScene!==47){return;
-}receipt+="<section id='receiptCard'>";
-receipt+="<h3>Story Receipt</h3>";
-receipt+="<p><strong>Traveler:</strong> "+(playerName||"Unknown")+"</p>";
-receipt+="<div class='receipt-section'><h4>Your Choices</h4><ol>";
-for(i=0;
-i<receiptChoices.length;
-i++){receipt+="<li>"+receiptChoices[i]+"</li>";
-}receipt+="</ol></div>";
-receipt+="<div class='receipt-section'><h4>Full Story</h4><ol>";
-for(i=0;
-i<receiptScenes.length;
-i++){receipt+="<li>"+receiptScenes[i]+"</li>";
-}receipt+="</ol></div>";
-receipt+="</section>";
-storyCard.innerHTML+=receipt;
-}function addChoiceToReceipt(choiceText){receiptChoices.push(choiceText);
-}function restart(){currentScene=0;
-broughtLakshmana=false;
-wentAlone=false;
-inventoryArtifacts=[];
-playerStats={};
-inventoryItems=[];
-receiptScenes=[];
-receiptChoices=[];
-oldStates=[];
-visitedSceneIds=[];
-takenTransitions=[];
-rescueSoundtrackMode=false;
-clearStoryCard();
-syncHashWithCurrentScene();
-renderTimeline(timelineModalOpen);
-setUndoButton();
-updatePlayerStatsCard();
-updateInventoryCard();
-}function resetLankaWarProfile(){rescueSoundtrackMode=false;
-}function startAdventure(){if(!guardSequentialSceneOrder()){console.warn("Scene order validation warning at start:",sceneSequenceValidation.message);
-}playerName=document.getElementById("playerName").value.trim();
-if(playerName===""){playerName="Traveler";
-}oldStates=[];
-visitedSceneIds=[];
-takenTransitions=[];
-rescueSoundtrackMode=false;
-resetLankaWarProfile();
-currentScene=1;
-updatePlayerStatsCard();
-showScene();
-focusStoryCard();
-}function escapeHtml(text){return String(text).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&quot;");
-}function makeWrappedTextLines(text,maxCharsPerLine){var words=text.split(" ");
-var lines=[];
-var line="";
-var i;
-for(i=0;
-i<words.length;
-i++){if((line+" "+words[i]).trim().length>maxCharsPerLine&&line!==""){lines.push(line);
-line=words[i];
-}else{line=(line+" "+words[i]).trim();
-}}if(line!==""){lines.push(line);
-}return lines;
-}function focusStoryCard(){var storyCard=document.getElementById("storyCard");
-if(!storyCard){return;
-}window.requestAnimationFrame(function(){storyCard.scrollIntoView({behavior:"smooth",block:"start"});
-});
-}function finishSceneDecision(previousScene){if(previousScene!==currentScene){takenTransitions.push(previousScene+"->"+currentScene);
-}showScene();
-focusStoryCard();
-}function applyScrollRevealState(element){if(!element){return;
-}window.requestAnimationFrame(function(){element.classList.add("in-view");
-});
-}function setupScrollRevealTransitions(){var revealElements=document.querySelectorAll("#titleContainer, #storyCard, #timelineCard, #inventoryCard");
-var i;
-for(i=0;
-i<revealElements.length;
-i++){revealElements[i].classList.add("scroll-reveal");
-}if(!("IntersectionObserver"in window)){for(i=0;
-i<revealElements.length;
-i++){applyScrollRevealState(revealElements[i]);
-}return;
-}scrollRevealObserver=new IntersectionObserver(function(entries){var j;
-for(j=0;
-j<entries.length;
-j++){if(entries[j].isIntersecting){entries[j].target.classList.add("in-view");
-}}},{threshold:0.18,rootMargin:"0px 0px -12% 0px"});
-for(i=0;
-i<revealElements.length;
-i++){scrollRevealObserver.observe(revealElements[i]);
-}}function animateStoryCardEntry(){var storyCard=document.getElementById("storyCard");
-if(!storyCard){return;
-}storyCard.classList.remove("in-view");
-void storyCard.offsetWidth;
-applyScrollRevealState(storyCard);
-}function updateTimelineZoomLabel(){var label=document.getElementById("timelineZoomValue");
-if(!label){return;
-}label.textContent=Math.round(timelineZoom*100)+"%";
-}function adjustTimelineZoom(change){timelineZoom=Math.max(1,Math.min(5,timelineZoom+change));
-updateTimelineZoomLabel();
-renderTimeline(timelineModalOpen);
-}function updateTimelineRevealButton(){var revealButton=document.getElementById("timelineRevealButton");
-if(!revealButton){return;
-}if(timelineRevealAll){revealButton.textContent="Unreveal";
-}else{revealButton.textContent="Reveal";
-}}function revealTimelinePossibilities(){timelineRevealAll=!timelineRevealAll;
-updateTimelineRevealButton();
-renderTimeline(timelineModalOpen);
-}function renderTimeline(showHighlight){var container=document.getElementById("timelineFlowchart");
-var svg="";
-var nodeWidth=280;
-var nodeHeight=112;
-var levelGap=430;
-var rowGap=260;
-var marginX=70;
-var marginY=80;
-var width=marginX*2+(timelineLevels.length-1)*levelGap+nodeWidth;
-var maxRows=0;
-var height;
-var coords={};
-var edgeKeyMap={};
-var levelGroups=["Exile","Surphanaka","Golden Deer","Abduction","Jatayu","Alliance","Part 2"];
-var levelLabelStep=Math.ceil(timelineLevels.length/levelGroups.length);
-var i;
-var j;
-var levelNodes;
-var yStart;
-var nodeId;
-var edge;
-var fromNode;
-var toNode;
-var fromX;
-var fromY;
-var toX;
-var toY;
-var pathClass;
-var nodeClass;
-var labelX;
-var labelY;
-var titleLines;
-var titleLine;
-var k;
-var columnLabel;
-var columnStartX;
-var edgeLabelPositions=[];
-var nodeBoxes=[];
-var laneOffset;
-var midX;
-var labelWidth;
-var labelHeight;
-var labelPaddingX=8;
-var labelPaddingY=5;
-var labelText;
-var collisionFound;
-if(!container){return;
-}for(i=0;
-i<timelineLevels.length;
-i++){if(timelineLevels[i].length>maxRows){maxRows=timelineLevels[i].length;
-}}height=marginY*2+(maxRows-1)*rowGap+nodeHeight;
-for(i=0;
-i<timelineLevels.length;
-i++){levelNodes=timelineLevels[i];
-yStart=marginY+((maxRows-levelNodes.length)*rowGap)/2;
-for(j=0;
-j<levelNodes.length;
-j++){nodeId=levelNodes[j];
-coords[nodeId]={x:marginX+i*levelGap,y:yStart+j*rowGap};
-nodeBoxes.push({x:coords[nodeId].x,y:coords[nodeId].y,w:nodeWidth,h:nodeHeight});
-}}if(showHighlight){for(i=0;
-i<takenTransitions.length;
-i++){edgeKeyMap[takenTransitions[i]]=true;
-}}svg+="<svg viewBox='0 0 "+width+" "+height+"' role='img' aria-label='Story timeline flowchart'>";
-for(i=0;
-i<timelineLevels.length;
-i++){columnStartX=marginX+i*levelGap;
-svg+="<rect x='"+(columnStartX-16)+"' y='16' width='"+(nodeWidth+32)+"' height='"+(height-32)+"' rx='18' ry='18' fill='rgba(255, 248, 229, 0.02)' stroke='rgba(255, 225, 169, 0.08)' />";
-if(i%levelLabelStep===0){columnLabel=levelGroups[Math.floor(i/levelLabelStep)]||"Story";
-svg+="<text class='timeline-column-label' x='"+columnStartX+"' y='48'>"+columnLabel+"</text>";
-}}for(i=0;
-i<timelineEdges.length;
-i++){edge=timelineEdges[i];
-fromNode=coords[edge.from];
-toNode=coords[edge.to];
-if(!fromNode||!toNode){continue;
-}if(!timelineRevealAll&&!edgeKeyMap[edge.from+"->"+edge.to]){continue;
-}fromX=fromNode.x+nodeWidth;
-fromY=fromNode.y+nodeHeight/2;
-toX=toNode.x;
-toY=toNode.y+nodeHeight/2;
-laneOffset=Math.max(-120,Math.min(120,(toY-fromY)*0.35))+((i%3)-1)*24;
-midX=fromX+((toX-fromX)/2)+laneOffset;
-pathClass="timeline-edge";
-if(edge.type==="chance"){pathClass+=" chance";
-}if(edgeKeyMap[edge.from+"->"+edge.to]){pathClass+=" active";
-}svg+="<path class='"+pathClass+"' d='M "+fromX+" "+fromY+" H "+midX+" V "+toY+" H "+toX+"' />";
-labelText=escapeHtml(edge.label||"");
-labelX=midX;
-labelY=((fromY+toY)/2)-8+((i%4)-1.5)*8;
-labelWidth=Math.max(56,labelText.length*7+labelPaddingX*2);
-labelHeight=22;
-do{collisionFound=false;
-for(k=0;
-k<edgeLabelPositions.length;
-k++){if(Math.abs(edgeLabelPositions[k].x-labelX)<(labelWidth/2+edgeLabelPositions[k].w/2+12)&&Math.abs(edgeLabelPositions[k].y-labelY)<(labelHeight+8)){labelY+=20;
-labelX+=((k%2)===0?20:-20);
-collisionFound=true;
-break;
-}}if(!collisionFound){for(k=0;
-k<nodeBoxes.length;
-k++){if(labelX+labelWidth/2>nodeBoxes[k].x-6&&labelX-labelWidth/2<nodeBoxes[k].x+nodeBoxes[k].w+6&&labelY-labelHeight<nodeBoxes[k].y+nodeBoxes[k].h+6&&labelY>nodeBoxes[k].y-6){labelY+=22;
-labelX+=((k%2)===0?18:-18);
-collisionFound=true;
-break;
-}}}if(labelX<marginX+20){labelX=marginX+20;
-}if(labelX>width-marginX-20){labelX=width-marginX-20;
-}}while(collisionFound);
-edgeLabelPositions.push({x:labelX,y:labelY,w:labelWidth});
-svg+="<g class='edge-label-group'>";
-svg+="<rect class='edge-label-bg' x='"+(labelX-labelWidth/2)+"' y='"+(labelY-labelHeight+labelPaddingY)+"' width='"+labelWidth+"' height='"+labelHeight+"' rx='8' ry='8'></rect>";
-svg+="<text class='edge-label' x='"+labelX+"' y='"+labelY+"'>"+labelText+"</text>";
-svg+="</g>";
-}for(i=0;
-i<timelineLevels.length;
-i++){levelNodes=timelineLevels[i];
-for(j=0;
-j<levelNodes.length;
-j++){nodeId=levelNodes[j];
-nodeClass="timeline-node";
-if(showHighlight&&visitedSceneIds.indexOf(nodeId)!==-1){nodeClass+=" visited";
-}if(showHighlight&&nodeId===currentScene){nodeClass+=" active";
-}if(!timelineRevealAll&&visitedSceneIds.indexOf(nodeId)===-1&&nodeId!==currentScene){continue;
-}svg+="<rect class='"+nodeClass+"' x='"+coords[nodeId].x+"' y='"+coords[nodeId].y+"' rx='12' ry='12' width='"+nodeWidth+"' height='"+nodeHeight+"'></rect>";
-svg+="<text class='node-id' x='"+(coords[nodeId].x+16)+"' y='"+(coords[nodeId].y+30)+"'>S"+nodeId+"</text>";
-titleLines=makeWrappedTextLines(timelineNodeTitles[nodeId]||"Scene",24);
-for(k=0;
-k<titleLines.length&&k<3;
-k++){titleLine=escapeHtml(titleLines[k]);
-svg+="<text class='node-title' x='"+(coords[nodeId].x+16)+"' y='"+(coords[nodeId].y+56+k*18)+"'>"+titleLine+"</text>";
-}}}svg+="</svg>";
-container.innerHTML=svg;
-var renderedSvg=container.querySelector("svg");
-if(renderedSvg){renderedSvg.style.width=(timelineZoom*100)+"%";
-renderedSvg.style.minWidth=(4300*timelineZoom)+"px";
-}}function openTimelineModal(){var modal=document.getElementById("timelineModal");
-if(!modal){return;
-}timelineModalOpen=true;
-timelineRevealAll=false;
-updateTimelineZoomLabel();
-updateTimelineRevealButton();
-renderTimeline(true);
-modal.classList.add("open");
-modal.setAttribute("aria-hidden","false");
-syncHashWithCurrentScene();
-}function closeTimelineModal(){var modal=document.getElementById("timelineModal");
-if(!modal){return;
-}timelineModalOpen=false;
-modal.classList.remove("open");
-modal.setAttribute("aria-hidden","true");
-syncHashWithCurrentScene();
-}function handleTimelineModalBackdrop(event){if(event.target&&event.target.id==="timelineModal"){closeTimelineModal();
-}}function showScene(){var storyCard=document.getElementById("storyCard");
-updateBackgroundMusicForScene();
-if(currentScene===1){storyCard.innerHTML="<h1>Part 1: The Exile</h1>"+"<h2>Welcome, "+playerName+"!</h2>"+"<p>You are a brave warrior in ancient India from the Kingdom of Ayodhya. You are soon to be crowned ruler, as your father, King Dasharatha, is getting old.</p>"+"<p>One of your father's wives, Kaikeyi, demands that her own son, your younger brother Bharata, be crowned instead. Your father is left with no choice but to exile you from the kingdom.</p>"+"<p>As part of your exile, you swear that you will live apart from royal comfort and will not enter any city until your exile ends.</p>"+"<p>Do you:</p>"+"<div id='choices'>"+"<button onclick='makeChoice(3)'>Argue back</button>"+"<button onclick='makeChoice(4)'>Accept the exile</button>"+"</div>";
-}else if(currentScene===2){storyCard.innerHTML="<h2>Exile Begins</h2>"+"<p>You have been banished from Ayodhya. The road ahead is uncertain, and your response will shape the rest of your journey.</p>"+"<p>Do you:</p>"+"<div id='choices'>"+"<button onclick='makeChoice(3)'>Argue back</button>"+"<button onclick='makeChoice(4)'>Accept the exile</button>"+"</div>";
-}else if(currentScene===3){storyCard.innerHTML="<h2>You choose to argue back.</h2>"+"<p>Dasharatha is moved by your words and begins to argue with Kaikeyi. Though he is heartbroken, he is ultimately unable to resist her demands because of an old promise.</p>"+"<p>You are left with no choice but to continue into exile.</p>"+"<div id='choices'>"+"<button onclick='makeChoice(4)'>Continue</button>"+"</div>";
-}else if(currentScene===4){storyCard.innerHTML="<h2>You choose to accept the exile.</h2>"+"<p>You prepare to leave, bound by your exile and your vow not to enter any city until it is over. Your brother Lakshmana and your wife Sita insist on going with you.</p>"+"<p>Do you:</p>"+"<div id='choices'>"+"<button onclick='makeChoice(5)'>Go alone</button>"+"<button onclick='makeChoice(6)'>Go with them</button>"+"</div>";
-}else if(currentScene===5){storyCard.innerHTML="<h2>You choose to go alone.</h2>"+"<p>You decide it will be easier for your loved ones to remain safe and comfortable in Ayodhya. You set out alone, carrying the burden of exile by yourself.</p>"+"<div id='choices'>"+"<button onclick='makeChoice(8)'>Continue</button>"+"</div>";
-}else if(currentScene===6){storyCard.innerHTML="<h2>You choose to go with them.</h2>"+"<p>You, Lakshmana, and Sita journey together through the forests. The trials are difficult, but their loyalty gives you strength.</p>"+"<div id='choices'>"+"<button onclick='makeChoice(8)'>Continue</button>"+"</div>";
-}else if(currentScene===7){storyCard.innerHTML="<h2>Surphanaka's Encounter</h2>"+"<p>One day, outside your home, you encounter a powerful demoness named Surphanaka. She claims she wants to be your wife, but you refuse because you are already married.</p>"+"<p>You suggest Lakshmana instead, but he refuses as well. Furious, Surphanaka threatens to kill Sita.</p>"+"<p>What do you do?</p>"+"<div id='choices'>"+"<button onclick='makeChoice(12)'>Accept the marriage</button>"+"<button onclick='makeChoice(9)'>Fight Surphanaka</button>"+"<button onclick='makeChoice(10)'>Protect Sita</button>"+"<button onclick='makeChoice(11)'>Negotiate</button>"+"</div>";
-}else if(currentScene===8){storyCard.innerHTML="<h2>Surphanaka's Encounter</h2>"+"<p>One day, outside your home, you encounter a powerful demoness named Surphanaka. She claims she wants to be your wife.</p>"+"<p>Do you:</p>"+"<div id='choices'>"+"<button onclick='makeChoice(12)'>Accept</button>"+"<button onclick='makeChoice(13)'>Reject</button>"+"</div>";
-}else if(currentScene===9){storyCard.innerHTML="<h2>Fight Surphanaka</h2>"+"<p>You choose to fight Surphanaka. Your strengths are evenly matched, and fate will decide the outcome.</p>"+"<p><strong>Current fight win odds:</strong> "+getChallengeOdds("fight")+"%</p>"+"<div id='choices'>"+"<button onclick='makeChoice(14)'>Fight</button>"+"</div>";
-}else if(currentScene===10){storyCard.innerHTML="<h2>Protect Sita</h2>"+"<p>You rush to defend Sita before Surphanaka can strike. Lakshmana steps in as well, and together you force the demoness to retreat in humiliation.</p>"+"<p>With Surphanaka driven away, the forest grows quiet once more. For a brief moment, it seems your troubles have passed.</p>"+"<div id='choices'>"+"<button onclick='makeChoice(19)'>Continue</button>"+"</div>";
-}else if(currentScene===11){storyCard.innerHTML="<h2>Negotiate with Surphanaka</h2>"+"<p>You try to calm Surphanaka with reason, hoping to avoid violence. For a moment she listens, but her anger burns fiercely.</p>"+"<p>Do you try one last peaceful appeal, or prepare to fight?</p>"+"<div id='choices'>"+"<button onclick='makeChoice(15)'>Try again</button>"+"<button onclick='makeChoice(9)'>Prepare to fight</button>"+"</div>";
-}else if(currentScene===12){storyCard.innerHTML="<h2>Accept Surphanaka's Proposal</h2>"+"<p>You accept Surphanaka's proposal and choose to stand by her side. Word of this shocking alliance quickly spreads across the land.</p>"+"<div id='choices'>"+"<button onclick='makeChoice(16)'>Meet Ravana</button>"+"</div>";
-}else if(currentScene===13){storyCard.innerHTML="<h2>Reject Surphanaka's Proposal</h2>"+"<p>You reject Surphanaka firmly. She is enraged by the insult and prepares to attack.</p>"+"<div id='choices'>"+"<button onclick='makeChoice(9)'>Fight Surphanaka</button>"+"</div>";
-}else if(currentScene===14){storyCard.innerHTML="<h2>Victory</h2>"+"<p>You defeat Surphanaka, and she flees in disgrace. At last, you, Sita, and Lakshmana are free from her schemes.</p>"+"<div id='choices'>"+"<button onclick='makeChoice(19)'>Continue</button>"+"</div>";
-}else if(currentScene===52){storyCard.innerHTML="<h2>Peaceful Ending</h2>"+"<p>You defeat Surphanaka while traveling alone, and her threat finally comes to an end.</p>"+"<p>Later, when the time comes to return, you refuse to go back to Ayodhya. Instead, you stay where you have found peace and live happily ever after.</p>"+"<div id='choices'>"+"<button onclick='restart()'>Restart</button>"+"</div>";
-}else if(currentScene===15){storyCard.innerHTML="<h2>Negotiation Fails</h2>"+"<p>Your final attempt at peace fails. Surphanaka's fury grows, and you realize battle can no longer be avoided.</p>"+"<div id='choices'>"+"<button onclick='makeChoice(9)'>Fight Surphanaka</button>"+"</div>";
-}else if(currentScene===16){storyCard.innerHTML="<h2>Meeting Ravana</h2>"+"<p>Surphanaka brings you before her brother, Ravana, the mighty king of Lanka. Rather than treating you as an enemy, he welcomes your ambition and darkness.</p>"+"<p>Ravana offers you power, a throne, and a new future beside Surphanaka.</p>"+"<div id='choices'>"+"<button onclick='makeChoice(17)'>Claim the throne</button>"+"</div>";
-}else if(currentScene===17){storyCard.innerHTML="<h2>Evil King Ending</h2>"+"<p>You accept Ravana's offer, marry Surphanaka, and rise as an evil king. Together, you rule with fear, power, and strange happiness for the rest of your days.</p>"+"<p>In this ending, your adventure does not end in honor, but in a dark happily ever after.</p>"+"<div id='choices'>"+"<button onclick='restart()'>Restart</button>"+"</div>";
-}else if(currentScene===18){storyCard.innerHTML="<h2>Game Over</h2>"+"<p>You fought bravely, but Surphanaka proved too powerful. Your journey ends here.</p>"+"<div id='choices'>"+"<button onclick='restart()'>Restart</button>"+"</div>";
-}else if(currentScene===19){storyCard.innerHTML="<h2>The Golden Deer</h2>"+"<p>Days later, while traveling with Sita and Lakshmana, you spot a beautiful golden deer shimmering between the trees. Its coat glows like sunlight, and Sita is immediately enchanted by it.</p>"+"<p>She asks you to catch it for her, but Lakshmana warns that such a creature may be a trick. Unknown to you, the golden deer is actually the demon Maricha in disguise.</p>"+"<p>What do you do?</p>"+"<div id='choices'>"+"<button onclick='makeChoice(95)'>Investigate a strange glimmer nearby</button>"+"<button onclick='makeChoice(20)'>Chase the deer</button>"+"<button onclick='makeChoice(21)'>Ignore it</button>"+"</div>";
-}else if(currentScene===95){storyCard.innerHTML="<h2>Artifact Found: Maricha's Gleaming Horn Fragment</h2>"+"<p>Near a tree root, you find a splinter that flashes with unnatural gold. A forest hermit whispers that illusions can be touched, but never trusted.</p>"+"<p><em>Extra Lore:</em> Some retellings use this scene to teach that maya can imitate truth closely enough to fool even the noble-hearted.</p>"+"<p>What do you do next?</p>"+"<div id='choices'>"+"<button onclick='makeChoice(20)'>Chase the deer anyway</button>"+"<button onclick='makeChoice(21)'>Ignore the deer and stay alert</button>"+"</div>";
-}else if(currentScene===20){storyCard.innerHTML="<h2>Bring Lakshmana?</h2>"+"<p>Sita pleads with you to catch the deer. Lakshmana still does not trust it and offers to come with you if you want help.</p>"+"<p>Do you bring Lakshmana with you?</p>"+"<div id='choices'>"+"<button onclick='makeChoice(22)'>Yes, bring Lakshmana</button>"+"<button onclick='makeChoice(23)'>No, leave him with Sita</button>"+"</div>";
-}else if(currentScene===21){storyCard.innerHTML="<h2>You Ignore the Deer</h2>"+"<p>You decide not to trust the strange creature. Staying with Sita and Lakshmana keeps your family safe, and the golden deer vanishes back into the forest.</p>"+"<p>The danger passes, and this path of the story comes to an end.</p>"+"<div id='choices'>"+"<button onclick='restart()'>Restart</button>"+"</div>";
-}else if(currentScene===22){storyCard.innerHTML="<h2>Find the Deer</h2>"+"<p>You and Lakshmana track the golden deer deeper into the forest, while Sita remains behind at the hut. The creature keeps just out of reach, always glittering between the trees.</p>"+"<div id='choices'>"+"<button onclick='makeChoice(24)'>Keep following it</button>"+"</div>";
-}else if(currentScene===23){storyCard.innerHTML="<h2>Find the Deer</h2>"+"<p>You leave Lakshmana behind to guard Sita and track the golden deer alone. The creature leads you farther and farther from the hut, never seeming to tire.</p>"+"<div id='choices'>"+"<button onclick='makeChoice(24)'>Keep following it</button>"+"</div>";
-}else if(currentScene===24){storyCard.innerHTML="<h2>Shoot the Deer</h2>"+"<p>At last, you loose an arrow and strike the golden deer. As it falls, its shining body twists and changes. Before you lies Maricha, the demon who had taken the deer's form.</p>"+"<div id='choices'>"+"<button onclick='makeChoice(25)'>Continue</button>"+"</div>";
-}else if(currentScene===25){storyCard.innerHTML="<h2>Maricha's Last Cry</h2>"+"<p>With his dying breath, Maricha cries out in a voice that sounds just like yours. The sound rushes back through the forest toward Sita and Lakshmana.</p>"+"<div id='choices'>"+"<button onclick='makeChoice(26)'>Continue</button>"+"</div>";
-}else if(currentScene===26){storyCard.innerHTML="<h2>Ravana Sees His Chance</h2>"+"<p>Because Lakshmana came with you, Sita is left alone at the hut. Ravana wastes no time. Disguised as a holy man, he approaches her with false humility before revealing his true form.</p>"+"<div id='choices'>"+"<button onclick='makeChoice(27)'>Continue</button>"+"</div>";
-}else if(currentScene===27){storyCard.innerHTML="<h2>Lakshmana Draws the Line</h2>"+"<p>Hearing Maricha's false cry, Sita begs Lakshmana to go after you. Before leaving, Lakshmana draws a protective line around the hut and warns her not to step outside it for any reason.</p>"+"<div id='choices'>"+"<button onclick='makeChoice(28)'>Continue</button>"+"</div>";
-}else if(currentScene===28){storyCard.innerHTML="<h2>Ravana's Trick</h2>"+"<p>Ravana arrives disguised as a wandering holy man and asks Sita for alms. Bound by duty and compassion, she is torn between Lakshmana's warning and the request of a guest.</p>"+"<div id='choices'>"+"<button onclick='makeChoice(29)'>See what happens</button>"+"</div>";
-}else if(currentScene===29){storyCard.innerHTML="<h2>The Abduction of Sita</h2>"+"<p>Ravana reveals his true form, seizes Sita, and lifts her into his flying chariot. He rises above the forest with her as she cries out for help.</p>"+"<div id='choices'>"+"<button onclick='makeChoice(30)'>Continue</button>"+"</div>";
-}else if(currentScene===30){storyCard.innerHTML="<h2>Jatayu Sees Ravana</h2>"+"<p>Jatayu, the aged vulture king, sees Ravana carrying Sita away through the sky. He knows he may be too old for battle, but he cannot ignore her cries.</p>"+"<p>What does Jatayu do?</p>"+"<div id='choices'>"+"<button onclick='makeChoice(96)'>Examine the sky-swept feathers first</button>"+"<button onclick='makeChoice(31)'>Do nothing</button>"+"<button onclick='makeChoice(32)'>Try to rescue Sita</button>"+"</div>";
-}else if(currentScene===96){storyCard.innerHTML="<h2>Artifact Found: Jatayu's Wind-Sworn Plume</h2>"+"<p>You recover a plume marked with claw-lines from Jatayu's first clash with Ravana's chariot.</p>"+"<p><em>Extra Lore:</em> Commentarial traditions praise Jatayu as proof that age does not reduce one's duty to protect the innocent.</p>"+"<p>How should Jatayu act now?</p>"+"<div id='choices'>"+"<button onclick='makeChoice(31)'>Do nothing</button>"+"<button onclick='makeChoice(32)'>Try to rescue Sita</button>"+"</div>";
-}else if(currentScene===31){storyCard.innerHTML="<h2>Sita is Taken</h2>"+"<p>Jatayu does not intervene. Ravana escapes with Sita, and when you return, your exile has become a desperate rescue mission.</p>"+"<p>You and Lakshmana immediately begin searching the forest for signs of where she was taken.</p>"+"<div id='choices'>"+"<button onclick='makeChoice(65)'>Keep searching</button>"+"</div>";
-}else if(currentScene===32){storyCard.innerHTML="<h2>Jatayu's Rescue Attempt</h2>"+"<p>Jatayu launches himself into the sky to stop Ravana. To help him succeed, answer these three questions correctly.</p>"+"<p><strong>What kind of being is Hanuman?</strong></p>"+"<div id='choices'>"+"<button onclick='makeChoice(48)'>A vanara</button>"+"<button onclick='makeChoice(34)'>A rakshasa</button>"+"<button onclick='makeChoice(35)'>A naga</button>"+"</div>";
-}else if(currentScene===48){storyCard.innerHTML="<h2>Jatayu's Rescue Attempt</h2>"+"<p>Jatayu keeps fighting in the sky. Answer the second question:</p>"+"<p><strong>What is the name of the island kingdom ruled by Ravana?</strong></p>"+"<div id='choices'>"+"<button onclick='makeChoice(49)'>Lanka</button>"+"<button onclick='makeChoice(34)'>Ayodhya</button>"+"<button onclick='makeChoice(35)'>Mithila</button>"+"</div>";
-}else if(currentScene===49){storyCard.innerHTML="<h2>Jatayu's Rescue Attempt</h2>"+"<p>Jatayu is almost there. Answer the final question:</p>"+"<p><strong>Who is Rama's loyal brother traveling with him in the forest?</strong></p>"+"<div id='choices'>"+"<button onclick='makeChoice(33)'>Lakshmana</button>"+"<button onclick='makeChoice(34)'>Bharata</button>"+"<button onclick='makeChoice(35)'>Vali</button>"+"</div>";
-}else if(currentScene===50){storyCard.innerHTML="<h2>Jatayu's Final Struggle</h2>"+"<p>You answered all three questions correctly, but the battle is still dangerous. Jatayu makes one final desperate attack against Ravana in the sky.</p>"+"<p>Fate will now decide whether he wins or falls.</p>"+"<div id='choices'>"+"<button onclick='makeChoice(51)'>See what happens</button>"+"</div>";
-}else if(currentScene===33){storyCard.innerHTML="<h2>Jatayu Rescues Sita</h2>"+"<p>Your answer gives Jatayu the strength he needs. He slashes Ravana's chariot apart, forces it down into the forest, and rescues Sita before Ravana can flee.</p>"+"<p>Jatayu returns Sita safely to you, but Ravana is still nearby among the wreckage of the shattered chariot.</p>"+"<div id='choices'>"+"<button onclick='makeChoice(36)'>Go after Ravana</button>"+"</div>";
-}else if(currentScene===34){storyCard.innerHTML="<h2>Jatayu Falls</h2>"+"<p>Jatayu attacks bravely, but without enough strength behind him, Ravana strikes him down. Sita is still carried away into the distance.</p>"+"<div id='choices'>"+"<button onclick='makeChoice(37)'>Continue</button>"+"</div>";
-}else if(currentScene===35){storyCard.innerHTML="<h2>Jatayu Falls</h2>"+"<p>Jatayu fights with all his courage, but Ravana defeats him. Sita remains in Ravana's grasp, and the journey must continue without her.</p>"+"<div id='choices'>"+"<button onclick='makeChoice(37)'>Continue</button>"+"</div>";
-}else if(currentScene===36){storyCard.innerHTML="<h2>Fight Ravana in the Forest</h2>"+"<p>You race to the forest where Jatayu shattered Ravana's chariot. There, among broken wheels and torn banners, you confront Ravana before he can escape.</p>"+"<div id='choices'>"+"<button onclick='makeChoice(38)'>Fight Ravana</button>"+"</div>";
-}else if(currentScene===37){storyCard.innerHTML="<h2>Sita is Taken</h2>"+"<p>Jatayu's bravery could not stop Ravana. When you return, you learn that Sita has been taken, and your exile becomes a rescue mission.</p>"+"<p>You and Lakshmana begin searching at once, following broken branches and tracks through the woods.</p>"+"<div id='choices'>"+"<button onclick='makeChoice(65)'>Keep searching</button>"+"</div>";
-}else if(currentScene===65){storyCard.innerHTML="<h2>Searching for Sita</h2>"+"<p>You search through groves, riverbanks, and rocky trails for any clue of Sita's path. As the day fades, you decide to return to your forest home to regroup.</p>"+"<div id='choices'>"+"<button onclick='makeChoice(66)'>Return to the hut</button>"+"</div>";
-}else if(currentScene===66){storyCard.innerHTML="<h2>Bharata at the Hut</h2>"+"<p>When you return, Bharata is waiting. He falls at your feet and pleads for you to return to Ayodhya and take the throne.</p>"+"<p>Do you accept Bharata's plea or continue your exile and rescue mission?</p>"+"<div id='choices'>"+"<button onclick='makeChoice(67)'>Accept and return</button>"+"<button onclick='makeChoice(68)'>Decline and continue exile</button>"+"</div>";
-}else if(currentScene===67){storyCard.innerHTML="<h2>Ayodhya Return Ending</h2>"+"<p>You accept Bharata's plea and return to Ayodhya before your exile vow is complete. Court rivals see your return as a threat, and you are killed in a palace conspiracy.</p>"+"<p>Your story ends in Ayodhya before Sita can be rescued.</p>"+"<div id='choices'>"+"<button onclick='restart()'>Restart</button>"+"</div>";
-}else if(currentScene===68){storyCard.innerHTML="<h2>The Sandals Promise</h2>"+"<p>You refuse to return early and place your sandals in Bharata's hands. Bharata vows, \"I am not king. You are king, and I will rule only as your servant until you return.\"</p>"+"<p>With your vow intact, you continue the search and soon cross paths with Sugriva.</p>"+"<div id='choices'>"+"<button onclick='makeChoice(40)'>Continue to Sugriva</button>"+"</div>";
-}else if(currentScene===38){storyCard.innerHTML="<h2>Forest Duel Ending</h2>"+"<p>You meet Ravana in the forest beside the wreck of his broken chariot and battle him face to face. Though the clash shakes the forest, Sita is safe by your side once more.</p>"+"<p>This path ends with a hard-won victory and the promise of new dangers ahead.</p>"+"<div id='choices'>"+"<button onclick='restart()'>Restart</button>"+"</div>";
-}else if(currentScene===39){storyCard.innerHTML="<h2>Lakshmana Saves Sita</h2>"+"<p>As Ravana moves to seize Sita, Lakshmana returns in time to intervene. Ravana is forced to retreat, and Sita remains safe within the protection of the line.</p>"+"<p>This path ends with danger avoided, at least for now.</p>"+"<div id='choices'>"+"<button onclick='restart()'>Restart</button>"+"</div>";
-}else if(currentScene===40){storyCard.innerHTML="<h2>Meeting Sugriva</h2>"+"<p>As you and Lakshmana search for Sita, you come upon Sugriva, a vanara prince hiding in fear. He has been driven from his home by his powerful brother, Vali.</p>"+"<p>Sugriva offers friendship and help in your search if you will help him in return.</p>"+"<div id='choices'>"+"<button onclick='makeChoice(97)'>Inspect the cave mural nearby</button>"+"<button onclick='makeChoice(41)'>Hear Sugriva's request</button>"+"</div>";
-}else if(currentScene===97){storyCard.innerHTML="<h2>Artifact Found: Kishkindha Cave Mural Tablet</h2>"+"<p>Painted stone scenes show vanara heroes leaping impossible distances in service of dharma. The art predates your arrival, as if awaiting Hanuman's future deed.</p>"+"<p><em>Extra Lore:</em> Regional oral retellings often include cave murals as memory archives for vanara clans.</p>"+"<div id='choices'>"+"<button onclick='makeChoice(41)'>Return to Sugriva's request</button>"+"</div>";
-}else if(currentScene===41){storyCard.innerHTML="<h2>Sugriva's Plea</h2>"+"<p>Sugriva tells you that Vali stole his wife and seized his place. He begs you to help him defeat Vali so he can reclaim what was taken from him.</p>"+"<div id='choices'>"+"<button onclick='makeChoice(42)'>Consider his plan</button>"+"</div>";
-}else if(currentScene===42){storyCard.innerHTML="<h2>Your Exile Vow</h2>"+"<p>You remind Sugriva that during your exile you swore not to enter any city. Because of that vow, you cannot march into Vali's stronghold yourself.</p>"+"<p>Instead, you convince Sugriva to lure Vali out and fight him where you can take the shot from the forest.</p>"+"<div id='choices'>"+"<button onclick='makeChoice(43)'>Set the trap</button>"+"</div>";
-}else if(currentScene===43){storyCard.innerHTML="<h2>Sugriva Challenges Vali</h2>"+"<p>Sugriva roars a challenge, and Vali rushes out to fight him. The brothers clash with such speed and force that the whole forest trembles.</p>"+"<p>To strike true, answer this question correctly:</p>"+"<p><strong>What did Vali steal from Sugriva?</strong></p>"+"<div id='choices'>"+"<button onclick='makeChoice(44)'>Sugriva's wife</button>"+"<button onclick='makeChoice(45)'>Sugriva's bow</button>"+"<button onclick='makeChoice(46)'>Sugriva's horse</button>"+"</div>";
-}else if(currentScene===44){storyCard.innerHTML="<h2>Vali Falls</h2>"+"<p>Your answer steadies your hand. You loose your arrow at the perfect moment, and it strikes Vali down. Sugriva is finally freed from his brother's power.</p>"+"<div id='choices'>"+"<button onclick='makeChoice(47)'>Meet Sugriva's ally</button>"+"</div>";
-}else if(currentScene===45){storyCard.innerHTML="<h2>You Miss the Moment</h2>"+"<p>Your aim wavers, and the shot is lost. Vali realizes something is wrong, and Sugriva is forced to retreat before the plan succeeds.</p>"+"<div id='choices'>"+"<button onclick='restart()'>Restart</button>"+"</div>";
-}else if(currentScene===46){storyCard.innerHTML="<h2>You Miss the Moment</h2>"+"<p>You hesitate for too long, and Vali gains the advantage. Sugriva barely escapes, and this attempt to help him fails.</p>"+"<div id='choices'>"+"<button onclick='restart()'>Restart</button>"+"</div>";
-}else if(currentScene===47){storyCard.innerHTML="<h2>Meeting Hanuman</h2>"+"<p>Grateful for your help, Sugriva brings forward his wisest and most loyal companion: Hanuman. Hanuman bows before you and offers his strength in the search for Sita.</p>"+"<p>The war-camp is now focused only on the main rescue campaign.</p>"+"<div id='choices'>"+"<button onclick='makeChoice(76)'>Return to Main Story</button>"+"</div>";}else if(currentScene===53){storyCard.innerHTML="<h1>Part 2: The Rescue</h1>"+"<h2>The Rescue Begins</h2>"+"<p>You cannot undo anything from here on.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(2)'>Begin The Rescue</button>"+"</div>";
-var disableUndo=document.getElementById("undoButton");
-if(disableUndo){disableUndo.disabled=true;
-disableUndo.title="No longer works in this Part.";
-}}else if(currentScene===54){storyCard.innerHTML="<h2>War Council</h2>"+"<p>The rescue campaign enters its strategic phase. Messengers arrive with sketches of cliff routes, tidal windows, and guard rotations along Lanka's perimeter.</p>"+"<p>Hanuman asks for patience: one more focused mission could convert scattered clues into war-grade intelligence.</p>"+"<div id='choices'>"+"<button onclick='makeChoice(47)'>Return to Hanuman's camp</button>"+"<button onclick='makeDecision(55)'>Lead the next story mission</button>"+"</div>";
-}else if(currentScene===55){addArtifact("Ocean Wind Compass");
-storyCard.innerHTML="<h2>From the Leap to Surasa's Test</h2>"+"<p>Hanuman launches from Mahendra Mountain in colossal form. The earth shakes, trees tear free, and clouds split as gods watch the mission unfold across the sea.</p>"+"<p>Surasa rises in a terrifying serpent form and commands him to enter her mouth. Hanuman must choose how to respond first.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(56)'>Answer with humility and strategy</button>"+"<button onclick='makeDecision(57)'>Try to overpower her immediately</button>"+"</div>";
-}else if(currentScene===56){storyCard.innerHTML="<h2>Surasa's Expanding Trial</h2>"+"<p>Hanuman politely explains Rama's mission. Surasa widens her jaws. He grows vast; she grows vaster. In one instant, he shrinks to a tiny spark, enters and exits her mouth, and fulfills the boon without violence.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(58)'>Receive Surasa's blessing and continue</button>"+"</div>";
-}else if(currentScene===57){storyCard.innerHTML="<h2>Power Against Power</h2>"+"<p>Hanuman swells to mountain size, but Surasa expands further. The contest wastes precious time until he realizes raw force will not pass a divine test.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(59)'>Regain focus and switch tactics</button>"+"</div>";
-}else if(currentScene===58){addArtifact("Surasa's Trial Pearl");
-storyCard.innerHTML="<h2>Surasa Reveals Her Purpose</h2>"+"<p>Surasa blesses Hanuman: intelligence matched with humility will open impossible gates. He surges onward at greater speed.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(60)'>Continue across the ocean</button>"+"</div>";
-}else if(currentScene===59){storyCard.innerHTML="<h2>Time Lost, Mission Intact</h2>"+"<p>After forcing distance, Hanuman stabilizes his flight and recommits to precision over pride.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(60)'>Recover mission pace</button>"+"<button onclick='makeDecision(62)'>Sprint recklessly to make up time</button>"+"</div>";
-}else if(currentScene===60){storyCard.innerHTML="<h2>Simhika Grabs the Shadow</h2>"+"<p>His speed suddenly drops. Simhika has seized his shadow from below. Hanuman identifies the danger and prepares a counter.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(61)'>Let her swallow him, then strike from within</button>"+"<button onclick='makeDecision(63)'>Break free and rush straight toward Lanka</button>"+"</div>";
-}else if(currentScene===61){storyCard.innerHTML="<h2>Inside Simhika</h2>"+"<p>Hanuman allows himself to be swallowed, expands within, destroys Simhika, and bursts free. Lanka now gleams on the horizon.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(63)'>Approach Lanka in stealth form</button>"+"</div>";
-}else if(currentScene===62){storyCard.innerHTML="<h2>Reckless Sprint</h2>"+"<p>Hanuman recovers speed but arrives slightly off-course and must adjust quickly before patrols detect him.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(63)'>Correct course to Lanka's walls</button>"+"</div>";
-}else if(currentScene===63){storyCard.innerHTML="<h2>Lankini Challenges the Intruder</h2>"+"<p>Shrinking to stealth size, Hanuman lands near Lanka's gates. Lankini attacks and is struck down lightly. She recalls prophecy: Lanka's fall has begun.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(64)'>Acknowledge the prophecy and enter</button>"+"<button onclick='makeDecision(69)'>Slip inside without speaking further</button>"+"</div>";
-}else if(currentScene===64){storyCard.innerHTML="<h2>Prophecy at the Wall</h2>"+"<p>Lankini permits passage, warning that arrogance has already doomed Ravana's city.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(69)'>Move across rooftops at night</button>"+"</div>";
-}else if(currentScene===69){storyCard.innerHTML="<h2>Night Search Across Lanka</h2>"+"<p>Hanuman surveys guards, mansions, and feasting halls. In Ravana's palace he briefly mistakes Mandodari for Sita, then corrects himself and redirects the search.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(70)'>Search Ashoka Vatika next</button>"+"<button onclick='makeDecision(71)'>Probe deeper into the palace first</button>"+"</div>";
-}else if(currentScene===71){storyCard.innerHTML="<h2>Risky Palace Probe</h2>"+"<p>Extra patrols close in. Hanuman escapes by crossing high banners and realizes any delay risks Sita's safety.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(70)'>Immediately shift to Ashoka Vatika</button>"+"</div>";
-}else if(currentScene===70){addArtifact("Sita's Ashoka Leaf Token");
-storyCard.innerHTML="<h2>Sita in Ashoka Vatika</h2>"+"<p>Hanuman finds Sita emaciated and sorrowful among demonesses. Hidden in a tree, he hears her lament and watches Ravana threaten her before departing.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(72)'>Drop Rama's ring and reveal himself gently</button>"+"<button onclick='makeDecision(73)'>Wait one more moment before speaking</button>"+"</div>";
-}else if(currentScene===72){addArtifact("Chudamani Transmission Case");
-storyCard.innerHTML="<h2>The Ring and the Oath</h2>"+"<p>Hanuman presents Rama's ring, reassures Sita, receives her jewel, and vows that rescue is near.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(74)'>Plan the next move</button>"+"</div>";
-}else if(currentScene===73){storyCard.innerHTML="<h2>Witness Before Words</h2>"+"<p>After hearing Sita's final prayer, Hanuman reveals himself with the ring and earns her trust through calm, precise testimony.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(74)'>Accept Sita's jewel and continue</button>"+"</div>";
-}else if(currentScene===74){storyCard.innerHTML="<h2>Mission Choice in Lanka</h2>"+"<p>Primary objective complete. Hanuman now chooses between immediate return or testing Lanka's defenses before departing.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(75)'>Assess enemy strength before leaving</button>"+"<button onclick='makeDecision(84)'>Return immediately with Sita's message</button>"+"</div>";
-}else if(currentScene===75){storyCard.innerHTML="<h2>Testing the Enemy</h2>"+"<p>Hanuman decides to force Lanka to reveal commanders, response times, and weapon discipline.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(77)'>Destroy the Ashoka grove openly</button>"+"<button onclick='makeDecision(78)'>Begin with covert sabotage</button>"+"</div>";
-}else if(currentScene===77){storyCard.innerHTML="<h2>Ashoka Grove in Ruin</h2>"+"<p>Trees and pavilions fall. Guards, generals, and Aksha are defeated. Indrajit finally binds Hanuman with a divine weapon.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(79)'>Allow capture to reach Ravana's court</button>"+"</div>";
-}else if(currentScene===78){storyCard.innerHTML="<h2>Covert Sabotage Escalates</h2>"+"<p>Silent strikes disrupt armories, but Indrajit's divine weapon still captures Hanuman and carries him before Ravana.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(79)'>Face Ravana directly</button>"+"</div>";
-}else if(currentScene===79){addArtifact("Hanuman's Debrief Seal");
-storyCard.innerHTML="<h2>Bound Before Ravana</h2>"+"<p>In court, Hanuman warns Ravana to return Sita. Ravana orders his tail wrapped and burned in mockery.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(80)'>Issue a final warning aloud</button>"+"<button onclick='makeDecision(81)'>Stay silent and prepare escape</button>"+"</div>";
-}else if(currentScene===80){storyCard.innerHTML="<h2>Warning in the Court</h2>"+"<p>Hanuman declares Lanka's destruction if Sita is not returned, then uses his burning tail to ignite towers and arsenals.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(82)'>Race across the city in flame</button>"+"</div>";
-}else if(currentScene===81){storyCard.innerHTML="<h2>Silent Defiance</h2>"+"<p>Without a word, Hanuman breaks bonds, leaps to the rooftops, and turns the burning tail into a moving firestorm.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(82)'>Ignite Lanka's war quarter</button>"+"</div>";
-}else if(currentScene===82){storyCard.innerHTML="<h2>Lanka in Flames</h2>"+"<p>District after district burns. Before leaving, Hanuman must ensure Sita remains safe in Ashoka Vatika.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(83)'>Confirm Sita's safety personally</button>"+"<button onclick='makeDecision(84)'>Trust the last sighting and leap back now</button>"+"</div>";
-}else if(currentScene===83){storyCard.innerHTML="<h2>Final Check in the Grove</h2>"+"<p>Hanuman sees Sita safe and offers one final bow from concealment before departing.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(84)'>Leap back across the ocean</button>"+"</div>";
-}else if(currentScene===84){storyCard.innerHTML="<h2>Return and Report</h2>"+"<p>Hanuman returns with Sita's jewel and full reconnaissance. Rama resolves to march south with Sugriva's forces.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(85)'>Press for immediate mobilization</button>"+"<button onclick='makeDecision(86)'>Counsel prayer before force</button>"+"</div>";
-}else if(currentScene===85){storyCard.innerHTML="<h2>Preparation for War</h2>"+"<p>The monkey army marches to the ocean. Drums, standards, and supply lines stretch to the horizon.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(87)'>Force the sea to answer</button>"+"</div>";
-}else if(currentScene===86){storyCard.innerHTML="<h2>Rama's Fast at the Shore</h2>"+"<p>Rama fasts and prays for passage. When no answer comes, he prepares arrows to dry the sea itself.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(87)'>Nock the celestial arrow</button>"+"</div>";
-}else if(currentScene===87){addArtifact("Setubandha Survey Tablet");
-storyCard.innerHTML="<h2>Sea God and the Bridge Plan</h2>"+"<p>The sea god appears, urging construction instead of destruction. Nala and Nila are chosen to engineer Rama Setu.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(88)'>Entrust design to Nala and Nila</button>"+"<button onclick='makeDecision(89)'>Lead army logistics personally</button>"+"</div>";
-}else if(currentScene===88){addArtifact("Rama Setu Coral Core");
-storyCard.innerHTML="<h2>Engineers of the Setu</h2>"+"<p>Floating stones are aligned by measured grids, ropes, and tide markers as the bridge extends over the sea.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(90)'>Cross toward Lanka</button>"+"</div>";
-}else if(currentScene===89){addArtifact("Jambavan's Tide Chart");
-storyCard.innerHTML="<h2>Armies Move Mountains</h2>"+"<p>Vanaras carry boulders, trees, and peaks in continuous relay while commanders maintain rhythm and morale.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(90)'>Lead the crossing</button>"+"</div>";
-}else if(currentScene===90){storyCard.innerHTML="<h2>Across Rama Setu</h2>"+"<p>The full host crosses into Lanka and establishes camp outside the city walls.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(91)'>Send Angada as envoy</button>"+"<button onclick='makeDecision(92)'>Open with direct assault</button>"+"</div>";
-}else if(currentScene===91){storyCard.innerHTML="<h2>Diplomacy Before War</h2>"+"<p>Angada delivers terms. Ravana refuses peace and sends him back with contempt.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(93)'>Order battle formations</button>"+"</div>";
-}else if(currentScene===92){storyCard.innerHTML="<h2>Shock Assault</h2>"+"<p>Without envoy delay, conches sound and the war opens in a storm of rocks, trees, maces, and iron.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(93)'>Commit the full front</button>"+"</div>";
-}else if(currentScene===93){storyCard.innerHTML="<h2>Major Battles Escalate</h2>"+"<p>Generals fall. Kumbhakarna is awakened and slain by Rama. Indrajit's serpent weapons bind Rama and Lakshmana until Garuda frees them.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(94)'>Send Lakshmana to stop Indrajit's ritual</button>"+"<button onclick='makeDecision(99)'>Press Ravana's lines first</button>"+"</div>";
-}else if(currentScene===94){storyCard.innerHTML="<h2>Indrajit Falls</h2>"+"<p>Lakshmana interrupts the ritual and kills Indrajit, but Ravana enters battle in fury and strikes Lakshmana down with a devastating weapon.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(100)'>Send Hanuman for Sanjeevani</button>"+"</div>";
-}else if(currentScene===99){storyCard.innerHTML="<h2>Ravana's Counterstrike</h2>"+"<p>The pressure on Ravana forces brutal exchanges. Lakshmana is critically wounded, making recovery the highest priority.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(100)'>Dispatch Hanuman to Dronagiri</button>"+"</div>";
-}else if(currentScene===100){storyCard.innerHTML="<h2>Sanjeevani Night</h2>"+"<p>Hanuman flies to Dronagiri, cannot identify the herb in darkness, and carries the mountain back. Lakshmana rises restored as dawn breaks.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(101)'>Invoke the divine arrow in final duel</button>"+"<button onclick='makeDecision(102)'>Extend the duel to wear Ravana down</button>"+"</div>";
-}else if(currentScene===102){storyCard.innerHTML="<h2>Last Exchange of Celestial Weapons</h2>"+"<p>Chariots wheel and armor shatters under divine missiles. Rama centers his mind and prepares one final invocation.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(101)'>Release the final divine arrow</button>"+"</div>";
-}else if(currentScene===101){storyCard.innerHTML="<h2>Final Duel and Restoration</h2>"+"<p>Rama kills Ravana with a divine arrow. Vibhishana is crowned. Sita proves purity through fire, and the allies return in Pushpaka to Ayodhya where Bharata awaits. Rama's coronation restores order.</p>"+"<div id='choices'>"+"<button onclick='restart()'>Restart Journey</button>"+"</div>";
-}else if(currentScene===98){storyCard.innerHTML="<h2>Negotiation Collapses into a Duel</h2>"+"<p>Your attempt to negotiate with Surphanaka buys a moment, but she lashes out anyway. You are now ready for a tighter duel.</p>"+"<p><strong>Refined duel odds:</strong> "+clampOdds(getChallengeOdds("fight")+8)+"%</p>"+"<div id='choices'>"+"<button onclick='makeChoice(140)'>Fight after negotiation</button>"+"</div>";
-}enhanceStoryExperience();
-ensureStoryCardToolbar();
-addSceneToReceipt();
-syncHashWithCurrentScene();
-renderTimeline(timelineModalOpen);
-setUndoButton();
-updatePlayerStatsCard();
-updateInventoryCard();
-makeReceipt();
-animateStoryCardEntry();
-}function makeChoice(choice){var previousScene=currentScene;
-var selectedButton;
-var choices=document.querySelectorAll("#storyCard #choices button");
-var i;
-if(!guardSequentialSceneOrder()){return;
-}for(i=0;
-i<choices.length;
-i++){if(choices[i].getAttribute("onclick")==="makeChoice("+choice+")"){selectedButton=choices[i];
-break;
-}}if(selectedButton){addChoiceToReceipt(selectedButton.textContent.trim());
-}saveOldState();
-if(currentScene===1||currentScene===2){if(choice===3){currentScene=3;
-}else if(choice===4){currentScene=4;
-}}else if(currentScene===3){if(choice===4){currentScene=4;
-}}else if(currentScene===4){if(choice===5){wentAlone=true;
-currentScene=5;
-}else if(choice===6){wentAlone=false;
-currentScene=6;
-}}else if(currentScene===5){if(choice===8){currentScene=8;
-}}else if(currentScene===6){if(choice===8){currentScene=7;
-}}else if(currentScene===7){if(choice===12){currentScene=12;
-}else if(choice===9){currentScene=9;
-}else if(choice===10){currentScene=10;
-}else if(choice===11){currentScene=11;
-}}else if(currentScene===8){if(choice===12){currentScene=12;
-}else if(choice===13){currentScene=13;
-}}else if(currentScene===9){if(choice===14){if(randomizer()<getChallengeOdds("fight")){if(wentAlone){currentScene=52;
-}else{currentScene=14;
-}}else{currentScene=18;
-}}}else if(currentScene===11){if(choice===15){currentScene=15;
-}else if(choice===9){currentScene=98;
-}}else if(currentScene===10||currentScene===14){if(choice===19){currentScene=19;
-}}else if(currentScene===12){if(choice===16){currentScene=16;
-}}else if(currentScene===13){if(choice===9){currentScene=9;
-}}else if(currentScene===16){if(choice===17){currentScene=17;
-}}else if(currentScene===19){if(choice===95){addArtifact("Maricha's Gleaming Horn Fragment");
-addArtifact("Forest Hermit's Palm-Leaf Note");
-currentScene=95;
-}else if(choice===20){currentScene=20;
-broughtLakshmana=false;
-}else if(choice===21){currentScene=21;
-}}else if(currentScene===95){if(choice===20){currentScene=20;
-broughtLakshmana=false;
-}else if(choice===21){currentScene=21;
-}}else if(currentScene===20){if(choice===22){currentScene=22;
-broughtLakshmana=true;
-}else if(choice===23){currentScene=23;
-broughtLakshmana=false;
-}}else if(currentScene===22||currentScene===23){if(choice===24){currentScene=24;
-}}else if(currentScene===24){if(choice===25){currentScene=25;
-}}else if(currentScene===25){if(choice===26){if(broughtLakshmana){currentScene=26;
-}else{currentScene=27;
-}}}else if(currentScene===26){if(choice===27){currentScene=29;
-}}else if(currentScene===27){if(choice===28){currentScene=28;
-}}else if(currentScene===28){if(choice===29){if(randomizer()<50){currentScene=29;
-}else{currentScene=39;
-}}}else if(currentScene===29){if(choice===30){currentScene=30;
-}}else if(currentScene===30){if(choice===96){addArtifact("Jatayu's Wind-Sworn Plume");
-currentScene=96;
-}else if(choice===31){currentScene=31;
-}else if(choice===32){addArtifact("Jatayu's Feather");
-currentScene=32;
-}}else if(currentScene===96){if(choice===31){currentScene=31;
-}else if(choice===32){addArtifact("Jatayu's Feather");
-currentScene=32;
-}}else if(currentScene===32){if(choice===48){currentScene=48;
-}else if(choice===34){currentScene=34;
-}else if(choice===35){currentScene=35;
-}}else if(currentScene===48){if(choice===49){currentScene=49;
-}else if(choice===34){currentScene=34;
-}else if(choice===35){currentScene=35;
-}}else if(currentScene===49){if(choice===33){currentScene=50;
-}else if(choice===34){currentScene=34;
-}else if(choice===35){currentScene=35;
-}}else if(currentScene===50){if(choice===51){if(randomizer()>=90){currentScene=33;
-}else{currentScene=34;
-}}}else if(currentScene===33){if(choice===36){currentScene=36;
-}}else if(currentScene===34||currentScene===35){if(choice===37){currentScene=37;
-}}else if(currentScene===31||currentScene===37){if(choice===65){currentScene=65;
-}}else if(currentScene===65){if(choice===66){currentScene=66;
-}}else if(currentScene===66){if(choice===67){currentScene=67;
-}else if(choice===68){addArtifact("Rama's Sandals (Paduka)");
-currentScene=68;
-}}else if(currentScene===36){if(choice===38){currentScene=38;
-}}else if(currentScene===68){if(choice===40){currentScene=40;
-}}else if(currentScene===40){if(choice===97){addArtifact("Kishkindha Cave Mural Tablet");
-currentScene=97;
-}else if(choice===41){addArtifact("Sugriva Alliance Oath");
-currentScene=41;
-}}else if(currentScene===97){if(choice===41){addArtifact("Sugriva Alliance Oath");
-currentScene=41;
-}}else if(currentScene===41){if(choice===42){currentScene=42;
-}}else if(currentScene===42){if(choice===43){currentScene=43;
-}}else if(currentScene===43){if(choice===44){currentScene=44;
-}else if(choice===45){currentScene=45;
-}else if(choice===46){currentScene=46;
-}}else if(currentScene===44){if(choice===47){currentScene=47;
-}}else if(currentScene===47){if(choice===76){currentScene=53;
-}}else if(currentScene===54){if(choice===47){currentScene=47;
-}}else if(currentScene===98){if(choice===140){if(randomizer()<clampOdds(getChallengeOdds("fight")+8)){addArtifact("Camp Story Scroll");
-currentScene=14;
-}else{currentScene=18;
-}}}finishSceneDecision(previousScene);
-}function makeDecision(decision){var previousScene=currentScene;
-if(!guardSequentialSceneOrder()){return;
-}if(decision===1){currentScene=53;
-}else if(currentScene===53&&decision===2){currentScene=54;
-}else if(currentScene===54&&(decision===3||decision===55)){currentScene=55;
-}else if(currentScene===55){if(decision===56){currentScene=56;
-}else if(decision===57){currentScene=57;
-}}else if(currentScene===56&&decision===58){currentScene=58;
-}else if(currentScene===57&&decision===59){currentScene=59;
-}else if(currentScene===58&&decision===60){currentScene=60;
-}else if(currentScene===59){if(decision===60){currentScene=60;
-}else if(decision===62){currentScene=62;
-}}else if(currentScene===60){if(decision===61){currentScene=61;
-}else if(decision===63){currentScene=63;
-}}else if((currentScene===61||currentScene===62)&&decision===63){currentScene=63;
-}else if(currentScene===63){if(decision===64){currentScene=64;
-}else if(decision===69){currentScene=69;
-}}else if(currentScene===64&&decision===69){currentScene=69;
-}else if(currentScene===69){if(decision===70){currentScene=70;
-}else if(decision===71){currentScene=71;
-}}else if(currentScene===71&&decision===70){currentScene=70;
-}else if(currentScene===70){if(decision===72){currentScene=72;
-}else if(decision===73){currentScene=73;
-}}else if((currentScene===72||currentScene===73)&&decision===74){currentScene=74;
-}else if(currentScene===74){if(decision===75){currentScene=75;
-}else if(decision===84){currentScene=84;
-}}else if(currentScene===75){if(decision===77){currentScene=77;
-}else if(decision===78){currentScene=78;
-}}else if((currentScene===77||currentScene===78)&&decision===79){currentScene=79;
-}else if(currentScene===79){if(decision===80){currentScene=80;
-}else if(decision===81){currentScene=81;
-}}else if((currentScene===80||currentScene===81)&&decision===82){currentScene=82;
-}else if(currentScene===82){if(decision===83){currentScene=83;
-}else if(decision===84){currentScene=84;
-}}else if(currentScene===83&&decision===84){currentScene=84;
-}else if(currentScene===84){if(decision===85){currentScene=85;
-}else if(decision===86){currentScene=86;
-}}else if((currentScene===85||currentScene===86)&&decision===87){currentScene=87;
-}else if(currentScene===87){if(decision===88){currentScene=88;
-}else if(decision===89){currentScene=89;
-}}else if((currentScene===88||currentScene===89)&&decision===90){currentScene=90;
-}else if(currentScene===90){if(decision===91){currentScene=91;
-}else if(decision===92){currentScene=92;
-}}else if((currentScene===91||currentScene===92)&&decision===93){currentScene=93;
-}else if(currentScene===93){if(decision===94){currentScene=94;
-}else if(decision===99){currentScene=99;
-}}else if((currentScene===94||currentScene===99)&&decision===100){currentScene=100;
-}else if(currentScene===100){if(decision===101){currentScene=101;
-}else if(decision===102){currentScene=102;
-}}else if(currentScene===102&&decision===101){currentScene=101;
-}finishSceneDecision(previousScene);
-}document.addEventListener("DOMContentLoaded",function(){console.log("Update 1");
-document.body.setAttribute("data-resolution-tier",resolutionTier);
-validateSequentialSceneOrder();
-applyResolutionTierStyling();
-renderTimeline(timelineModalOpen);
-updatePlayerStatsCard();
-updateInventoryCard();
-var startButton=document.getElementById("startBtn");
-var playerNameInput=document.getElementById("playerName");
-var backgroundMusic=document.getElementById("backgroundMusic");
-var musicVolume=document.getElementById("musicVolume");
-var navbarToggle=document.getElementById("navbarToggle");
-var topNavbar=document.getElementById("topNavbar");
-window.startAdventure=startAdventure;
-if(startButton){startButton.addEventListener("click",startAdventure);
-}setupScrollRevealTransitions();
-if(navbarToggle&&topNavbar){syncNavbarLayout();
-navbarToggle.addEventListener("click",function(){toggleNavbarMenu();
-});
-document.addEventListener("click",function(event){if(window.matchMedia("(max-width: 768px)").matches&&topNavbar.classList.contains("nav-open")&&!topNavbar.contains(event.target)){toggleNavbarMenu(false);
-}});
-window.addEventListener("resize",function(){syncNavbarLayout();
-});
-}if(playerNameInput){playerNameInput.addEventListener("keydown",function(event){if(event.key==="Enter"){startAdventure();
-}});
-}if(backgroundMusic&&musicVolume){backgroundMusic.volume=parseFloat(musicVolume.value);
-backgroundMusic.muted=parseFloat(musicVolume.value)===0;
-activeSoundtrackSrc=defaultSoundtrackSrc;
-musicVolume.addEventListener("change",function(){var selectedVolume=parseFloat(musicVolume.value);
-if(!isNaN(selectedVolume)){backgroundMusic.volume=selectedVolume;
-backgroundMusic.muted=selectedVolume===0;
-if(!backgroundMusic.paused){return;
-}backgroundMusic.play().catch(function(){return null;
-});
-}});
-document.addEventListener("click",function(){if(backgroundMusic.paused){backgroundMusic.play().catch(function(){return null;
-});
-}},{once:true});
-}applySceneFromHash();
-window.addEventListener("hashchange",applySceneFromHash);
-document.addEventListener("contextmenu",function(event){if(event.target&&event.target.id==="backgroundMusic"){event.preventDefault();
-}});
-document.addEventListener("keydown",function(event){var tagName=event.target&&event.target.tagName?event.target.tagName.toLowerCase():"";
-var isTypingTarget=tagName==="input"||tagName==="textarea"||(event.target&&event.target.isContentEditable);
-if(event.key==="Escape"){toggleNavbarMenu(false);
-closeTimelineModal();
-closePlayerStatsModal();
-closeInventoryModal();
-}if(currentScene>0&&!isTypingTarget){if(event.key==="ArrowLeft"){event.preventDefault();
-navigateLinearScene(-1);
-}else if(event.key==="ArrowRight"){event.preventDefault();
-navigateLinearScene(1);
-}}});
-window.addEventListener("resize",function(){applyResolutionTierStyling();
-if(currentScene>0){focusStoryCard();
-}});
+
+function renderScene() {
+  var storyCard = document.getElementById("storyCard");
+  var renderer = scenes[currentScene];
+
+  if (!storyCard || !renderer) {
+    return;
+  }
+
+  storyCard.innerHTML = renderer();
+}
+
+function choose(nextScene) {
+  if (!scenes[nextScene]) {
+    return;
+  }
+
+  storyHistory.push(currentScene);
+  currentScene = nextScene;
+  renderScene();
+}
+
+function startAdventure() {
+  var playerNameInput = document.getElementById("playerName");
+  var rawName = playerNameInput ? playerNameInput.value.trim() : "";
+
+  playerName = rawName || "Traveler";
+  currentScene = "intro";
+  storyHistory = [];
+  renderScene();
+}
+
+function restart() {
+  currentScene = "intro";
+  storyHistory = [];
+  renderScene();
+}
+
+function toggleNavbarMenu(forceOpen) {
+  var navbar = document.getElementById("topNavbar");
+  var toggleButton = document.getElementById("navbarToggle");
+  var isMobileNavbar = window.matchMedia("(max-width: 768px)").matches;
+  var shouldOpen = typeof forceOpen === "boolean" ? forceOpen : true;
+
+  if (!navbar || !toggleButton) {
+    return;
+  }
+
+  if (!isMobileNavbar) {
+    navbar.classList.add("nav-open");
+    toggleButton.setAttribute("aria-expanded", "true");
+    toggleButton.textContent = "✕";
+    return;
+  }
+
+  if (typeof forceOpen !== "boolean") {
+    shouldOpen = !navbar.classList.contains("nav-open");
+  }
+
+  navbar.classList.toggle("nav-open", shouldOpen);
+  toggleButton.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
+  toggleButton.textContent = shouldOpen ? "✕" : "☰";
+}
+
+function syncNavbarLayout() {
+  var isMobileNavbar = window.matchMedia("(max-width: 768px)").matches;
+  toggleNavbarMenu(isMobileNavbar ? false : true);
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  console.log("Update 3");
+
+  var startButton = document.getElementById("startBtn");
+  var playerNameInput = document.getElementById("playerName");
+  var backgroundMusic = document.getElementById("backgroundMusic");
+  var musicVolume = document.getElementById("musicVolume");
+  var navbarToggle = document.getElementById("navbarToggle");
+  var topNavbar = document.getElementById("topNavbar");
+
+  window.startAdventure = startAdventure;
+
+  if (startButton) {
+    startButton.addEventListener("click", startAdventure);
+  }
+
+  if (playerNameInput) {
+    playerNameInput.addEventListener("keydown", function (event) {
+      if (event.key === "Enter") {
+        startAdventure();
+      }
+    });
+  }
+
+  if (navbarToggle && topNavbar) {
+    syncNavbarLayout();
+
+    navbarToggle.addEventListener("click", function () {
+      toggleNavbarMenu();
+    });
+
+    document.addEventListener("click", function (event) {
+      if (window.matchMedia("(max-width: 768px)").matches
+        && topNavbar.classList.contains("nav-open")
+        && !topNavbar.contains(event.target)) {
+        toggleNavbarMenu(false);
+      }
+    });
+
+    window.addEventListener("resize", function () {
+      syncNavbarLayout();
+    });
+  }
+
+  if (backgroundMusic && musicVolume) {
+    backgroundMusic.volume = parseFloat(musicVolume.value);
+    backgroundMusic.muted = parseFloat(musicVolume.value) === 0;
+
+    musicVolume.addEventListener("change", function () {
+      var selectedVolume = parseFloat(musicVolume.value);
+
+      if (!isNaN(selectedVolume)) {
+        backgroundMusic.volume = selectedVolume;
+        backgroundMusic.muted = selectedVolume === 0;
+
+        if (backgroundMusic.paused) {
+          backgroundMusic.play().catch(function () {
+            return null;
+          });
+        }
+      }
+    });
+
+    document.addEventListener("click", function () {
+      if (backgroundMusic.paused) {
+        backgroundMusic.play().catch(function () {
+          return null;
+        });
+      }
+    }, { once: true });
+  }
 });

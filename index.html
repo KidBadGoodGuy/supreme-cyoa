@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title id="Question">The Ramayana: Choose Your Adventure</title>
   <link rel="stylesheet" href="Project.css">
+  <script src="resolution.js"></script>
   <script src="Project.js"></script>
   <link rel="apple-touch-icon" sizes="180x180" href="favicon_io/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon_io/favicon-32x32.png">
@@ -14,31 +15,15 @@
 </head>
 <body>
   <nav id="topNavbar" aria-label="Site navigation">
-    <button id="navbarToggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="navLinks soundtrackBadge">☰</button>
-    <div id="navLinks">
-      <a id="aboutButton" href="https://arjun-singh.com/" target="_blank" rel="noopener noreferrer">About</a>
-      <a class="nav-link-pill" href="updates.html">Updates</a>
-      <button id="timelineButton" onclick="openTimelineModal()" type="button">Timeline</button>
-      <button id="inventoryButton" onclick="openInventoryModal()" type="button">Inventory (0)</button>
-    </div>
-
-    <div id="soundtrackBadge">
-    <label for="backgroundMusic" class="soundtrack-label">Background Music</label>
-    <p id="currentTrackName" class="soundtrack-track-name">Sacred Path Of Rama</p>
-    <audio id="backgroundMusic" controls autoplay muted loop preload="metadata" controlslist="nodownload noplaybackrate" disablepictureinpicture disableremoteplayback>
-      <source src="Sacred Path Of Rama.mp3" type="audio/mpeg">
-    </audio>
-    <label for="musicVolume" class="soundtrack-label">Volume</label>
-    <select id="musicVolume" aria-label="Select background music volume">
-      <option value="0" selected>Muted (0%)</option>
-      <option value="0.2">Low (20%)</option>
-      <option value="0.4">Medium (40%)</option>
-      <option value="0.6">High (60%)</option>
-      <option value="0.8">Very High (80%)</option>
-      <option value="1">Max (100%)</option>
-    </select>
-  </div>
+    <a href="before-the-ramayana.html">Before the Ramayana</a>
+    <a href="people-of-ramayana.html">People of Ramayana</a>
+    <a href="updates.html">Updates</a>
+    <a href="https://arjun-singh.com/" target="_blank" rel="noopener noreferrer">About</a>
   </nav>
+
+  <audio id="backgroundMusic" autoplay muted loop preload="metadata">
+    <source src="Sacred Path Of Rama.mp3" type="audio/mpeg">
+  </audio>
 
   <div id="titleContainer">
     <header>
@@ -47,7 +32,6 @@
       <h4 id="description">Embark on your own journey through the great Indian epic.</h4>
       <p>You will travel through ancient India, make difficult choices, and uncover how the story of the Ramayana might unfold in different ways.</p>
       <button onclick="window.location.href='before-the-ramayana.html'">Before the Ramayana</button>
-      <button onclick="window.location.href='people-of-ramayana.html'">People of the Ramayana</button>
     </header>
 
     <div id="beginningContainer">
@@ -57,22 +41,12 @@
         <div>
           <input type="text" id="playerName" placeholder="Rama" />
         </div>
-        <button type="button" id="startBtn" onclick="startAdventure()">Begin Your Quest</button>
+        <button type="button" id="startBtn">Begin Your Quest</button>
       </div>
     </div>
   </div>
 
   <div id="storyCard">
-    <div id="storyCardToolbar">
-      <button id="undoButton" onclick="undoChoice()" type="button" disabled aria-label="Undo last choice">
-        <svg viewBox="0 0 24 24" role="img" aria-hidden="true" focusable="false">
-          <path d="M9 7H4V2"/>
-          <path d="M4 7l5-5"/>
-          <path d="M4 7h9a7 7 0 1 1 0 14h-2"/>
-        </svg>
-        <span>Undo</span>
-      </button>
-    </div>
     <!-- this is where the story will be displayed -->
     <div id="choices"></div>
   </div>

@@ -4,7 +4,7 @@ var broughtLakshmana = false;
 var wentAlone = false;
 var historyStack = [];
 
-console.log("Update 3");
+console.log("Update 4");
 
 var scenes = {
   1: {

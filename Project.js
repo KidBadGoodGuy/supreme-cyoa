@@ -4,7 +4,7 @@ var broughtLakshmana = false;
 var wentAlone = false;
 var historyStack = [];
 
-console.log("Update 10");
+console.log("Update 11");
 
 var scenes = {
   1: {
@@ -45,7 +45,7 @@ var scenes = {
       "{{name}}, you leave Ayodhya alone, carrying only a bow, memory, and duty.",
       "Each step into the forest deepens the silence around you, but your vow remains unbroken."
     ],
-    choices: [{ label: "Continue", next: 8 }]
+    choices: [{ label: "Continue", next: 66 }]
   },
   6: {
     title: "You choose to go with them.",
@@ -53,7 +53,7 @@ var scenes = {
       "{{name}}, with Sita and Lakshmana at your side, exile becomes a shared pilgrimage instead of a lonely punishment.",
       "Together you cross rivers, build shelter, and learn the rhythms of forest life."
     ],
-    choices: [{ label: "Continue", next: 7 }]
+    choices: [{ label: "Continue", next: 66 }]
   },
   7: {
     title: "Surphanaka's Encounter",
@@ -224,9 +224,9 @@ var scenes = {
     title: "Ravana Sees His Chance",
     text: [
       "As you race back, Ravana takes disguise and moves toward your dwelling.",
-      "Moments before the calamity, fate brings Bharata to your forest camp."
+      "By the time danger peaks, only fate and vigilance stand between your family and calamity."
     ],
-    choices: [{ label: "Continue", next: 66 }]
+    choices: [{ label: "Continue", next: 29 }]
   },
   27: {
     title: "Lakshmana Draws the Line",
@@ -441,8 +441,8 @@ var scenes = {
   66: {
     title: "Bharata at the Hut",
     text: [
-      "Right before disaster strikes, Bharata reaches your hut and pleads once more: return and rule Ayodhya, {{name}}.",
-      "You honor him, renew your vow, and ask him to safeguard the kingdom until your exile ends."
+      "Soon after exile begins, Bharata reaches your forest hut and pleads once more: return and rule Ayodhya, {{name}}.",
+      "You honor him, renew your vow, and ask him to safeguard the kingdom until your exile ends before you continue deeper into the forest."
     ],
     choices: [
       { label: "Entrust him with your sandals", next: 68 },
@@ -460,9 +460,9 @@ var scenes = {
     title: "The Sandals Promise",
     text: [
       "Bharata accepts your sandals as a symbol of rightful rule and departs in tears.",
-      "{{name}}, moments later the forest trembles as Ravana's plot unfolds."
+      "{{name}}, once Bharata departs, your exile journey resumes and the forest's first major threat approaches."
     ],
-    choices: [{ label: "Continue", next: 29 }]
+    choices: [{ label: "Continue", next: -4 }]
   }
 };
 
@@ -512,6 +512,10 @@ function resolveSpecialNext(next) {
 
   if (next === -3) {
     return randomPercent() < 15 ? 33 : 34;
+  }
+
+  if (next === -4) {
+    return wentAlone ? 8 : 7;
   }
 
   return next;

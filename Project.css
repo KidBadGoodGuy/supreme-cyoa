@@ -369,6 +369,51 @@ body[data-resolution-tier="uhd"] {
   font-size: 0.85rem;
 }
 
+#startBtn,
+#undoButton.art-button,
+.restart-art {
+  min-height: 0;
+  width: 220px;
+  height: 64px;
+  padding: 0;
+  border: 0;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  box-shadow: none;
+  color: transparent;
+  text-shadow: none;
+  overflow: hidden;
+}
+
+#startBtn {
+  background-image: url("startBtn");
+}
+
+#undoButton.art-button {
+  width: 150px;
+  height: 48px;
+  background-image: url("undoBtn");
+}
+
+.restart-art {
+  background-image: url("restartBtn");
+}
+
+#startBtn:hover,
+#undoButton.art-button:hover,
+.restart-art:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+
+#undoButton.art-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(0.15);
+}
+
 #topNavbar button {
   width: auto;
   padding: 8px 14px;

@@ -11,10 +11,11 @@ This wiki documents the game exactly as it exists in the repository right now.
 - [Game Overview](./Game-Overview.md)
 - [Scene & Route Reference](./Scene-and-Route-Reference.md)
 - [Developer Guide](./Developer-Guide.md)
+- [Features](./Features.md)
 
 ## Snapshot
 
-- Current hidden update console marker: **Update 2**
+- Current hidden update console marker: **Update 4**
 - Main entry page: `index.html`
 - Story logic file: `Project.js`
 - Styling file: `Project.css`

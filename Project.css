@@ -385,6 +385,11 @@ body[data-resolution-tier="uhd"] {
   color: transparent;
   text-shadow: none;
   overflow: hidden;
+  transition:
+    filter 0.25s var(--ease-refined),
+    transform 0.25s var(--ease-refined),
+    opacity 0.2s var(--ease-refined);
+  filter: brightness(1.14) saturate(1.12) drop-shadow(0 5px 10px rgba(255, 186, 77, 0.33));
 }
 
 #startBtn {
@@ -404,14 +409,21 @@ body[data-resolution-tier="uhd"] {
 #startBtn:hover,
 #undoButton.art-button:hover,
 .restart-art:hover {
-  filter: brightness(1.06);
-  transform: translateY(-1px);
+  filter: brightness(1.24) saturate(1.24) drop-shadow(0 8px 14px rgba(255, 194, 96, 0.45));
+  transform: translateY(-2px) scale(1.02);
+}
+
+#startBtn:focus-visible,
+#undoButton.art-button:focus-visible,
+.restart-art:focus-visible {
+  outline: none;
+  filter: brightness(1.22) saturate(1.25) drop-shadow(0 0 0 3px rgba(255, 230, 163, 0.42)) drop-shadow(0 8px 14px rgba(255, 194, 96, 0.4));
 }
 
 #undoButton.art-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  filter: grayscale(0.15);
+  filter: grayscale(0.1) brightness(0.92);
 }
 
 #topNavbar button {

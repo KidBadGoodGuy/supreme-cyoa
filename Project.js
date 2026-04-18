@@ -2,7 +2,7 @@ var currentScene=0;
 var playerName="";
 var broughtLakshmana=false;
 var wentAlone=false;
-}
+
 function clearStoryCard(){document.getElementById("storyCard").innerHTML="<!-- this is where the story will be displayed --><div id='choices'></div>";
 }function restart(){currentScene=0;
 broughtLakshmana=false;
@@ -76,7 +76,7 @@ if(currentScene===1){storyCard.innerHTML="<h1>Part 1: The Bhanwas</h1>"+"<h2>Wel
 }else if(currentScene===45){storyCard.innerHTML="<h2>You Miss the Moment</h2>"+"<p>Your aim wavers, and the shot is lost. Vali realizes something is wrong, and Sugriva is forced to retreat before the plan succeeds.</p>"+"<div id='choices'>"+"<button onclick='restart()'>Restart</button>"+"</div>";
 }else if(currentScene===46){storyCard.innerHTML="<h2>You Miss the Moment</h2>"+"<p>You hesitate for too long, and Vali gains the advantage. Sugriva barely escapes, and this attempt to help him fails.</p>"+"<div id='choices'>"+"<button onclick='restart()'>Restart</button>"+"</div>";
 }else if(currentScene===47){storyCard.innerHTML="<h2>Meeting Hanuman</h2>"+"<p>Grateful for your help, Sugriva brings forward his wisest and most loyal companion: Hanuman. Hanuman bows before you and offers his strength in the search for Sita.</p>"+"<p>The war-camp is now focused only on the main rescue campaign.</p>"+"<div id='choices'>"+"<button onclick='makeChoice(76)'>Return to Main Story</button>"+"</div>";}else if(currentScene===53){storyCard.innerHTML="<h1>The Rescue Begins</h1>"+"<h2>The Rescue Begins</h2>"+"<p>You cannot undo anything from here on.</p>"+"<div id='choices'>"+"<button onclick='makeDecision(2)'>Begin The Rescue</button>"+"</div>";
-}}else if(currentScene===54){storyCard.innerHTML="<h2>War Council</h2>"+"<p>The rescue campaign enters its strategic phase. Messengers arrive with sketches of cliff routes, tidal windows, and guard rotations along Lanka's perimeter.</p>"+"<p>Hanuman asks for patience: one more focused mission could convert scattered clues into war-grade intelligence.</p>"+"<h3>Part 2: The Lanka War - Coming Soon!</h3>"+"<div id='choices'>"+"<button onclick='restart()'>Restart</button>"+"</div>";
+}else if(currentScene===54){storyCard.innerHTML="<h2>War Council</h2>"+"<p>The rescue campaign enters its strategic phase. Messengers arrive with sketches of cliff routes, tidal windows, and guard rotations along Lanka's perimeter.</p>"+"<p>Hanuman asks for patience: one more focused mission could convert scattered clues into war-grade intelligence.</p>"+"<h3>Part 2: The Lanka War - Coming Soon!</h3>"+"<div id='choices'>"+"<button onclick='restart()'>Restart</button>"+"</div>";
 }
 }function makeChoice(choice){var previousScene=currentScene;function makeChoice(choice){var previousScene=currentScene;
 var selectedButton;
@@ -223,32 +223,4 @@ if(!guardSequentialSceneOrder()){return;
 }else if(decision===102){currentScene=102;
 }}else if(currentScene===102&&decision===101){currentScene=101;
 }finishSceneDecision(previousScene);
-}document.addEventListener("DOMContentLoaded",function(){console.log("Update 2");
-document.body.setAttribute("data-resolution-tier",resolutionTier);
-applyResolutionTierStyling();
-var startButton=document.getElementById("startBtn");
-var playerNameInput=document.getElementById("playerName");
-var backgroundMusic=document.getElementById("backgroundMusic");
-var musicVolume=document.getElementById("musicVolume");
-window.startAdventure=startAdventure;
-if(startButton){startButton.addEventListener("click",startAdventure);
-}if(playerNameInput){playerNameInput.addEventListener("keydown",function(event){if(event.key==="Enter"){startAdventure();
-}});
-}if(backgroundMusic&&musicVolume){backgroundMusic.volume=parseFloat(musicVolume.value);
-backgroundMusic.muted=parseFloat(musicVolume.value)===0;
-activeSoundtrackSrc=defaultSoundtrackSrc;
-musicVolume.addEventListener("change",function(){var selectedVolume=parseFloat(musicVolume.value);
-if(!isNaN(selectedVolume)){backgroundMusic.volume=selectedVolume;
-backgroundMusic.muted=selectedVolume===0;
-if(!backgroundMusic.paused){return;
-}backgroundMusic.play().catch(function(){return null;
-});
-}});
-document.addEventListener("keydown",function(event){var tagName=event.target&&event.target.tagName?event.target.tagName.toLowerCase():"";
-var isTypingTarget=tagName==="input"||tagName==="textarea"||(event.target&&event.target.isContentEditable);
-if(event.key==="Escape"){return;
-}});
-window.addEventListener("resize",function(){applyResolutionTierStyling();
-if(currentScene>0){focusStoryCard();
-}});
-});
+}}

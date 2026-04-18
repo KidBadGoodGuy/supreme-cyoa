@@ -4,7 +4,7 @@ var broughtLakshmana = false;
 var wentAlone = false;
 var historyStack = [];
 
-console.log("Update 2");
+console.log("Update 3");
 
 var scenes = {
   1: {
@@ -382,7 +382,7 @@ function showScene() {
 
   var scene = scenes[currentScene];
   var sceneTitle = escapeHtml(scene.title);
-  var html = "<div id='storyCardToolbar'><button id='undoButton' type='button' onclick='undoLastChoice()'>Undo</button></div>";
+  var html = "<div id='storyCardToolbar'><button id='undoButton' class='art-button undo-art' type='button' onclick='undoLastChoice()' aria-label='Undo'>Undo</button></div>";
 
   if (currentScene === 1) {
     html += "<h1>" + sceneTitle + "</h1>";
@@ -398,7 +398,7 @@ function showScene() {
   html += "<div id='choices'>";
   scene.choices.forEach(function (choice, index) {
     if (choice.restart) {
-      html += "<button type='button' onclick='restart()'>" + escapeHtml(choice.label) + "</button>";
+      html += "<button class='art-button restart-art' type='button' onclick='restart()' aria-label='Restart'>" + escapeHtml(choice.label) + "</button>";
     } else {
       html += "<button type='button' onclick='makeChoice(" + index + ")'>" + escapeHtml(choice.label) + "</button>";
     }

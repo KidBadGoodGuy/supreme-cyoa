@@ -14,7 +14,7 @@ var broughtLakshmana = false;
 var wentAlone = false;
 var historyStack = [];
 
-console.log("Update 20");
+console.log("Update 21");
 
 var scenes = {
   1: {
@@ -602,6 +602,10 @@ function startAdventure() {
     window.localStorage.setItem("ramayanaMusicVolume", "50");
   }
   showScene();
+  var storyCard = document.getElementById("storyCard");
+  if (storyCard && typeof storyCard.scrollIntoView === "function") {
+    storyCard.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
   updateUndoButton();
 }
 

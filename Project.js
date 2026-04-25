@@ -595,6 +595,9 @@ function escapeHtml(value) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
 }
+//Purpose: Prepares user-generated content to be safely displayed in HTML.
+//What it does: It takes a string and replaces dangerous characters with their corresponding safe HTML entities.
+// and the following
 
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

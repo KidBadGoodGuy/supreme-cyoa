@@ -1,21 +1,18 @@
 var currentScene = 0;
 var playerName = "";
-var fatherName = "";
-var motherName = "";
-var wifeName = "";
-var siblingOneName = "";
-var siblingTwoName = "";
-var siblingThreeName = "";
-var siblingOneGender = "male";
-var siblingTwoGender = "male";
-var siblingThreeGender = "male";
-var secondMotherName = "";
 var broughtLakshmana = false;
 var wentAlone = false;
 var historyStack = [];
-// var familySetupEnabled = false;
-// var familySetupActivatedOnce = false;
-// var customNames = null;
+
+var familyCast = {
+  fatherName: "Dasharatha",
+  motherName: "Kausalya",
+  wifeName: "Sita",
+  siblingOneName: "Lakshmana",
+  siblingTwoName: "Bharata",
+  siblingThreeName: "Shatrughna",
+  secondMotherName: "Kaikeyi"
+};
 
 console.log("Update 24");
 
@@ -542,16 +539,6 @@ function clearStoryCard() {
 function restart() {
   currentScene = 0;
   playerName = "";
-  fatherName = "";
-  motherName = "";
-  wifeName = "";
-  siblingOneName = "";
-  siblingTwoName = "";
-  siblingThreeName = "";
-  siblingOneGender = "male";
-  siblingTwoGender = "male";
-  siblingThreeGender = "male";
-  secondMotherName = "";
   broughtLakshmana = false;
   wentAlone = false;
   historyStack = [];
@@ -559,49 +546,9 @@ function restart() {
   updateUndoButton();
 }
 
-function getCanonNames() {
-  return {
-    playerName: "Rama",
-    fatherName: "Dasharatha",
-    motherName: "Kausalya",
-    wifeName: "Sita",
-    siblingOneName: "Lakshmana",
-    siblingTwoName: "Bharata",
-    siblingThreeName: "Shatrughna",
-    siblingOneGender: "male",
-    siblingTwoGender: "male",
-    siblingThreeGender: "male",
-    secondMotherName: "Kaikeyi"
-  };
-}
-
-// Family setup feature intentionally disabled.
-// function readCustomNamesFromInputs() {}
-
-function assignNames(nameSet) {
-  playerName = nameSet.playerName;
-  fatherName = nameSet.fatherName;
-  motherName = nameSet.motherName;
-  wifeName = nameSet.wifeName;
-  siblingOneName = nameSet.siblingOneName;
-  siblingTwoName = nameSet.siblingTwoName;
-  siblingThreeName = nameSet.siblingThreeName;
-  siblingOneGender = nameSet.siblingOneGender;
-  siblingTwoGender = nameSet.siblingTwoGender;
-  siblingThreeGender = nameSet.siblingThreeGender;
-  secondMotherName = nameSet.secondMotherName;
-}
-
-// Family setup feature intentionally disabled.
-// function applyFamilySetupState() {}
-// function toggleFamilySetup() {}
-
 function startAdventure() {
   var baseNameInput = document.getElementById("playerName");
-  var basePlayerName = baseNameInput && baseNameInput.value.trim() ? baseNameInput.value.trim() : "Rama";
-  var canonNames = getCanonNames();
-  canonNames.playerName = basePlayerName;
-  assignNames(canonNames);
+  playerName = baseNameInput && baseNameInput.value.trim() ? baseNameInput.value.trim() : "Rama";
 
   historyStack = [];
   currentScene = 1;
@@ -672,13 +619,13 @@ function escapeRegExp(value) {
 function getCharacterNames() {
   var names = [
     playerName || "Rama",
-    fatherName || "Dasharatha",
-    motherName || "Kausalya",
-    wifeName || "Sita",
-    siblingOneName || "Lakshmana",
-    siblingTwoName || "Bharata",
-    siblingThreeName || "Shatrughna",
-    secondMotherName || "Kaikeyi",
+    familyCast.fatherName || "Dasharatha",
+    familyCast.motherName || "Kausalya",
+    familyCast.wifeName || "Sita",
+    familyCast.siblingOneName || "Lakshmana",
+    familyCast.siblingTwoName || "Bharata",
+    familyCast.siblingThreeName || "Shatrughna",
+    familyCast.secondMotherName || "Kaikeyi",
     "Ravana",
     "Hanuman",
     "Sugriva",
@@ -715,33 +662,24 @@ function formatStoryHtml(text) {
 }
 
 function interpolatePlayerName(text) {
-  var siblingOneSubject = siblingOneGender === "female" ? "she" : "he";
-  var siblingOneObject = siblingOneGender === "female" ? "her" : "him";
-  var siblingOnePossessive = siblingOneGender === "female" ? "her" : "his";
-  var siblingTwoSubject = siblingTwoGender === "female" ? "she" : "he";
-  var siblingTwoObject = siblingTwoGender === "female" ? "her" : "him";
-  var siblingTwoPossessive = siblingTwoGender === "female" ? "her" : "his";
-  var siblingThreeSubject = siblingThreeGender === "female" ? "she" : "he";
-  var siblingThreeObject = siblingThreeGender === "female" ? "her" : "him";
-  var siblingThreePossessive = siblingThreeGender === "female" ? "her" : "his";
   var replacements = {
     "{{name}}": playerName || "Rama",
-    "{{fatherName}}": fatherName || "Dasharatha",
-    "{{motherName}}": motherName || "Kausalya",
-    "{{wifeName}}": wifeName || "Sita",
-    "{{siblingOneName}}": siblingOneName || "Lakshmana",
-    "{{siblingTwoName}}": siblingTwoName || "Bharata",
-    "{{siblingThreeName}}": siblingThreeName || "Shatrughna",
-    "{{secondMotherName}}": secondMotherName || "Kaikeyi",
-    "{{siblingOneSubject}}": siblingOneSubject,
-    "{{siblingOneObject}}": siblingOneObject,
-    "{{siblingOnePossessive}}": siblingOnePossessive,
-    "{{siblingTwoSubject}}": siblingTwoSubject,
-    "{{siblingTwoObject}}": siblingTwoObject,
-    "{{siblingTwoPossessive}}": siblingTwoPossessive,
-    "{{siblingThreeSubject}}": siblingThreeSubject,
-    "{{siblingThreeObject}}": siblingThreeObject,
-    "{{siblingThreePossessive}}": siblingThreePossessive
+    "{{fatherName}}": familyCast.fatherName || "Dasharatha",
+    "{{motherName}}": familyCast.motherName || "Kausalya",
+    "{{wifeName}}": familyCast.wifeName || "Sita",
+    "{{siblingOneName}}": familyCast.siblingOneName || "Lakshmana",
+    "{{siblingTwoName}}": familyCast.siblingTwoName || "Bharata",
+    "{{siblingThreeName}}": familyCast.siblingThreeName || "Shatrughna",
+    "{{secondMotherName}}": familyCast.secondMotherName || "Kaikeyi",
+    "{{siblingOneSubject}}": "he",
+    "{{siblingOneObject}}": "him",
+    "{{siblingOnePossessive}}": "his",
+    "{{siblingTwoSubject}}": "he",
+    "{{siblingTwoObject}}": "him",
+    "{{siblingTwoPossessive}}": "his",
+    "{{siblingThreeSubject}}": "he",
+    "{{siblingThreeObject}}": "him",
+    "{{siblingThreePossessive}}": "his"
   };
 
   var output = text;
@@ -772,11 +710,8 @@ function showScene() {
     html += "<p class='scene-subtitle scene-subtitle-strong'>" + formatStoryHtml(scene.subtitle) + "</p>";
   }
 
-  // drop hero art in the middle area.. yeah right after heading stuff.
   if (scene.featureImage && scene.featureImage.src) {
-    html += "<div class='scene-feature-image-wrap'>";
     html += "<img class='scene-feature-image' src='" + escapeHtml(scene.featureImage.src) + "' alt='" + escapeHtml(scene.featureImage.alt || "Scene image") + "'>";
-    html += "</div>";
   }
 
   scene.text.forEach(function (paragraph) {

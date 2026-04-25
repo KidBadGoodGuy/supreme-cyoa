@@ -668,20 +668,20 @@ function interpolatePlayerName(text) {
     "{{siblingThreeObject}}": "him",
     "{{siblingThreePossessive}}": "his"
   };
-
+  //the abovw just sets default family names for an old feature
   var output = text;
   Object.keys(replacements).forEach(function (key) {
     output = output.replaceAll(key, replacements[key]);
   });
   return output;
 }
-
+//this sets key returns
 function showScene() {
   var storyCard = document.getElementById("storyCard");
   if (!storyCard || !scenes[currentScene]) {
     return;
   }
-
+//this is the function that allows scenes to show
   var scene = scenes[currentScene];
   var sceneTitle = formatStoryHtml(scene.title);
   var html = "<div id='storyCardToolbar'><button id='undoButton' class='art-button undo-art' type='button' onclick='undoLastChoice()' aria-label='Undo' data-tooltip='undo'>Undo</button><button type='button' onclick='openTimelineModal()' aria-label='Open my storyline'>My Storyline</button></div>";
@@ -726,7 +726,7 @@ function showScene() {
   storyCard.innerHTML = html;
   updateUndoButton();
 }
-
+//the above formats the scene logic into html
 function makeChoice(choiceIndex) {
   var scene = scenes[currentScene];
   if (!scene || !scene.choices[choiceIndex]) {
@@ -785,7 +785,7 @@ function renderSimpleTimelineList() {
 
   list.innerHTML = html;
 }
-
+//choice logic
 function openTimelineModal() {
   var modal = document.getElementById("timelineModal");
   if (!modal) {
@@ -810,5 +810,6 @@ function closeTimelineModal() {
   modal.classList.remove("open");
   modal.setAttribute("aria-hidden", "true");
 }
-
+//controls the timeline/storyline modal
 window.startAdventure = startAdventure;
+//starts adventure

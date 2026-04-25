@@ -479,8 +479,13 @@ var scenes = {
   },
   54: {
     title: "The Ramayana Adventure: Lanka",
+    subtitle: "Coming Soon",
+    featureImage: {
+      src: "Hanuman_Stare.png",
+      alt: "Hanuman staring toward Lanka"
+    },
     text: [
-      "Coming Soon"
+      "The next part arrives soon, where vows become war plans and the sea itself will be challenged."
     ],
     dialogue: [
       { speaker: "Hanuman", line: "\"Give the word, and we leap for Lanka tonight.\"" },
@@ -760,6 +765,18 @@ function showScene() {
     html += "<h1>" + sceneTitle + "</h1>";
   } else {
     html += "<h2>" + sceneTitle + "</h2>";
+  }
+
+  // quick subtitle jam here,, make it loud when scene asks for it.
+  if (scene.subtitle) {
+    html += "<p class='scene-subtitle scene-subtitle-strong'>" + formatStoryHtml(scene.subtitle) + "</p>";
+  }
+
+  // drop hero art in the middle area.. yeah right after heading stuff.
+  if (scene.featureImage && scene.featureImage.src) {
+    html += "<div class='scene-feature-image-wrap'>";
+    html += "<img class='scene-feature-image' src='" + escapeHtml(scene.featureImage.src) + "' alt='" + escapeHtml(scene.featureImage.alt || "Scene image") + "'>";
+    html += "</div>";
   }
 
   scene.text.forEach(function (paragraph) {

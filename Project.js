@@ -1,13 +1,16 @@
-if (!storyCard.hasChildNodes()) {
-  storyCard.innerHTML = "<h1>Fulfill your dharma, and let your deeds become legend.</h1>";
-}
+document.addEventListener("DOMContentLoaded", function () {
+  var storyCard = document.getElementById("storyCard");
+  var choices = document.getElementById("choices");
+  if (storyCard && choices && choices.children.length === 0) {
+    storyCard.insertAdjacentHTML("afterbegin", '<p class="prelude-text">Fulfill your dharma, and let your deeds become legend.</p>');
+  }
+});
+
 var currentScene = 0;
 var playerName = "";
 var broughtLakshmana = false;
 var wentAlone = false;
 var historyStack = [];
-console.log("Confirmed - Ready for Expo")
-console.log("Added new heading")
 var familyCast = {
   fatherName: "Dasharatha",
   motherName: "Kausalya",
@@ -18,7 +21,6 @@ var familyCast = {
   secondMotherName: "Kaikeyi"
 };
 
-console.log("Update 24");
 
 var scenes = {
   1: {

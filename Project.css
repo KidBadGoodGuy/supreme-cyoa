@@ -913,6 +913,19 @@ p {
   color: var(--muted);
 }
 
+.timeline-scenes-scroll {
+  margin-top: 12px;
+  max-height: min(52vh, 560px);
+  overflow-y: auto;
+  padding-right: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 223, 165, 0.45) rgba(12, 8, 14, 0.45);
+}
+
+.timeline-scenes-scroll ol {
+  margin-top: 0;
+}
+
 .receipt-section li + li {
   margin-top: 8px;
 }

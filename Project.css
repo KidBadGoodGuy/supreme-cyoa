@@ -865,6 +865,31 @@ p {
   color: #fff0c6;
 }
 
+.scene-subtitle {
+  margin: 10px auto 14px;
+  color: #ffe8b5;
+  text-align: center;
+}
+
+.scene-subtitle-strong {
+  font-size: clamp(1.55rem, 3.2vw, 2.2rem);
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+.scene-feature-image-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 12px auto 18px;
+}
+
+.scene-feature-image {
+  width: min(420px, 92%);
+  border-radius: 20px;
+  border: 8px solid #d4a63a;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+}
+
 #choices {
   margin-top: 26px;
   display: flex;

@@ -1,6 +1,6 @@
 var preludeText = "Fulfill your dharma, and let your deeds become legend.";
 // the variable defines the prelude text
-console.log("Update 1.0.5")
+console.log("Update 1.0.6")
 var currentScene = 0;
 var playerName = "";
 var broughtLakshmana = false;
@@ -104,9 +104,9 @@ var scenes = {
     title: "The Ramayana Begins",
     text: [
       "Welcome, {{name}}!",
-      "{{name}}, you are the prince of Ayodhya, and the kingdom is preparing to celebrate your coronation as {{fatherName}} grows old.",
+      "{{name}}, you are the prince of Ayodhya, and the kingdom prepares to celebrate your coronation as {{fatherName}} grows old.",
       "Before dawn, {{secondMotherName}} invokes old promises and demands that {{siblingTwoName}} receive the throne while you, {{name}}, are sent into exile.",
-      "To protect dharma and your father's honor, you accept a life of hardship and vow that you, {{name}}, will not enter any city until the exile ends."
+      "To protect dharma and your father's honor, you choose hardship over conflict and vow not to enter any city until exile ends."
     ],
     choices: [
       { label: "Argue back", next: 3 },
@@ -151,7 +151,7 @@ var scenes = {
   71: {
     title: "Who Goes With You?",
     text: [
-      "You steady yourself and choose whether to walk into exile alone or with {{siblingOneName}} and {{wifeName}}."
+      "At Ayodhya's edge, you pause and decide whether to carry exile alone or share it with {{siblingOneName}} and {{wifeName}}."
     ],
     choices: [
       { label: "Go alone", next: 5, onPick: function () { wentAlone = true; } },

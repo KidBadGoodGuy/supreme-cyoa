@@ -13,6 +13,8 @@ This page now includes both **live features** and a **comprehensive systems expa
 - Route identity changes based on earlier decisions.
 - Multiple restart-capable endings.
 - Dialogue blocks for key character moments.
+- Extended campaign continuation from forest arc through Lanka war and Uttara Kanda endings.
+- Longer scene cadence with day/night progression pacing.
 
 ### 2) Personalization
 - Custom player name input on the start card.
@@ -26,11 +28,13 @@ This page now includes both **live features** and a **comprehensive systems expa
 - Randomized outcomes in selected scenes.
 - Toggle between in-game luck and real-life day/night influenced luck.
 - Explicit restart flow for replayability.
+- Random-encounter style stat growth choices in campaign expansion scenes.
 
 ### 4) Story UI
 - Scene rendering into `#storyCard` with title, narrative, dialogue, and choices.
 - Undo via decision history stack.
 - **My Storyline** modal recap of visited scenes.
+- New **Stats** modal for RPG combat attributes (Strength, Defense, Speed, Agility, Stamina, Endurance).
 
 ### 5) Navigation and pages
 - Shared responsive navbar pattern.

@@ -1,5 +1,6 @@
 var preludeText = "Fulfill your dharma, and let your deeds become legend.";
 // the variable defines the prelude text
+console.log("Update 1.0.6")
 console.log("Update 1.0.7")
 console.log("Update 1.0.8")
 var currentScene = 0;
@@ -29,6 +30,8 @@ var systemState = {
   world: { chapter: "banwas", activeEvent: null },
   inventory: []
 };
+
+var progressionState = { day: 1, timeOfDay: "Day" };
 
 function evaluateRelationshipStates() {
   Object.keys(systemState.affection).forEach(function (id) {
@@ -562,22 +565,21 @@ var scenes = {
     ],
     choices: [{ label: "Restart", restart: true }]
   },
-  54: {
-    title: "The Ramayana Adventure: Lanka",
-    subtitle: "Coming Soon",
-    featureImage: {
-      src: "Hanuman_Stare.png",
-      alt: "Hanuman staring toward Lanka"
-    },
-    text: [
-      "The next part arrives soon, where vows become war plans and the sea itself will be challenged."
-    ],
-    dialogue: [
-      { speaker: "Hanuman", line: "\"Give the word, and we leap for Lanka tonight.\"" },
-      { speaker: "{{name}}", line: "\"We move with courage and discipline. Everyone returns together.\"" }
-    ],
-    choices: [{ label: "Restart", restart: true }]
-  },
+  54: { title: "War Council at Prasravana", text: ["At sunset on Day 3, the vanara captains form a firelit ring around you. Maps of Lanka, tidal charts, and scouting notes are spread over stone.", "This is the first of many linked campaign scenes. Your doctrine now shapes combat readiness, relationships, and stat growth."], choices: [{ label: "Fortify logistics and shields", next: 72, effects: { defense: 2, endurance: 1 }, timeAdvance: 1 }, { label: "Intensive assault drills", next: 72, effects: { strength: 2, stamina: 1 }, timeAdvance: 1 }, { label: "Stealth + recon doctrine", next: 72, effects: { agility: 2, speed: 2 }, timeAdvance: 1 }] },
+  72: { title: "Night Raid Simulations", text: ["Hanuman runs moonlit obstacle drills with your strike squads. Messengers report demon watchtowers rotating every half watch.", "Your command style inspires either loyalty, fear, or precision discipline."], choices: [{ label: "Lead from the front", next: 73, effects: { strength: 1, stamina: 2 }, timeAdvance: 1 }, { label: "Command from elevated strategy post", next: 73, effects: { defense: 1, endurance: 2 }, timeAdvance: 1 }, { label: "Split into specialist teams", next: 73, effects: { agility: 2, speed: 1 }, timeAdvance: 1 }] },
+  73: { title: "Dawn: Hanuman's Leap", text: ["Day 4 dawn breaks crimson as Hanuman launches toward Lanka carrying your signet and command authority.", "Winds shift violently; he must choose between stealth, shock, or devotion-led diplomacy with hidden allies."], choices: [{ label: "Authorize total stealth", next: 74, effects: { agility: 1, speed: 1 }, timeAdvance: 1 }, { label: "Authorize visible provocation", next: 74, effects: { strength: 1, defense: -1 }, timeAdvance: 1 }, { label: "Authorize sacred oath approach", next: 74, effects: { endurance: 2 }, timeAdvance: 1 }] },
+  74: { title: "Ashoka Vatika Contact", text: ["In the deepest grove, Hanuman meets Sita and receives her jewel token and urgent timeline: Ravana demands surrender soon.", "Her words can either steady your heart or push you toward ruthless escalation."], choices: [{ label: "Preserve civilians at all costs", next: 75, effects: { defense: 1, endurance: 1 }, timeAdvance: 1 }, { label: "Prioritize rapid extraction", next: 75, effects: { speed: 2 }, timeAdvance: 1 }, { label: "Prepare decisive invasion", next: 75, effects: { strength: 2 }, timeAdvance: 1 }] },
+  75: { title: "Setu Engineering Day", text: ["Day 5 becomes a colossal labor operation. Nala and Nila direct stone placement while tides threaten to shatter early spans.", "Random encounter: A collapsing section can be saved only by immediate intervention."], choices: [{ label: "Personally brace the collapse", next: 76, effects: { strength: 2, endurance: 1 }, timeAdvance: 1 }, { label: "Use disciplined shield wall", next: 76, effects: { defense: 2, stamina: 1 }, timeAdvance: 1 }, { label: "Rapid rope traversal rescue", next: 76, effects: { agility: 2, speed: 1 }, timeAdvance: 1 }] },
+  76: { title: "Night Before Landing", text: ["Torches reflect over the completed bridge. Lakshmana and Vibhishana debate whether Indrajit will force an illusion war at first light.", "Companion affection and personality now influence battle callouts and support timing."], choices: [{ label: "Trust Vibhishana's intelligence", next: 77, effects: { defense: 1, endurance: 1 }, timeAdvance: 1 }, { label: "Trust Lakshmana's aggression", next: 77, effects: { strength: 1, stamina: 1 }, timeAdvance: 1 }, { label: "Blend both plans", next: 77, effects: { agility: 1, speed: 1 }, timeAdvance: 1 }] },
+  77: { title: "Boss Phase: Indrajit", text: ["Phase I: serpent-bind volleys. Phase II: invisible artillery. Phase III: ritual chamber strike window.", "You must decide whether to conserve elite units or break formation for a finishing move."], choices: [{ label: "Conserve and counter", next: 78, effects: { defense: 2, endurance: 1 }, timeAdvance: 1 }, { label: "Break formation and pressure", next: 78, effects: { strength: 2, stamina: -1 }, timeAdvance: 1 }, { label: "Flank through smoke corridors", next: 78, effects: { agility: 2, speed: 1 }, timeAdvance: 1 }] },
+  78: { title: "Boss Phase: Kumbhakarna", text: ["At Day 6 dusk, Kumbhakarna crushes siege towers and vanara phalanxes alike. The field becomes a rescue-and-kill puzzle.", "Random encounter: save a trapped battalion or press for a quick kill."], choices: [{ label: "Save battalion first", next: 79, effects: { defense: 2, endurance: 2 }, timeAdvance: 1 }, { label: "Press for quick kill", next: 79, effects: { strength: 2, stamina: 1 }, timeAdvance: 1 }, { label: "Hit-and-fade harassment", next: 79, effects: { agility: 1, speed: 2 }, timeAdvance: 1 }] },
+  79: { title: "Boss Phase: Ravana", text: ["Final day-night cycle begins. Ravana's ten-crowned war form rotates elemental weapons and psychological attacks.", "You choose your final doctrine, which shapes coronation perception and Uttara outcomes."], choices: [{ label: "Offer surrender once, then strike", next: 80, effects: { defense: 1, endurance: 1 }, timeAdvance: 1 }, { label: "Unleash overwhelming force", next: 80, effects: { strength: 2, stamina: 1 }, timeAdvance: 1 }, { label: "Coordinated companion lock", next: 80, effects: { agility: 2, speed: 1 }, timeAdvance: 1 }] },
+  80: { title: "Return to Ayodhya: Coronation Day", text: ["After victory, you return for coronation amid celebration and scrutiny. Public perception tracks mercy, discipline, and wartime loss.", "Your reign now transitions into Uttara Kanda, where the hardest moral trials begin."], choices: [{ label: "Rule through restorative justice", next: 81, timeAdvance: 1 }, { label: "Rule through iron order", next: 81, timeAdvance: 1 }, { label: "Rule through ritual duty", next: 81, timeAdvance: 1 }] },
+  81: { title: "Uttara Kanda: Rumors and Exile", text: ["Whispers in Ayodhya challenge Sita's honor. You face crown-versus-heart in a decision that permanently changes family destiny.", "Day 8 closes with Sita sent to Valmiki's refuge where Lava and Kusha are born."], choices: [{ label: "Stand publicly with Sita", next: 82, effects: { endurance: 1 }, timeAdvance: 1 }, { label: "Exile her for state stability", next: 82, effects: { defense: 1 }, timeAdvance: 1 }, { label: "Call legal dharma inquiry", next: 82, effects: { agility: 1 }, timeAdvance: 1 }] },
+  82: { title: "Ashvamedha and Final Reunion", text: ["Years later, Lava and Kusha halt the Ashvamedha horse. Father and sons meet first in conflict, then in recognition through song.", "Sita invokes Bhumi Devi and departs into the earth. Rama's final journey approaches the Sarayu."], choices: [{ label: "Ideal Dharma Ending", next: 83 }, { label: "Ruthless Conqueror Ending", next: 84 }, { label: "Failed Ruler Ending", next: 85 }] },
+  83: { title: "Ending: Ideal Dharma", text: ["You complete rule with compassion, restraint, and justice. Allies remain loyal; memory becomes blessing across generations."], choices: [{ label: "Restart", restart: true }] },
+  84: { title: "Ending: Ruthless Conqueror", text: ["Your victories endure, but fear replaces devotion. The realm obeys your will while love and trust fade from court and camp."], choices: [{ label: "Restart", restart: true }] },
+  85: { title: "Ending: Failed Ruler", text: ["Broken loyalties and unresolved grief shadow your reign. The epic closes with warning: power without balance devours itself."], choices: [{ label: "Restart", restart: true }] },
   65: {
     title: "Searching for {{wifeName}}",
     text: [
@@ -661,6 +663,7 @@ function startAdventure() {
   timelineEntries = [];
   currentScene = 1;
   gameState = createInitialGameState(playerName);
+  gameState.player.rpgStats = { strength: 12, defense: 11, speed: 10, agility: 10, stamina: 12, endurance: 11 };
   registerCoreSystems();
   addItem("forest_bow", "Forest Bow", "weapons", 1);
   addItem("sitas_token", "Sita's Token", "quest items", 1);
@@ -805,6 +808,7 @@ function showScene() {
   if (gameState) { gameState.scene.current = currentScene; eventBus.emit(GAME_EVENTS.SCENE_LOAD, { sceneId: currentScene }); }
   var sceneTitle = formatStoryHtml(scene.title);
   if (gameState && gameState.player.stats.dharma >= 70) sceneTitle += " <span class='dharma-echo'>• Aura of Dharma</span>";
+  var html = "<div id='storyCardToolbar'><button id='undoButton' class='art-button undo-art' type='button' onclick='undoLastChoice()' aria-label='Undo' data-tooltip='undo'>Undo</button><button type='button' onclick='openTimelineModal()' aria-label='Open my storyline'>My Storyline</button><button type='button' onclick='openStatsModal()' aria-label='Open stats'>Stats</button><button type='button' onclick='downloadSaveFile()' aria-label='Export save'>Export Save</button><button type='button' onclick='triggerSaveUpload()' aria-label='Import save'>Import Save</button><button type='button' onclick='toggleDharmaConsole()' aria-label='Open Dharma Console'>Dharma Console</button><input id='saveFileInput' type='file' accept='application/json' style='display:none' onchange='importSaveFile(event)'></div>";
   var luckNote = dayNightMode === "real"
     ? (isRealLifeNight() ? "Real-time mode: Night luck is lower right now." : "Real-time mode: Day luck is higher right now.")
     : "In-game mode: Standard story luck is active.";
@@ -813,6 +817,7 @@ function showScene() {
     var inventoryView = Object.keys(gameState.player.inventory).map(function (key) { var item = gameState.player.inventory[key]; return "<li>" + escapeHtml(item.name) + " x" + item.qty + " <em>(" + escapeHtml(item.category) + ")</em></li>"; }).join("");
     var questView = [];
     ["main", "side", "hidden"].forEach(function (bucket) { Object.keys(gameState.quests[bucket]).forEach(function (qid) { var q = gameState.quests[bucket][qid]; questView.push("<li>" + escapeHtml(q.title) + " — " + escapeHtml(q.state) + "</li>"); }); });
+    html += "<div id='rpgHud'><div class='hud-card'><h4>Dharma Console</h4><p>Dharma: " + gameState.player.stats.dharma + " | Aggression: " + gameState.player.stats.aggression + " | Compassion: " + gameState.player.stats.compassion + "</p><p>" + escapeHtml((gameState.ui.moralLog[0] || "Your journey has just begun.")) + "</p></div><div class='hud-card'><h4>World Clock</h4><p>Day " + progressionState.day + " • " + progressionState.timeOfDay + "</p><p>5-10 scenes now complete one in-world day cycle.</p></div><div class='hud-card'><h4>Inventory</h4><ul>" + (inventoryView || "<li>Empty</li>") + "</ul></div><div class='hud-card'><h4>Quest Tracker</h4><ul>" + (questView.join("") || "<li>No quests yet</li>") + "</ul></div></div>";
     var rpgClass = rpgPanelsVisible ? "" : " rpg-collapsed";
     var xp = Math.max(0, Math.round((gameState.player.stats.dharma + gameState.player.stats.compassion + gameState.player.stats.honor) / 3));
     var stamina = Math.max(0, 100 - gameState.player.stats.aggression + Math.floor(gameState.player.stats.strategy / 2));
@@ -920,6 +925,8 @@ function makeChoice(choiceIndex) {
   var choice = scene.choices[choiceIndex];
   var fromScene = currentScene;
   if (gameState) eventBus.emit(GAME_EVENTS.CHOICE_MADE, { sceneId: currentScene, choice: choice });
+  if (choice.effects && gameState) applyChoiceEffects(choice.effects);
+  if (choice.timeAdvance) advanceWorldTime(choice.timeAdvance);
   if (typeof choice.onPick === "function") {
     choice.onPick();
   }
@@ -928,6 +935,34 @@ function makeChoice(choiceIndex) {
   currentScene = resolveSpecialNext(choice.next);
   timelineEntries.push({ from: fromScene, to: currentScene, label: choice.label });
   showScene();
+}
+
+function applyChoiceEffects(effects) {
+  if (!gameState || !gameState.player) return;
+  var stats = gameState.player.rpgStats || (gameState.player.rpgStats = { strength: 12, defense: 11, speed: 10, agility: 10, stamina: 12, endurance: 11 });
+  Object.keys(effects).forEach(function (k) {
+    if (stats[k] == null) return;
+    stats[k] = Math.max(1, Math.min(99, stats[k] + effects[k]));
+  });
+}
+
+function advanceWorldTime(units) {
+  var cycle = ["Day", "Dusk", "Night", "Dawn"];
+  var idx = cycle.indexOf(progressionState.timeOfDay);
+  var next = (idx + (units || 1)) % cycle.length;
+  progressionState.timeOfDay = cycle[next];
+  if (progressionState.timeOfDay === "Dawn") progressionState.day += 1;
+}
+
+function openStatsModal() {
+  if (!gameState || !gameState.player) return;
+  var stats = gameState.player.rpgStats || {};
+  var modal = document.createElement("div");
+  modal.id = "statsModal";
+  modal.style = "position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;";
+  modal.innerHTML = "<div style='max-width:520px;width:100%;background:#171717;color:#f2f2f2;border:1px solid #666;border-radius:16px;padding:18px;'><h3>Player Combat Stats</h3><p>Strength: " + stats.strength + " | Defense: " + stats.defense + " | Speed: " + stats.speed + "</p><p>Agility: " + stats.agility + " | Stamina: " + stats.stamina + " | Endurance: " + stats.endurance + "</p><p>Dharma: " + gameState.player.stats.dharma + " | Honor: " + (gameState.player.stats.honor || 50) + " | Strategy: " + (gameState.player.stats.strategy || 40) + "</p><button type='button' onclick='document.getElementById(\"statsModal\").remove()'>Close</button></div>";
+  modal.onclick = function (event) { if (event.target && event.target.id === "statsModal") modal.remove(); };
+  document.body.appendChild(modal);
 }
 
 function undoLastChoice() {

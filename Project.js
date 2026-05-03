@@ -5,6 +5,7 @@ console.log("Update 1.0.7")
 console.log("Update 1.0.8")
 console.log("Update 1.0.9")
 console.log("Update 1.0.10")
+console.log("Update 1.0.11")
 var currentScene = 0;
 var playerName = "";
 var broughtLakshmana = false;
@@ -12,6 +13,7 @@ var wentAlone = false;
 var historyStack = [];
 var timelineEntries = [];
 var timelineRevealAll = false;
+var selectedHero = "rama";
 var familyCast = {
   fatherName: "Dasharatha",
   motherName: "Kausalya",
@@ -125,14 +127,43 @@ var scenes = {
     title: "The Ramayana Begins",
     text: [
       "Welcome, {{name}}!",
-      "{{name}}, you are the prince of Ayodhya, and the kingdom prepares to celebrate your coronation as {{fatherName}} grows old.",
-      "Before dawn, {{secondMotherName}} invokes old promises and demands that {{siblingTwoName}} receive the throne while you, {{name}}, are sent into exile.",
-      "To protect dharma and your father's honor, you choose hardship over conflict and vow not to enter any city until exile ends."
+      "Tonight, destiny turns. Your chosen path will reshape the epic from your own perspective."
     ],
     choices: [
-      { label: "Argue back", next: 3 },
-      { label: "Accept the exile", next: 4 }
+      { label: "Enter your hero's perspective", next: -10 }
     ]
+  },
+  86: {
+    title: "Lakshmana's Oath",
+    text: [
+      "{{name}}, you watch Rama accept exile and feel fire in your chest.",
+      "You swear before Ayodhya that no danger, demon, or hunger will touch your elder brother while you still breathe."
+    ],
+    choices: [{ label: "Escort Rama into exile", next: 4 }]
+  },
+  87: {
+    title: "Bharata's Burden",
+    text: [
+      "{{name}}, you return to Ayodhya and learn that the throne was won through your mother {{motherName}}'s demand.",
+      "Shaken by grief and shame, you reject the crown and vow to rule only as Rama's regent."
+    ],
+    choices: [{ label: "Go to Chitrakoot and plead", next: 70 }]
+  },
+  88: {
+    title: "Ravana's Ambition",
+    text: [
+      "{{name}}, in Lanka's golden court, spies whisper of Ayodhya's fractured royal house.",
+      "You decide to exploit the exile and set plans in motion long before the forest ever hears your name."
+    ],
+    choices: [{ label: "Set the snare in the forest", next: 66 }]
+  },
+  89: {
+    title: "Sita's Resolve",
+    text: [
+      "{{name}}, while the palace trembles, you refuse comfort and ornaments.",
+      "You choose the forest path willingly, believing dharma is not a place but the promise you keep beside Rama."
+    ],
+    choices: [{ label: "Walk into exile together", next: 6 }]
   },
   3: {
     title: "You choose to argue back.",
@@ -673,6 +704,7 @@ function startAdventure() {
   var heroSelect = document.getElementById("heroSelect");
   var heroKey = heroSelect && heroProfiles[heroSelect.value] ? heroSelect.value : "rama";
   var heroProfile = heroProfiles[heroKey];
+  selectedHero = heroKey;
   var baseNameInput = document.getElementById("playerName");
   playerName = baseNameInput && baseNameInput.value.trim() ? baseNameInput.value.trim() : heroProfile.defaultName;
   familyCast.fatherName = heroProfile.fatherName;
@@ -711,6 +743,14 @@ function simulateOfflineProgress() {
 //starts the adventure
 
 function resolveSpecialNext(next) {
+  if (next === -10) {
+    if (selectedHero === "lakshmana") return 86;
+    if (selectedHero === "bharata") return 87;
+    if (selectedHero === "ravana") return 88;
+    if (selectedHero === "sita") return 89;
+    return 3;
+  }
+
   if (next === -1) {
     if (randomPercent() < getLuckThreshold(65)) {
       return wentAlone ? 52 : 14;
@@ -735,6 +775,7 @@ function resolveSpecialNext(next) {
 //determines special transitions between special scenes
 
 function getPossibleNextScenes(next) {
+  if (next === -10) return [3, 86, 87, 88, 89];
   if (next === -1) return [14, 18, 52];
   if (next === -2) return [29, 39];
   if (next === -3) return [33, 34];

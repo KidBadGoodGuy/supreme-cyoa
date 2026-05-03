@@ -3,6 +3,7 @@ var preludeText = "Fulfill your dharma, and let your deeds become legend.";
 console.log("Update 1.0.6")
 console.log("Update 1.0.7")
 console.log("Update 1.0.8")
+console.log("Update 1.0.9")
 var currentScene = 0;
 var playerName = "";
 var broughtLakshmana = false;
@@ -48,6 +49,9 @@ var isRoutingSceneUpdate = false;
 var rpgPanelsVisible = false;
 var aiSceneSeed = 10000;
 var dayNightMode = "game";
+var accountState = { username: "", createdAt: null, settings: { realtimeWorld: true, travelEncounters: true, dreams: true } };
+var worldClock = { lastActiveAt: Date.now(), phase: "Dawn", totalHours: 0, storyPhase: "Origin Phase" };
+var travelEncounters = ["Sage", "Old Man", "Poor Family", "Demon", "Hunting Ground", "Merchant", "Village"];
 
 function getSceneIdFromUrl() {
   var fromPath = window.location.pathname.match(/\/scene\/(\d+)\/?$/);
@@ -79,7 +83,7 @@ function applySceneFromRoute() {
 }
 
 function createInitialGameState(name) {
-  return { player: { name: name || "Rama", health: 100, stats: { dharma: 50, aggression: 20, compassion: 50 }, affection: { sita: 70, lakshmana: 75, hanuman: 50, sugriva: 35, vibhishana: 20, bharata: 80 }, inventory: {} }, quests: { main: { exilePath: { id: "exilePath", title: "Path of Exile", type: "main", state: "active" } }, side: {}, hidden: {} }, world: { flags: {}, activeEvent: null }, scene: { current: 1, history: [] }, ui: { moralLog: [] } };
+  return { player: { name: name || "Rama", health: 100, energy: 100, stats: { dharma: 50, aggression: 20, compassion: 50, wisdom: 10, knowledge: 10 }, affection: { sita: 70, lakshmana: 75, hanuman: 50, sugriva: 35, vibhishana: 20, bharata: 80 }, inventory: {} }, quests: { main: { exilePath: { id: "exilePath", title: "Path of Exile", type: "main", state: "active" } }, side: {}, hidden: {} }, world: { flags: {}, activeEvent: null }, scene: { current: 1, history: [] }, ui: { moralLog: [] } };
 }
 
 var eventBus = { listeners: {}, on: function (name, handler) { (this.listeners[name] = this.listeners[name] || []).push(handler); }, emit: function (name, payload) { (this.listeners[name] || []).forEach(function (handler) { handler(payload); }); } };
@@ -665,6 +669,7 @@ function startAdventure() {
   gameState = createInitialGameState(playerName);
   gameState.player.rpgStats = { strength: 12, defense: 11, speed: 10, agility: 10, stamina: 12, endurance: 11 };
   registerCoreSystems();
+  simulateOfflineProgress();
   addItem("forest_bow", "Forest Bow", "weapons", 1);
   addItem("sitas_token", "Sita's Token", "quest items", 1);
   showScene();
@@ -674,6 +679,15 @@ function startAdventure() {
   }
   updateUndoButton();
   syncSceneRoute(true);
+}
+
+function simulateOfflineProgress() {
+  var now = Date.now();
+  var elapsedHours = Math.floor((now - (worldClock.lastActiveAt || now)) / 3600000);
+  if (elapsedHours > 0) {
+    simulateWorldPassage(elapsedHours);
+    if (gameState && gameState.ui) gameState.ui.moralLog.unshift("The world evolved for " + elapsedHours + " hour(s) while you were away.");
+  }
 }
 //starts the adventure
 
@@ -808,11 +822,10 @@ function showScene() {
   if (gameState) { gameState.scene.current = currentScene; eventBus.emit(GAME_EVENTS.SCENE_LOAD, { sceneId: currentScene }); }
   var sceneTitle = formatStoryHtml(scene.title);
   if (gameState && gameState.player.stats.dharma >= 70) sceneTitle += " <span class='dharma-echo'>• Aura of Dharma</span>";
-  var html = "<div id='storyCardToolbar'><button id='undoButton' class='art-button undo-art' type='button' onclick='undoLastChoice()' aria-label='Undo' data-tooltip='undo'>Undo</button><button type='button' onclick='openTimelineModal()' aria-label='Open my storyline'>My Storyline</button><button type='button' onclick='openStatsModal()' aria-label='Open stats'>Stats</button><button type='button' onclick='downloadSaveFile()' aria-label='Export save'>Export Save</button><button type='button' onclick='triggerSaveUpload()' aria-label='Import save'>Import Save</button><button type='button' onclick='toggleDharmaConsole()' aria-label='Open Dharma Console'>Dharma Console</button><input id='saveFileInput' type='file' accept='application/json' style='display:none' onchange='importSaveFile(event)'></div>";
   var luckNote = dayNightMode === "real"
     ? (isRealLifeNight() ? "Real-time mode: Night luck is lower right now." : "Real-time mode: Day luck is higher right now.")
     : "In-game mode: Standard story luck is active.";
-  var html = "<div id='storyCardToolbar'><button id='undoButton' class='art-button undo-art' type='button' onclick='undoLastChoice()' aria-label='Undo' data-tooltip='undo'>Undo</button><button type='button' onclick='openTimelineModal()' aria-label='Open my storyline'>My Storyline</button><button type='button' onclick='downloadSaveFile()' aria-label='Export save'>Export Save</button><button type='button' onclick='triggerSaveUpload()' aria-label='Import save'>Import Save</button><button type='button' onclick='toggleRpgPanels()' aria-label='Toggle RPG Panels'>RPG Features</button><button type='button' onclick='toggleDharmaConsole()' aria-label='Open Dharma Console'>Dharma Console</button><button type='button' onclick='generateInfiniteAiScene()' aria-label='Generate endless AI story scene'>AI Continue</button><label for='dayNightModeToggle' class='story-toggle-label'>Day/Night</label><select id='dayNightModeToggle' aria-label='Choose day and night mode' onchange='setDayNightMode(this.value)'><option value='game'" + (dayNightMode === "game" ? " selected" : "") + ">In-Game Day/Night</option><option value='real'" + (dayNightMode === "real" ? " selected" : "") + ">Real-Life Day/Night</option></select><span class='story-toggle-note'>" + escapeHtml(luckNote) + "</span><input id='saveFileInput' type='file' accept='application/json' style='display:none' onchange='importSaveFile(event)'></div>";
+  var html = "<div id='storyCardToolbar'><button id='undoButton' class='art-button undo-art' type='button' onclick='undoLastChoice()' aria-label='Undo' data-tooltip='undo'>Undo</button><button type='button' onclick='openTimelineModal()' aria-label='Open my storyline'>My Storyline</button><button type='button' onclick='downloadSaveFile()' aria-label='Export save'>Export Save</button><button type='button' onclick='triggerSaveUpload()' aria-label='Import save'>Import Save</button><button type='button' onclick='openSettingsPanel()' aria-label='Open settings'>Settings</button><button type='button' onclick='openAccountPanel()' aria-label='Open account'>Account</button><button type='button' onclick='restAndDream()' aria-label='Sleep and dream'>Sleep</button><label for='dayNightModeToggle' class='story-toggle-label'>Day/Night</label><select id='dayNightModeToggle' aria-label='Choose day and night mode' onchange='setDayNightMode(this.value)'><option value='game'" + (dayNightMode === "game" ? " selected" : "") + ">In-Game Day/Night</option><option value='real'" + (dayNightMode === "real" ? " selected" : "") + ">Real-Life Day/Night</option></select><span class='story-toggle-note'>" + escapeHtml(luckNote) + "</span><input id='saveFileInput' type='file' accept='application/json' style='display:none' onchange='importSaveFile(event)'></div>";
   if (gameState) {
     var inventoryView = Object.keys(gameState.player.inventory).map(function (key) { var item = gameState.player.inventory[key]; return "<li>" + escapeHtml(item.name) + " x" + item.qty + " <em>(" + escapeHtml(item.category) + ")</em></li>"; }).join("");
     var questView = [];
@@ -821,7 +834,7 @@ function showScene() {
     var rpgClass = rpgPanelsVisible ? "" : " rpg-collapsed";
     var xp = Math.max(0, Math.round((gameState.player.stats.dharma + gameState.player.stats.compassion + gameState.player.stats.honor) / 3));
     var stamina = Math.max(0, 100 - gameState.player.stats.aggression + Math.floor(gameState.player.stats.strategy / 2));
-    html += "<div id='rpgHud' class='" + rpgClass + "'><aside class='hud-card hud-left'><h4>Dharma Console</h4><p>Dharma: " + gameState.player.stats.dharma + " | Aggression: " + gameState.player.stats.aggression + " | Compassion: " + gameState.player.stats.compassion + "</p><p>" + escapeHtml((gameState.ui.moralLog[0] || "Your journey has just begun.")) + "</p><h4>Combat Readiness</h4><p>XP Power: " + xp + " | Stamina: " + stamina + "</p></aside><div class='hud-center'><div class='hud-card'><h4>Inventory</h4><ul>" + (inventoryView || "<li>Empty</li>") + "</ul></div></div><aside class='hud-card hud-right'><h4>Quest Tracker</h4><ul>" + (questView.join("") || "<li>No quests yet</li>") + "</ul><h4>Party Bond</h4><p>Sita: " + (gameState.player.affection.sita || 0) + " | Lakshmana: " + (gameState.player.affection.lakshmana || 0) + "</p></aside></div>";
+    html += "<div id='rpgHud' class='" + rpgClass + "'><aside class='hud-card hud-left'><h4>World Simulation</h4><p>Dharma: " + gameState.player.stats.dharma + " | Wisdom: " + gameState.player.stats.wisdom + " | Knowledge: " + gameState.player.stats.knowledge + "</p><p>Energy: " + gameState.player.energy + " | Phase: " + worldClock.storyPhase + "</p><p>" + escapeHtml((gameState.ui.moralLog[0] || "Your journey has just begun.")) + "</p><h4>Combat Readiness</h4><p>XP Power: " + xp + " | Stamina: " + stamina + "</p></aside><div class='hud-center'><div class='hud-card'><h4>Inventory</h4><ul>" + (inventoryView || "<li>Empty</li>") + "</ul></div></div><aside class='hud-card hud-right'><h4>Quest Tracker</h4><ul>" + (questView.join("") || "<li>No quests yet</li>") + "</ul><h4>Party Bond</h4><p>Sita: " + (gameState.player.affection.sita || 0) + " | Lakshmana: " + (gameState.player.affection.lakshmana || 0) + "</p></aside></div>";
   }
 
 
@@ -869,40 +882,6 @@ function showScene() {
 //the above formats the scene logic into html
 
 
-async function generateInfiniteAiScene() {
-  var scene = scenes[currentScene];
-  if (!scene || !gameState) return;
-  var aiButton = document.querySelector("button[onclick='generateInfiniteAiScene()']");
-  if (aiButton) { aiButton.disabled = true; aiButton.textContent = "Summoning..."; }
-  try {
-    var payload = {
-      player_name: gameState.player.name || "Rama",
-      current_title: interpolatePlayerName(scene.title),
-      current_text: interpolatePlayerName((scene.text || []).join(" ")),
-      stats: gameState.player.stats
-    };
-    var response = await fetch("/ai/continue-story", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-    if (!response.ok) throw new Error("AI service unavailable");
-    var data = await response.json();
-    var newId = aiSceneSeed++;
-    scenes[newId] = {
-      title: data.title || "The Journey Continues",
-      subtitle: "AI-Generated Endless Chapter",
-      text: Array.isArray(data.paragraphs) && data.paragraphs.length ? data.paragraphs : ["The path extends beyond maps and memory."],
-      choices: [
-        { label: data.choice_a || "Advance with courage", next: newId + 1 },
-        { label: data.choice_b || "Reflect and adapt", next: newId + 1 }
-      ]
-    };
-    historyStack.push(currentScene);
-    currentScene = newId;
-    if (gameState.ui && gameState.ui.moralLog) gameState.ui.moralLog.unshift("AI has forged a new endless chapter.");
-    showScene();
-  } catch (err) {
-    alert("AI continuation could not load right now. Please try again.");
-  }
-}
-
 function toggleRpgPanels() {
   rpgPanelsVisible = !rpgPanelsVisible;
   showScene();
@@ -933,7 +912,42 @@ function makeChoice(choiceIndex) {
 
   historyStack.push(currentScene);
   currentScene = resolveSpecialNext(choice.next);
+  simulateWorldPassage(1);
+  maybeTriggerTravelEncounter();
   timelineEntries.push({ from: fromScene, to: currentScene, label: choice.label });
+  showScene();
+}
+
+function maybeTriggerTravelEncounter() {
+  if (!accountState.settings.travelEncounters || !gameState) return;
+  if (Math.random() > 0.35) return;
+  var pick = travelEncounters[Math.floor(Math.random() * travelEncounters.length)];
+  gameState.ui.moralLog.unshift("Travel Encounter: " + pick + " changes your perspective.");
+  gameState.player.stats.wisdom += 1;
+  gameState.player.stats.knowledge += 1;
+}
+
+function simulateWorldPassage(hours) {
+  worldClock.totalHours += hours || 1;
+  worldClock.lastActiveAt = Date.now();
+  var phases = ["Dawn", "Day", "Dusk", "Night", "Deep Night"];
+  worldClock.phase = phases[worldClock.totalHours % phases.length];
+  if (worldClock.totalHours < 24) worldClock.storyPhase = "Origin Phase";
+  else if (worldClock.totalHours < 60) worldClock.storyPhase = "Rising Conflict Phase";
+  else if (worldClock.totalHours < 96) worldClock.storyPhase = "War Expansion Phase";
+  else if (worldClock.totalHours < 132) worldClock.storyPhase = "Mythic Escalation Phase";
+  else worldClock.storyPhase = "Resolution Phase";
+}
+
+function restAndDream() {
+  if (!gameState || !accountState.settings.dreams) return;
+  gameState.player.energy = Math.min(100, (gameState.player.energy || 80) + 25);
+  simulateWorldPassage(8);
+  var dreams = ["Divine Dream", "Shadow Dream", "Memory Dream", "Prophetic Dream"];
+  var dream = dreams[Math.floor(Math.random() * dreams.length)];
+  gameState.player.stats.wisdom += 2;
+  gameState.player.stats.knowledge += 2;
+  gameState.ui.moralLog.unshift("You slept, entered Slumberland, and received a " + dream + ".");
   showScene();
 }
 
@@ -1170,7 +1184,9 @@ function buildSaveSnapshot() {
     flags: { broughtLakshmana: broughtLakshmana, wentAlone: wentAlone },
     historyStack: historyStack.slice(),
     systems: systemState,
-    unifiedState: gameState
+    unifiedState: gameState,
+    accountState: accountState,
+    worldClock: worldClock
   };
 }
 
@@ -1182,8 +1198,30 @@ function hydrateFromSave(snapshot) {
   historyStack = Array.isArray(snapshot.historyStack) ? snapshot.historyStack : [];
   systemState = snapshot.systems || systemState;
   gameState = snapshot.unifiedState || createInitialGameState(playerName);
+  accountState = snapshot.accountState || accountState;
+  worldClock = snapshot.worldClock || worldClock;
   registerCoreSystems();
   evaluateRelationshipStates();
+  showScene();
+}
+
+function openAccountPanel() {
+  var username = window.prompt("Account name:", accountState.username || playerName || "Rama");
+  if (!username) return;
+  accountState.username = username.trim();
+  if (!accountState.createdAt) accountState.createdAt = new Date().toISOString();
+  if (gameState && gameState.ui) gameState.ui.moralLog.unshift("Account linked: " + accountState.username);
+  showScene();
+}
+
+function openSettingsPanel() {
+  var realtime = window.confirm("Enable realtime world progression while offline?");
+  var encounters = window.confirm("Enable travel encounters (Sage, merchant, demon, village, etc.)?");
+  var dreams = window.confirm("Enable Slumberland dream realm during sleep?");
+  accountState.settings.realtimeWorld = realtime;
+  accountState.settings.travelEncounters = encounters;
+  accountState.settings.dreams = dreams;
+  if (gameState && gameState.ui) gameState.ui.moralLog.unshift("Settings updated for realtime, encounters, and dreams.");
   showScene();
 }
 

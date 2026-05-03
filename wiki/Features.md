@@ -35,6 +35,8 @@ This page now includes both **live features** and a **comprehensive systems expa
 - Undo via decision history stack.
 - **My Storyline** modal recap of visited scenes.
 - New **Stats** modal for RPG combat attributes (Strength, Defense, Speed, Agility, Stamina, Endurance).
+- New **Settings** and **Account** controls in the story toolbar.
+- Save snapshots include account profile + world simulation clock for persistent continuity.
 
 ### 5) Navigation and pages
 - Shared responsive navbar pattern.
@@ -66,6 +68,13 @@ This page now includes both **live features** and a **comprehensive systems expa
 - Semantic/ARIA support in key controls.
 - Input guidance for player-name defaults.
 - Graceful fallbacks for optional browser features.
+
+### 10) Living world simulation (new)
+- Realtime and offline world passage simulation with story phase progression.
+- Sleep action that triggers Slumberland dream outcomes.
+- Added player stats for **Wisdom** and **Knowledge**.
+- Added Travel Encounters pool (Sage, Old Man, Poor Family, Demon, Hunting Ground, Merchant, Village) that can boost Wisdom/Knowledge.
+- Removed AI continuation feature to keep all progression deterministic and simulation-based.
 
 ---
 

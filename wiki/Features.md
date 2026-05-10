@@ -83,6 +83,12 @@ This page now includes both **live features** and a **comprehensive systems expa
 - Added Travel Encounters pool (Sage, Old Man, Poor Family, Demon, Hunting Ground, Merchant, Village) that can boost Wisdom/Knowledge.
 - Removed AI continuation feature to keep all progression deterministic and simulation-based.
 
+### 11) Reliable element and asset loading (new)
+- Required game-shell DOM nodes are validated before the modular RPG UI starts, so missing HUD, scene, timeline, receipt, or control elements are caught immediately.
+- Generated scene, encounter, dream, and expansion art now uses repository-hosted fallback assets for dependable page loads.
+- The image loader uses a timeout-backed fallback path so slow or broken art requests do not leave scene elements faded or empty.
+- Save, Load, Timeline, and Reset controls now bind through guarded helpers for safer startup.
+
 ---
 
 ## B) Major systems expansion blueprint (Ramayana RPG 2.0)

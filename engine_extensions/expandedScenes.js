@@ -1,7 +1,7 @@
 export const RAMAYANA_ARCS = ['ayodhya', 'exile', 'forest', 'kishkindha', 'lanka', 'return'];
 
-const imageFor = (seed) => `https://picsum.photos/seed/rkod-${seed}/1200/700`;
-const portraitFor = (seed) => `https://picsum.photos/seed/rkod-portrait-${seed}/360/620`;
+const imageFor = () => 'assets/images/fallback-scene.svg';
+const portraitFor = () => 'assets/images/fallback-character.svg';
 
 export const EXPANDED_SCENES = [
   { id: 'ayodhya-council-1', arc: 'ayodhya', title: 'Ayodhya Council: The Uneasy Dawn', text: 'Ministers whisper that the city celebrates too loudly. You may reassure them, investigate the rumor, or spend gold strengthening the granaries.', image: imageFor('ayodhya-council-1'), characterImage: portraitFor('council'), quest: 'Stabilize Ayodhya before exile', choices: [

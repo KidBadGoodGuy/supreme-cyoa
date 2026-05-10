@@ -10,7 +10,7 @@
   <script src="Project.js"></script>
 </head>
 <body>
-  <a id="updateBadge" class="nav-link-current" href="updates.html" aria-label="Go to updates page" aria-current="page" data-resolution-label="HD">Update 1.0.14</a>
+  <a id="updateBadge" class="nav-link-current" href="updates.html" aria-label="Go to updates page" aria-current="page" data-resolution-label="HD">Update 1.0.15</a>
 
   <nav id="topNavbar" aria-label="Site navigation">
     <button id="navbarToggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="navLinks">☰</button>
@@ -40,6 +40,15 @@
   <main id="storyCard" aria-live="polite">
     <h2>Latest Update</h2>
     <div id="updateInfo">
+      <h3>Update 1.0.15 — Project.js Main Story Integration</h3>
+      <p>Integrated the primary numbered story scenes from <code>Project.js</code> into the modular main adventure so the story shell now opens on the authored Ramayana branch instead of generated placeholder chapters.</p>
+      <p><strong>What’s included:</strong></p>
+      <ul>
+        <li>Added the Project.js main scene catalog as modular routeable scenes using <code>main-&lt;legacy-id&gt;</code> ids.</li>
+        <li>Preserved branching transitions, chance outcomes, restart choices, and the solo-vs-family forest route flag.</li>
+        <li>Updated fresh saves, resets, and numeric URL aliases so the main story starts at <code>main-1</code> and legacy numeric scene links still resolve.</li>
+        <li>Bumped hidden console update marker to <code>Update 1.0.15</code> for release tracking.</li>
+      </ul>
       <h3>Update 1.0.14 — Reliable Element and Asset Loading</h3>
       <p>Hardened the modular RPG shell so all required HUD, scene, timeline, receipt, control, background, and character elements are validated and shown with local assets instead of depending on remote image services.</p>
       <p><strong>What’s included:</strong></p>

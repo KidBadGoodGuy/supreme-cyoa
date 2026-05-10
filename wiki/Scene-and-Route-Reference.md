@@ -85,3 +85,19 @@ The main adventure now supports direct URL routing with `?scene=<scene-id>#scene
 - Scene visits append structured timeline entries with scene id, title, day, phase, and timestamp.
 - Choice consequences append receipt entries describing the selected action and resulting day/night state.
 - Browser back/forward navigation re-renders scenes without re-applying scene effects, preventing duplicated history and resource changes.
+
+
+## Update 1.0.15 main story route additions
+
+The authored Project.js main story scenes are now available in the modular story main with `main-<legacy-id>` route ids. Legacy numeric URL requests are normalized to these ids, so `?scene=1` opens `main-1`.
+
+### New main route group
+
+- `main-1`, `main-3` through `main-34`, `main-36` through `main-48`, `main-50` through `main-52`, `main-54`, and `main-65` through `main-89` for the existing Project.js authored main-story scenes that are present in the legacy catalog.
+- Chance routes from the legacy story remain dynamic: Surphanaka combat, deer pursuit, Jatayu rescue, and solo/family forest entry resolve at choice time.
+- Restart endings now reset the modular save and return to `main-1`.
+
+### Timeline and receipt model update
+
+- Integrated main story scene visits use the existing history list so the timeline panel records title, id, day, phase, and timestamp.
+- Integrated main story choices use the existing receipt list so branch decisions record the selected label and resulting day/night state.

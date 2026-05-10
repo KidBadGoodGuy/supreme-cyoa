@@ -1,6 +1,7 @@
-console.log("Update 1.0.14");
+console.log("Update 1.0.15");
 
 import { EXPANDED_SCENES, RAMAYANA_ARCS } from './engine_extensions/expandedScenes.js';
+import { PROJECT_MAIN_STORY_SCENES } from './engine_extensions/projectMainStoryScenes.js';
 import { GameUI } from './ui/gameUI.js';
 import {
   InventorySystem,
@@ -16,6 +17,65 @@ import {
   FALLBACK_CHARACTER_IMAGE,
   FALLBACK_SCENE_IMAGE
 } from './systems/gameSystems.js';
+
+
+const MAIN_STORY_CAST = {
+  name: 'Rama',
+  fatherName: 'Dasharatha',
+  motherName: 'Kausalya',
+  wifeName: 'Sita',
+  siblingOneName: 'Lakshmana',
+  siblingTwoName: 'Bharata',
+  siblingThreeName: 'Shatrughna',
+  secondMotherName: 'Kaikeyi',
+  siblingTwoPossessive: 'his',
+  siblingTwoObject: 'him'
+};
+
+function mainStoryId(legacyId) {
+  return `main-${legacyId}`;
+}
+
+function mainStoryArc(legacyId) {
+  if ([1, 3, 4, 5, 6, 66, 67, 68, 69, 70, 71, 86, 87, 88, 89].includes(legacyId)) return 'main-ayodhya';
+  if (legacyId >= 7 && legacyId <= 39) return 'main-forest';
+  if (legacyId >= 40 && legacyId <= 52) return 'main-kishkindha';
+  if (legacyId >= 53 && legacyId <= 64) return 'main-search';
+  if (legacyId >= 72 && legacyId <= 79) return 'main-lanka';
+  if (legacyId >= 80) return 'main-return';
+  return 'main-story';
+}
+
+function normaliseSceneRoute(id) {
+  if (id == null || id === '') return id;
+  const stringId = String(id);
+  if (/^\d+$/.test(stringId)) return mainStoryId(stringId);
+  return stringId;
+}
+
+function interpolateMainStory(value) {
+  if (Array.isArray(value)) return value.map(interpolateMainStory).join('\n\n');
+  return String(value || '').replace(/{{(.*?)}}/g, (_, key) => MAIN_STORY_CAST[key] || '');
+}
+
+function resolveProjectMainNext(next, stateRef) {
+  if (next == null) return undefined;
+  if (next === -10) return 'main-3';
+  if (next === -1) {
+    return () => (Math.random() < 0.65 ? (stateRef.state.world.flags.wentAlone ? 'main-52' : 'main-14') : 'main-18');
+  }
+  if (next === -2) return () => (Math.random() < 0.5 ? 'main-29' : 'main-39');
+  if (next === -3) return () => (Math.random() < 0.15 ? 'main-33' : 'main-34');
+  if (next === -4) return () => (stateRef.state.world.flags.wentAlone ? 'main-8' : 'main-7');
+  return mainStoryId(next);
+}
+
+function primaryStatEffect(effects) {
+  if (!effects) return undefined;
+  const source = effects.stats || effects;
+  const entry = Object.entries(source).find(([, value]) => typeof value === 'number');
+  return entry ? [entry[0], entry[1]] : undefined;
+}
 
 class StateManager {
   constructor() {
@@ -63,6 +123,7 @@ class SceneManager {
 
     this.createEncounters().forEach((scene) => { scenes[scene.id] = scene; });
     EXPANDED_SCENES.forEach((scene) => { scenes[scene.id] = this.normaliseScene(scene); });
+    this.createProjectMainScenes().forEach((scene) => { scenes[scene.id] = scene; });
     scenes['dream-1'] = this.normaliseScene({
       id: 'dream-1',
       arc: 'slumberland',
@@ -98,6 +159,34 @@ class SceneManager {
         { label: 'Use herbs to aid travelers', to: next, requiresItem: 'herbs', cost: ['herbs', 1], dharma: 3, kingdom: { faith: 2 }, time: isNightGate ? 3 : 2 }
       ]
     });
+  }
+
+
+  createProjectMainScenes() {
+    return Object.entries(PROJECT_MAIN_STORY_SCENES).map(([legacyId, scene]) => this.normaliseScene({
+      id: mainStoryId(legacyId),
+      arc: mainStoryArc(Number(legacyId)),
+      title: interpolateMainStory(scene.title),
+      text: interpolateMainStory([...(scene.text || []), ...(scene.dialogue || []).map((entry) => `${entry.speaker}: ${entry.line}`)]),
+      image: scene.image || FALLBACK_SCENE_IMAGE,
+      characterImage: scene.characterImage || FALLBACK_CHARACTER_IMAGE,
+      dialogue: (scene.dialogue || []).map((entry) => ({
+        speaker: interpolateMainStory(entry.speaker),
+        line: interpolateMainStory(entry.line)
+      })),
+      choices: (scene.choices || []).map((choice) => this.normaliseProjectChoice(choice))
+    }));
+  }
+
+  normaliseProjectChoice(choice) {
+    return {
+      label: interpolateMainStory(choice.label),
+      to: resolveProjectMainNext(choice.next, this.stateRef),
+      restart: Boolean(choice.restart),
+      time: choice.timeAdvance || choice.time || 1,
+      flag: choice.flag,
+      stat: primaryStatEffect(choice.effects)
+    };
   }
 
   createEncounters() {
@@ -156,7 +245,8 @@ class GameEngine {
     this.stateManager.state = normaliseState(this.stateManager.state);
     this.systems.rebind();
     const routedScene = new URLSearchParams(window.location.search).get('scene') || window.location.hash.replace('#scene-', '');
-    const startingScene = this.sceneManager.getScene(routedScene) ? routedScene : this.stateManager.state.world.currentScene;
+    const routedAlias = normaliseSceneRoute(routedScene);
+    const startingScene = this.sceneManager.getScene(routedAlias) ? routedAlias : this.stateManager.state.world.currentScene;
     this.renderScene(startingScene, { replace: true, runEffects: false, recordHistory: false });
     this.systems.time.start(() => {
       this.systems.kingdom.generate('real-time');
@@ -178,10 +268,10 @@ class GameEngine {
       localStorage.removeItem('rkod_save');
       this.stateManager.state = createDefaultState();
       this.systems.rebind();
-      this.renderScene('ayodhya-1', { replace: true, runEffects: false });
+      this.renderScene('main-1', { replace: true, runEffects: false });
     });
     window.addEventListener('popstate', (event) => {
-      const sceneId = event.state?.sceneId;
+      const sceneId = normaliseSceneRoute(event.state?.sceneId);
       if (sceneId) this.renderScene(sceneId, { replace: true, runEffects: false, recordHistory: false });
     });
   }
@@ -197,6 +287,14 @@ class GameEngine {
   }
 
   choose(choice) {
+    if (choice.restart) {
+      localStorage.removeItem('rkod_save_v2');
+      localStorage.removeItem('rkod_save');
+      this.stateManager.state = createDefaultState();
+      this.systems.rebind();
+      this.renderScene('main-1', { replace: true, runEffects: false });
+      return;
+    }
     if (!canShowChoice(choice, this.stateManager.state)) return;
     this.applyChoice(choice);
     const destination = typeof choice.to === 'function' ? choice.to() : choice.to;
@@ -232,7 +330,8 @@ class GameEngine {
 
   renderScene(id, options = {}) {
     const { replace = false, runEffects = true, recordHistory = true } = options;
-    const scene = this.sceneManager.getScene(id) || this.sceneManager.getScene('ayodhya-1');
+    const normalisedId = normaliseSceneRoute(id);
+    const scene = this.sceneManager.getScene(normalisedId) || this.sceneManager.getScene('main-1') || this.sceneManager.getScene('ayodhya-1');
     const state = this.stateManager.state;
     if (!scene) return;
 

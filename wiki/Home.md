@@ -1,6 +1,6 @@
 # Supreme CYOA Wiki
 
-_Last updated: 2026-04-25 (UTC)_
+_Last updated: 2026-05-10 (UTC)_
 
 Welcome to the wiki for **The Ramayana Adventure: Banwas**.
 
@@ -13,8 +13,8 @@ Welcome to the wiki for **The Ramayana Adventure: Banwas**.
 
 ## Current snapshot
 
-- Hidden console update marker: **Update 22**
-- Public release version: **1.0.5**
+- Hidden console update marker: **Update 1.0.15**
+- Public release version: **1.0.15**
 - Main game page: `index.html`
-- Story logic: `Project.js`
+- Story logic: `Project.js` and `script.js`
 - Styling: `Project.css`

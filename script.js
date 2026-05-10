@@ -1,6 +1,7 @@
-console.log("Update 1.0.14");
+console.log("Update 1.0.15");
 
 import { EXPANDED_SCENES, RAMAYANA_ARCS } from './engine_extensions/expandedScenes.js';
+import { getCharacterArt, getSceneArt } from './systems/sceneImages.js';
 import { GameUI } from './ui/gameUI.js';
 import {
   InventorySystem,
@@ -68,8 +69,8 @@ class SceneManager {
       arc: 'slumberland',
       title: 'Slumberland Dream Gate',
       text: 'You enter a dream realm. Hidden truths alter lineage memory, but the world continues beyond sleep.',
-      image: FALLBACK_SCENE_IMAGE,
-      characterImage: FALLBACK_CHARACTER_IMAGE,
+      image: getSceneArt({ id: 'dream-1', arc: 'slumberland', title: 'Slumberland Dream Gate', text: 'dream realm hidden truths sleep' }),
+      characterImage: getCharacterArt({ id: 'dream-1', arc: 'slumberland', title: 'Slumberland Dream Gate', text: 'dream realm hidden truths sleep' }),
       onEnter: () => {
         const lineage = this.stateRef.state.player.lineage;
         if (!lineage.includes('Dream Omen')) lineage.push('Dream Omen');
@@ -87,8 +88,8 @@ class SceneManager {
       arc,
       title: `${arc.toUpperCase()} • Chapter ${index}`,
       text: `Day ${this.stateRef.state.world.day}: You face trials in ${arc}. Dharma, allies, inventory, and time now shape which paths remain open.`,
-      image: FALLBACK_SCENE_IMAGE,
-      characterImage: FALLBACK_CHARACTER_IMAGE,
+      image: getSceneArt({ id, arc, title: `${arc.toUpperCase()} • Chapter ${index}`, text: `trials in ${arc}` }),
+      characterImage: getCharacterArt({ id, arc, title: `${arc.toUpperCase()} • Chapter ${index}`, text: `trials in ${arc}` }),
       onEnter: () => this.applySceneMilestones(arc, index),
       choices: [
         { label: 'Follow dharma', to: next, dharma: 2, time: 2 },
@@ -106,19 +107,24 @@ class SceneManager {
       arc: 'encounter',
       title: `${kind[0].toUpperCase() + kind.slice(1)} Encounter`,
       text: 'A dynamic event reacts to your party, time, dharma, and resources before returning you to the wider road.',
-      image: FALLBACK_SCENE_IMAGE,
-      characterImage: FALLBACK_CHARACTER_IMAGE,
+      image: getSceneArt({ id: `encounter-${kind}`, arc: 'encounter', title: `${kind[0].toUpperCase() + kind.slice(1)} Encounter`, text: kind }),
+      characterImage: getCharacterArt({ id: `encounter-${kind}`, arc: 'encounter', title: `${kind[0].toUpperCase() + kind.slice(1)} Encounter`, text: kind }),
       onEnter: () => { this.systems.inventory.add(kind === 'merchant' ? 'arrows' : 'herbs', 1); },
       choices: [{ label: 'Return to the journey', to: () => this.stateRef.state.world.lastScene || 'ayodhya-1', time: 1 }]
     }));
   }
 
   normaliseScene(scene) {
+    const normalizedBase = { ...scene };
+    const providedImage = scene.image || scene.backgroundImage;
+    const providedCharacter = scene.characterImage;
+    const image = !providedImage || providedImage === FALLBACK_SCENE_IMAGE ? getSceneArt(normalizedBase) : providedImage;
+    const characterImage = !providedCharacter || providedCharacter === FALLBACK_CHARACTER_IMAGE ? getCharacterArt(normalizedBase) : providedCharacter;
     return {
-      image: scene.image || scene.backgroundImage,
-      characterImage: scene.characterImage,
       choices: [],
       ...scene,
+      image,
+      characterImage,
       choices: (scene.choices || []).map((choice) => ({ time: 1, ...choice }))
     };
   }

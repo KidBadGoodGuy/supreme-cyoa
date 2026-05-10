@@ -10,7 +10,7 @@
   <script src="Project.js"></script>
 </head>
 <body>
-  <a id="updateBadge" class="nav-link-current" href="updates.html" aria-label="Go to updates page" aria-current="page" data-resolution-label="HD">Update 1.0.14</a>
+  <a id="updateBadge" class="nav-link-current" href="updates.html" aria-label="Go to updates page" aria-current="page" data-resolution-label="HD">Update 1.0.15</a>
 
   <nav id="topNavbar" aria-label="Site navigation">
     <button id="navbarToggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="navLinks">☰</button>
@@ -40,6 +40,15 @@
   <main id="storyCard" aria-live="polite">
     <h2>Latest Update</h2>
     <div id="updateInfo">
+      <h3>Update 1.0.15 — Web Scene Art Integration</h3>
+      <p>Every generated, encounter, dream, and expansion scene now receives a matching web-sourced background and character image in the scene photo area, with deterministic image locks and the existing local fallback safety net.</p>
+      <p><strong>What’s included:</strong></p>
+      <ul>
+        <li>Added a reusable scene art resolver that chooses image search tags from each scene’s arc, title, and narrative hints.</li>
+        <li>Assigned matching web background photos and character portraits to all generated Ramayana arc scenes.</li>
+        <li>Backfilled encounter, Slumberland, and expansion scenes so the photo area is never intentionally left on generic fallback art.</li>
+        <li>Bumped the hidden console marker to <code>Update 1.0.15</code>.</li>
+      </ul>
       <h3>Update 1.0.14 — Reliable Element and Asset Loading</h3>
       <p>Hardened the modular RPG shell so all required HUD, scene, timeline, receipt, control, background, and character elements are validated and shown with local assets instead of depending on remote image services.</p>
       <p><strong>What’s included:</strong></p>

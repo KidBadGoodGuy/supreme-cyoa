@@ -1,6 +1,6 @@
 # Features
 
-_Last updated: 2026-05-05 (UTC)_
+_Last updated: 2026-05-10 (UTC)_
 
 This page now includes both **live features** and a **comprehensive systems expansion blueprint** for the next major evolution of the Ramayana RPG.
 
@@ -75,6 +75,7 @@ This page now includes both **live features** and a **comprehensive systems expa
 - New class-based architecture split into GameEngine, SceneManager, StateManager, and UIController with modular responsibilities.
 - New long-form timeline generator spanning Ayodhya → Exile → Forest → Kishkindha → Lanka → Return with 240 base scenes plus dynamic encounters.
 - New per-scene background and character image layers with smooth transitions and readability overlays.
+- Web-sourced scene art resolver fills every generated, encounter, dream, and expansion scene photo area with arc- and title-matched background/portrait imagery while preserving local fallbacks.
 - New foundational systems: party recruitment, inventory/equipment hooks, quests, kingdom resources, lineage memory, dream-world event routing, and local save/load.
 ### 10) Living world simulation (new)
 - Realtime and offline world passage simulation with story phase progression.
@@ -88,6 +89,11 @@ This page now includes both **live features** and a **comprehensive systems expa
 - Generated scene, encounter, dream, and expansion art now uses repository-hosted fallback assets for dependable page loads.
 - The image loader uses a timeout-backed fallback path so slow or broken art requests do not leave scene elements faded or empty.
 - Save, Load, Timeline, and Reset controls now bind through guarded helpers for safer startup.
+
+### 12) Web scene art integration (new)
+- Every modular scene now gets a deterministic web image URL for the background photo area.
+- Character portrait art is selected from scene arc and story hints such as Sita, Hanuman, Lanka war, Setu bridge, Slumberland, sages, and merchants.
+- Existing local fallback SVGs remain the safety path if a remote image is slow or unavailable.
 
 ---
 

@@ -23,7 +23,17 @@ export class GameUI {
       timeline: document.getElementById('timelineList'),
       receipts: document.getElementById('receiptList')
     };
+    this.assertRequiredNodes();
     this.typingRun = 0;
+  }
+
+  assertRequiredNodes() {
+    const missing = Object.entries(this.nodes)
+      .filter(([, node]) => !node)
+      .map(([name]) => name);
+    if (missing.length) {
+      throw new Error(`Cannot start game UI. Missing required element(s): ${missing.join(', ')}`);
+    }
   }
 
   renderAll(scene, scenes) {
@@ -97,18 +107,26 @@ export class GameUI {
   setImage(node, src, fallback) {
     if (node.dataset.currentSrc === src) return;
     node.classList.add('image-fading');
+    const requestedSrc = src || fallback;
     const next = new Image();
-    next.onload = () => {
-      node.src = src;
-      node.dataset.currentSrc = src;
+    let settled = false;
+    const finish = (finalSrc) => {
+      if (settled) return;
+      settled = true;
+      node.src = finalSrc;
+      node.dataset.currentSrc = finalSrc;
       requestAnimationFrame(() => node.classList.remove('image-fading'));
+    };
+    const fallbackTimer = window.setTimeout(() => finish(fallback), 2500);
+    next.onload = () => {
+      window.clearTimeout(fallbackTimer);
+      finish(requestedSrc);
     };
     next.onerror = () => {
-      node.src = fallback;
-      node.dataset.currentSrc = fallback;
-      requestAnimationFrame(() => node.classList.remove('image-fading'));
+      window.clearTimeout(fallbackTimer);
+      finish(fallback);
     };
-    next.src = src;
+    next.src = requestedSrc;
   }
 
   typeText(text) {

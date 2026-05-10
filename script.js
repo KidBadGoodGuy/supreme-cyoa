@@ -1,4 +1,4 @@
-console.log("Update 1.0.13");
+console.log("Update 1.0.14");
 
 import { EXPANDED_SCENES, RAMAYANA_ARCS } from './engine_extensions/expandedScenes.js';
 import { GameUI } from './ui/gameUI.js';
@@ -12,7 +12,9 @@ import {
   canShowChoice,
   clamp,
   createDefaultState,
-  normaliseState
+  normaliseState,
+  FALLBACK_CHARACTER_IMAGE,
+  FALLBACK_SCENE_IMAGE
 } from './systems/gameSystems.js';
 
 class StateManager {
@@ -66,8 +68,8 @@ class SceneManager {
       arc: 'slumberland',
       title: 'Slumberland Dream Gate',
       text: 'You enter a dream realm. Hidden truths alter lineage memory, but the world continues beyond sleep.',
-      image: 'https://picsum.photos/seed/rkod-dream-gate/1200/700',
-      characterImage: 'https://picsum.photos/seed/rkod-moon-sage/360/620',
+      image: FALLBACK_SCENE_IMAGE,
+      characterImage: FALLBACK_CHARACTER_IMAGE,
       onEnter: () => {
         const lineage = this.stateRef.state.player.lineage;
         if (!lineage.includes('Dream Omen')) lineage.push('Dream Omen');
@@ -85,8 +87,8 @@ class SceneManager {
       arc,
       title: `${arc.toUpperCase()} • Chapter ${index}`,
       text: `Day ${this.stateRef.state.world.day}: You face trials in ${arc}. Dharma, allies, inventory, and time now shape which paths remain open.`,
-      image: `https://picsum.photos/seed/rkod-${arc}-${index}/1200/700`,
-      characterImage: `https://picsum.photos/seed/rkod-hero-${arc}-${index}/360/620`,
+      image: FALLBACK_SCENE_IMAGE,
+      characterImage: FALLBACK_CHARACTER_IMAGE,
       onEnter: () => this.applySceneMilestones(arc, index),
       choices: [
         { label: 'Follow dharma', to: next, dharma: 2, time: 2 },
@@ -104,8 +106,8 @@ class SceneManager {
       arc: 'encounter',
       title: `${kind[0].toUpperCase() + kind.slice(1)} Encounter`,
       text: 'A dynamic event reacts to your party, time, dharma, and resources before returning you to the wider road.',
-      image: `https://picsum.photos/seed/rkod-encounter-${kind}/1200/700`,
-      characterImage: `https://picsum.photos/seed/rkod-encounter-${kind}-portrait/360/620`,
+      image: FALLBACK_SCENE_IMAGE,
+      characterImage: FALLBACK_CHARACTER_IMAGE,
       onEnter: () => { this.systems.inventory.add(kind === 'merchant' ? 'arrows' : 'herbs', 1); },
       choices: [{ label: 'Return to the journey', to: () => this.stateRef.state.world.lastScene || 'ayodhya-1', time: 1 }]
     }));
@@ -163,15 +165,15 @@ class GameEngine {
   }
 
   bindGlobalActions() {
-    document.getElementById('saveBtn').addEventListener('click', () => this.systems.saveLoad.save());
-    document.getElementById('loadBtn').addEventListener('click', () => {
+    this.bindRequiredButton('saveBtn', () => this.systems.saveLoad.save());
+    this.bindRequiredButton('loadBtn', () => {
       if (this.systems.saveLoad.load()) {
         this.systems.rebind();
         this.renderScene(this.stateManager.state.world.currentScene, { replace: true, runEffects: false, recordHistory: false });
       }
     });
-    document.getElementById('timelineBtn').addEventListener('click', () => document.getElementById('timelinePanel').classList.toggle('hidden'));
-    document.getElementById('resetBtn').addEventListener('click', () => {
+    this.bindRequiredButton('timelineBtn', () => document.getElementById('timelinePanel')?.classList.toggle('hidden'));
+    this.bindRequiredButton('resetBtn', () => {
       localStorage.removeItem('rkod_save_v2');
       localStorage.removeItem('rkod_save');
       this.stateManager.state = createDefaultState();
@@ -182,6 +184,16 @@ class GameEngine {
       const sceneId = event.state?.sceneId;
       if (sceneId) this.renderScene(sceneId, { replace: true, runEffects: false, recordHistory: false });
     });
+  }
+
+
+  bindRequiredButton(id, handler) {
+    const button = document.getElementById(id);
+    if (!button) {
+      console.warn(`Missing required control: ${id}`);
+      return;
+    }
+    button.addEventListener('click', handler);
   }
 
   choose(choice) {

@@ -4,7 +4,7 @@ export const FALLBACK_SCENE_IMAGE = 'assets/images/fallback-scene.svg';
 export const FALLBACK_CHARACTER_IMAGE = 'assets/images/fallback-character.svg';
 
 const DEFAULT_STATE = {
-  version: '1.0.13',
+  version: '1.0.15',
   player: {
     name: 'Rama',
     level: 1,
@@ -27,7 +27,7 @@ const DEFAULT_STATE = {
     flags: {},
     history: [],
     timelineReceipts: [],
-    currentScene: 'ayodhya-1',
+    currentScene: 'main-1',
     lastScene: null,
     sceneEntries: {}
   },
@@ -45,7 +45,7 @@ export function clamp(value, min, max) {
 export function normaliseState(rawState = {}) {
   const state = createDefaultState();
   const merged = deepMerge(state, rawState);
-  merged.version = '1.0.13';
+  merged.version = '1.0.15';
   merged.inventory.gold ??= merged.kingdom.gold ?? 0;
   merged.kingdom.gold ??= merged.inventory.gold ?? 0;
   merged.world.hour ??= merged.world.phase === 'Night' ? 20 : 8;

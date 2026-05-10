@@ -345,3 +345,12 @@ This architecture ensures every feature reinforces the same core fantasy: leadin
 - Added a polished dark epic interface with a top status bar, left quest/party panel, central image-backed scene card, right inventory/kingdom panel, hover/click animations, scene fade transitions, and responsive layout behavior.
 - Added `scene.image` and `scene.characterImage` support with smooth image swaps, readability gradients, and local fallback SVG assets in `/assets/images/`.
 - Added Slumberland rest routing and 42 connected expansion scenes spanning Ayodhya, Exile, Forest, Kishkindha, Lanka, Return, and dream branches.
+
+
+## Update 1.0.15 — Project.js Main Story Integration
+
+- Added the authored Project.js main story scenes to the modular engine as routeable `main-<legacy-id>` scenes.
+- Fresh starts and resets now begin on `main-1`, bringing the primary Ramayana branch into the story main experience.
+- Preserved legacy branching behavior for chance outcomes, restart endings, and the `wentAlone` route flag.
+- Added legacy numeric scene aliasing so `?scene=1` resolves to `main-1` while named modular routes continue to work.
+- Timeline entries and receipt rows continue to record each integrated main scene visit and choice consequence through the existing HUD panels.

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>People of the Ramayana</title>
+  <link rel="stylesheet" href="Project.css">
+  <link rel="icon" type="image/x-icon" href="ramayana_favicon.ico">
+  <script src="resolution.js"></script>
+  <script src="people-of-ramayana.js" defer></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      if (typeof applyResolutionTierStyling === "function") {
+        applyResolutionTierStyling();
+        window.addEventListener("resize", applyResolutionTierStyling);
+      }
+    });
+  </script>
+</head>
+<body id="peoplePageBody">
+  <a id="updateBadge" href="updates.html" aria-label="Go to updates page" data-resolution-label="HD">Update 1.0.0</a>
+
+  <nav id="topNavbar" aria-label="Site navigation">
+    <button id="navbarToggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="navLinks">☰</button>
+    <div id="navLinks">
+      <a id="aboutButton" href="index.html">Main Adventure</a>
+      <a class="nav-link-pill" href="before-the-ramayana.html">Before the Ramayana</a>
+      <a class="nav-link-pill nav-link-current" href="people-of-ramayana.html" aria-current="page">People of the Ramayana</a>
+      <a class="nav-link-pill" href="https://arjun-singh.com/" target="_blank" rel="noopener noreferrer">About</a>
+    </div>
+    <div id="soundtrackBadge" aria-label="Background soundtrack controls">
+      <span class="soundtrack-label">Soundtrack</span>
+      <audio id="backgroundMusic" controls controlsList="nodownload noplaybackrate" autoplay muted loop preload="metadata">
+        <source src="Sacred Path Of Rama.mp3" type="audio/mpeg">
+      </audio>
+    </div>
+  </nav>
+
+  <div id="titleContainer">
+    <header>
+      <h1>People of the Ramayana</h1>
+      <h3 class="subtitle">Individuals and Kingdoms</h3>
+      <h4 id="description">A guide to key Ramayana characters and the four major kingdoms in this adventure.</h4>
+      <p>Use the filters to browse all listed people or just the four kingdoms: Ayodhya, Lanka, Mithila, and Kishkindha.</p>
+    </header>
+  </div>
+
+  <main id="storyCard" aria-live="polite">
+    <section id="peopleControls" aria-label="People page controls">
+      <label for="peopleCategory">View category:</label>
+      <select id="peopleCategory">
+        <option value="all">All</option>
+        <option value="individual">Individuals</option>
+        <option value="group">Kingdoms</option>
+      </select>
+    </section>
+    <section id="peopleGrid" aria-label="People and groups list"></section>
+  </main>
+</body>
+</html>

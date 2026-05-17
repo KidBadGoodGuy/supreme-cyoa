@@ -10,7 +10,7 @@
   <script src="Project.js"></script>
 </head>
 <body>
-  <a id="updateBadge" class="nav-link-current" href="updates.html" aria-label="Go to updates page" aria-current="page" data-resolution-label="HD">Update 1.0.0</a>
+  <a id="updateBadge" class="nav-link-current" href="updates.html" aria-label="Go to updates page" aria-current="page" data-resolution-label="HD">Update 1.0.3</a>
 
   <nav id="topNavbar" aria-label="Site navigation">
     <button id="navbarToggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="navLinks">☰</button>
@@ -40,16 +40,20 @@
   <main id="storyCard" aria-live="polite">
     <h2>Latest Update</h2>
     <div id="updateInfo">
-      <h3>Update 1.0.1 — Family Setup Removed</h3>
-      <p>Family Setup has been fully disabled, and the intro now supports player-name-only start flow.</p>
-      <p><strong>Feature list:</strong></p>
+      <h3>Update 1.0.3 — Lanka Arc & Python Backend</h3>
+      <p>The complete Lanka rescue storyline is now playable, featuring 67 new scenes with strategic choices and multiple endings. Python backend for save/load management is now available.</p>
+      <p><strong>Major additions:</strong></p>
       <ul>
-        <li>Branching Ramayana choose-your-own-adventure story flow with multiple endings.</li>
-        <li>Name personalization throughout the story with canon fallback defaults.</li>
-        <li>Sibling gender selectors with pronoun-aware story text replacements.</li>
-        <li>Undo, restart, and progression timeline receipt support.</li>
-        <li>Built-in soundtrack controls with cross-page playback state persistence.</li>
-        <li>Dedicated People of the Ramayana page with character and kingdom filters.</li>
+        <li>Complete Lanka Rescue Arc: War councils, ocean crossings, infiltration strategies, and Ravana battles (54 new scenes).</li>
+        <li>Strategic Planning: Multiple approaches to the rescue (direct assault, scouting first, deception, divine aid).</li>
+        <li>Ocean Crossing Mechanics: Choose between bridge sacrifice, Hanuman's guidance, or secret sea routes.</li>
+        <li>Multiple Ravana Encounters: Strategic vs. direct combat approaches with different outcomes.</li>
+        <li>Triumphal Ending: Escape Lanka and return to Ayodhya (Scene 121 epilogue).</li>
+        <li>Python Backend (data.py): RamayanaGameData class for managing JSON save files, validation, and listing.</li>
+        <li>Save Game: Export your progress as a JSON file with a single click.</li>
+        <li>Load Game: Import a previously saved JSON file to resume your adventure.</li>
+        <li>Day/Night Mode: Toggle between day and night visual themes with persistent preference storage.</li>
+        <li>Full storyline now covers Exile (Banwas) from beginning to victorious return.</li>
       </ul>
     </div>
   </main>

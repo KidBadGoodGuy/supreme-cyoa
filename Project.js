@@ -13,11 +13,23 @@ var secondMotherName = "";
 var broughtLakshmana = false;
 var wentAlone = false;
 var historyStack = [];
+var dayNightMode = "day"; // "day" or "night"
+
+// NEW GAME FEATURES
+var inventory = [];
+var characterStats = { courage: 50, wisdom: 50, strength: 50, strategy: 50 };
+var questLog = [];
+var achievements = [];
+var relationships = { hanuman: 50, sugriva: 50, siblingOne: 50, wifeName: 50, siblingTwo: 50 };
+var lakshmanaAllyStatus = "unknown"; // ally, guardian, unknown
+var battleStats = { winsCount: 0, strategicVictories: 0, allyDeaths: 0 };
+var lyricsKnown = [];
+
 // var familySetupEnabled = false;
 // var familySetupActivatedOnce = false;
 // var customNames = null;
 
-console.log("Update 24");
+console.log("Update 27");
 
 var scenes = {
   1: {
@@ -478,50 +490,525 @@ var scenes = {
     choices: [{ label: "Restart", restart: true }]
   },
   54: {
-    title: "The Ramayana Adventure: Lanka",
+    title: "War Council Strategy",
     text: [
-      "Coming Soon"
+      "Hanuman, {{siblingOneName}}, Sugriva, and you, {{name}}, gather to plan the assault on Lanka.",
+      "The council debates approach: strike swiftly and directly, or scout first for intelligence?"
     ],
     dialogue: [
-      { speaker: "Hanuman", line: "\"Give the word, and we leap for Lanka tonight.\"" },
-      { speaker: "{{name}}", line: "\"We move with courage and discipline. Everyone returns together.\"" }
-    ],
-    choices: [{ label: "Restart", restart: true }]
-  },
-  65: {
-    title: "Searching for {{wifeName}}",
-    text: [
-      "{{name}}, you search ravines, groves, and riverbanks for signs of {{wifeName}} until clues lead you toward new allies."
-    ],
-    choices: [{ label: "Continue to Sugriva", next: 40 }]
-  },
-  66: {
-    title: "{{siblingTwoName}} at the Hut",
-    text: [
-      "Soon after exile begins, {{siblingTwoName}} reaches your forest hut and pleads once more: return and rule Ayodhya, {{name}}.",
-      "You honor him, renew your vow, and ask him to safeguard the kingdom until your exile ends before you continue deeper into the forest."
+      { speaker: "Hanuman", line: "\"I can reach Lanka in a single bound, {{name}}.\"" },
+      { speaker: "Sugriva", line: "\"And what of returning with {{wifeName}}? We must know Ravana's strength.\"" }
     ],
     choices: [
-      { label: "Entrust him with your sandals", next: 68 },
-      { label: "Ask him to carry a message to Ayodhya", next: 68 }
+      { label: "Send Hanuman to scout", next: 75 },
+      { label: "Launch direct assault", next: 76 },
+      { label: "Wait and plan carefully", next: 77 }
     ]
   },
-  67: {
-    title: "Ayodhya Return Ending",
+  75: {
+    title: "Hanuman's Solo Journey",
     text: [
-      "{{name}}, you return early and the epic turns into palace intrigue instead of a rescue quest."
+      "You choose to send Hanuman ahead as a scout, knowing his speed and wisdom make him ideal for reconnaissance.",
+      "Hanuman pledges to find {{wifeName}}, learn Ravana's defenses, and return with a full report."
+    ],
+    choices: [{ label: "Continue", next: 78 }]
+  },
+  76: {
+    title: "Direct Assault Ordered",
+    text: [
+      "You order an immediate assault on Lanka, determined to rescue {{wifeName}} before Ravana's schemes advance further.",
+      "Your forces march toward the shore, ready to cross the ocean."
+    ],
+    choices: [{ label: "Reach the Ocean", next: 79 }]
+  },
+  77: {
+    title: "Careful Planning",
+    text: [
+      "You insist on a measured approach, gathering detailed intelligence before committing to the assault.",
+      "Hanuman and scouts prepare for a thorough reconnaissance mission."
+    ],
+    choices: [{ label: "Hanuman departs", next: 78 }]
+  },
+  78: {
+    title: "Hanuman's Reconnaissance",
+    text: [
+      "Hanuman bounds across the ocean in a single leap, defying its vast width.",
+      "Arriving in Lanka, he searches for {{wifeName}} and maps Ravana's palace and army strength.",
+      "{{name}}, hours pass as you wait by the shore. When Hanuman returns, his news will shape your next move."
+    ],
+    choices: [
+      { label: "Hanuman returns with good news", next: 80 },
+      { label: "Hanuman returns with grave warnings", next: 81 }
+    ]
+  },
+  79: {
+    title: "The Ocean Salute",
+    text: [
+      "You and your forces reach the shore, facing the vast ocean blocking your path to Lanka.",
+      "You bow respectfully and call upon the Ocean itself, asking for passage."
+    ],
+    dialogue: [
+      { speaker: "{{name}}", line: "\"Ocean, I ask for safe passage to Lanka. Help me rescue {{wifeName}} from tyranny.\"" }
+    ],
+    choices: [
+      { label: "Ocean grants a bridge", next: 82 },
+      { label: "Ocean demands a sacrifice", next: 83 }
+    ]
+  },
+  80: {
+    title: "Scout Report: Sita Found",
+    text: [
+      "Hanuman returns with joy in his eyes.",
+      "\"I found {{wifeName}} in Ravana's ashoka grove, {{name}}, guarded but alive. She has not given in to Ravana's threats.\"",
+      "\"The palace is vast but his inner guard is not as strong as legend suggests.\""
+    ],
+    choices: [
+      { label: "Plan a rescue raid", next: 84 },
+      { label: "Send a messenger to {{wifeName}}", next: 85 }
+    ]
+  },
+  81: {
+    title: "Scout Report: Dire Warning",
+    text: [
+      "Hanuman returns with a grave expression.",
+      "\"Ravana's army is larger than we thought, {{name}}. His palace is a fortress with enchantments. {{wifeName}} is there, but the cost of rescue will be steep.\"",
+      "\"The choice is yours: proceed with the attack or seek another path.\""
+    ],
+    choices: [
+      { label: "Attack despite the odds", next: 87 },
+      { label: "Attempt a deception", next: 86 },
+      { label: "Seek divine intervention", next: 88 }
+    ]
+  },
+  82: {
+    title: "The Ocean Bridge",
+    text: [
+      "The Ocean itself rises and forms a bridge of solid water, defying the laws of nature.",
+      "Your army crosses safely, {{name}}, and reaches the shores of Lanka.",
+      "The fortress city looms ahead, and the true assault begins."
+    ],
+    choices: [{ label: "Approach the gates", next: 89 }]
+  },
+  83: {
+    title: "Ocean's Price",
+    text: [
+      "The Ocean speaks: \"To cross, one of your commanders must remain to guard this passage forever.\"",
+      "{{name}}, you must decide who bears this burden."
+    ],
+    choices: [
+      { label: "Offer {{siblingOneName}}", next: 90 },
+      { label: "Offer Hanuman", next: 91 },
+      { label: "Refuse and find another way", next: 92 }
+    ]
+  },
+  84: {
+    title: "Rescue Raid Prepared",
+    text: [
+      "You and Hanuman plan a swift, targeted rescue.",
+      "A small team will infiltrate the ashoka grove while Hanuman creates a diversion.",
+      "Speed and stealth are your only advantages."
+    ],
+    choices: [
+      { label: "Infiltrate tonight", next: 93 },
+      { label: "Wait for moonless night", next: 94 }
+    ]
+  },
+  85: {
+    title: "Hanuman Delivers a Message",
+    text: [
+      "You send Hanuman back with a message for {{wifeName}}: \"Hold steadfast. Help is coming.\"",
+      "Hanuman leaps back to Lanka and finds {{wifeName}} in the ashoka grove.",
+      "He delivers the message in secret, renewing her hope."
+    ],
+    choices: [{ label: "Begin the rescue assault", next: 95 }]
+  },
+  86: {
+    title: "Deception Strategy",
+    text: [
+      "You devise a cunning plan: send a false messenger claiming {{siblingTwoName}} has conquered Sugriva and wants to negotiate.",
+      "Ravana, believing your alliance is broken, may lower his guard."
+    ],
+    choices: [{ label: "Send the false messenger", next: 96 }]
+  },
+  87: {
+    title: "Charge Into Battle",
+    text: [
+      "Despite Hanuman's warnings, you order a direct assault on Lanka.",
+      "You lead the charge yourself, your bow drawn, determined to reach {{wifeName}}."
+    ],
+    choices: [{ label: "The siege of Lanka begins", next: 97 }]
+  },
+  88: {
+    title: "Prayer for Divine Aid",
+    text: [
+      "You meditate and pray for intervention from the gods.",
+      "A divine vision appears before you, offering counsel and blessing.",
+      "Your resolve strengthens, and the impossible suddenly feels possible."
+    ],
+    choices: [{ label: "Assault Lanka with divine favor", next: 98 }]
+  },
+  89: {
+    title: "Lanka's Golden Gates",
+    text: [
+      "Your army stands before Lanka's massive golden gates, forged by ancient magic.",
+      "{{name}}, the city is magnificent and terrible, a fortress within a fortress.",
+      "Ravana's guards begin to stir at the gates."
+    ],
+    choices: [
+      { label: "Demand surrender", next: 100 },
+      { label: "Force the gates open", next: 101 }
+    ]
+  },
+  90: {
+    title: "{{siblingOneName}}'s Sacrifice",
+    text: [
+      "You turn to {{siblingOneName}} and ask him to bear this burden.",
+      "{{siblingOneName}} nods without hesitation: \"I will remain, {{name}}. Go rescue {{wifeName}}.\"",
+      "{{siblingOneName}} takes his place at the bridge as your army crosses into Lanka."
+    ],
+    choices: [{ label: "Cross with the army", next: 82 }]
+  },
+  91: {
+    title: "Hanuman's Eternal Guard",
+    text: [
+      "You ask Hanuman to remain as the Ocean's guardian.",
+      "Hanuman's face shows sadness but acceptance.",
+      "\"I cannot fight Ravana beside you, {{name}}. But I will hold this bridge with my last breath.\""
+    ],
+    choices: [{ label: "Cross with the army", next: 82 }]
+  },
+  92: {
+    title: "Reject the Ocean",
+    text: [
+      "You refuse to sacrifice anyone. You seek another path.",
+      "The Ocean recedes, and you must find an alternative route to Lanka.",
+      "Days pass as you search for a way across."
+    ],
+    choices: [{ label: "Discover an ancient sea route", next: 102 }]
+  },
+  93: {
+    title: "Night Infiltration",
+    text: [
+      "You and a small team infiltrate Lanka's ashoka grove under cover of darkness.",
+      "The guards are fewer than expected; Hanuman's diversion works perfectly.",
+      "You find {{wifeName}} and begin the escape."
+    ],
+    choices: [{ label: "Race back to the shore", next: 103 }]
+  },
+  94: {
+    title: "Waiting for the Moonless Night",
+    text: [
+      "You wait three days for the moonless night.",
+      "The wait is agonizing, but the darkness provides perfect cover.",
+      "On the night of the new moon, you lead your infiltration team."
+    ],
+    choices: [{ label: "Infiltrate in darkness", next: 93 }]
+  },
+  95: {
+    title: "The Rescue Assault Begins",
+    text: [
+      "With {{wifeName}} aware that rescue is coming, hope burns bright in her heart.",
+      "Your forces storm Lanka, and the battle begins in earnest.",
+      "{{name}}, you fight your way toward the ashoka grove."
+    ],
+    choices: [{ label: "Battle toward {{wifeName}}", next: 104 }]
+  },
+  96: {
+    title: "Ravana's Confusion",
+    text: [
+      "The false messenger reaches Ravana and plants seeds of doubt.",
+      "Ravana's paranoia grows as he questions {{siblingTwoName}}'s loyalty.",
+      "In his distraction, his vigilance weakens—the perfect opportunity."
+    ],
+    choices: [{ label: "Launch the rescue", next: 105 }]
+  },
+  97: {
+    title: "The Siege of Lanka",
+    text: [
+      "A fierce battle rages outside Lanka's walls.",
+      "Your forces clash with Ravana's demons and soldiers.",
+      "{{name}}, you fight with extraordinary skill, carving a path toward the palace."
+    ],
+    choices: [{ label: "Fight through to the palace", next: 106 }]
+  },
+  98: {
+    title: "Blessed Assault",
+    text: [
+      "With divine favor, your assault seems blessed by the gods themselves.",
+      "Your arrows fly true, your soldiers fight with supernatural strength.",
+      "Lanka's defenses crumble before your blessed assault."
+    ],
+    choices: [{ label: "Press the advantage", next: 107 }]
+  },
+  100: {
+    title: "Demand Surrender",
+    text: [
+      "You step forward and demand that Ravana surrender {{wifeName}} and accept exile.",
+      "Ravana appears on the palace walls, laughing.",
+      "\"Surrender? {{name}}, you amuse me. Lanka will be your tomb!\""
+    ],
+    choices: [{ label: "Battle erupts", next: 106 }]
+  },
+  101: {
+    title: "Force the Gates",
+    text: [
+      "Your strongest soldiers push against Lanka's golden gates.",
+      "With a tremendous crash, the gates give way, revealing the streets beyond.",
+      "Ravana's army pours out to meet you in the streets."
+    ],
+    choices: [{ label: "Battle in Lanka's streets", next: 108 }]
+  },
+  102: {
+    title: "Ancient Sea Route Discovered",
+    text: [
+      "You discover an ancient underwater passage created by celestial beings.",
+      "Your army crosses safely through the luminous tunnel.",
+      "{{name}}, you emerge on Lanka's far shore, behind enemy lines."
+    ],
+    choices: [{ label: "Surprise assault from behind", next: 109 }]
+  },
+  103: {
+    title: "Escape with {{wifeName}}",
+    text: [
+      "{{wifeName}} clings to your arm as you race through Lankan streets.",
+      "Hanuman fights beside you, clearing a path with tremendous power.",
+      "Behind you, Ravana's guards close in. The shore is still far."
+    ],
+    choices: [
+      { label: "Fight through the guards", next: 110 },
+      { label: "Hide and wait for pursuit to pass", next: 111 }
+    ]
+  },
+  104: {
+    title: "Battle in the Ashoka Grove",
+    text: [
+      "The ashoka grove becomes a battleground as {{wifeName}}'s guards defend her.",
+      "{{name}}, you duel the grove's commander with skill and fury.",
+      "{{wifeName}} is freed, and reunion is possible."
+    ],
+    choices: [{ label: "Embrace {{wifeName}}", next: 112 }]
+  },
+  105: {
+    title: "Strike While Distracted",
+    text: [
+      "With Ravana distracted by paranoia, his defenses falter.",
+      "You breach Lanka's inner sanctum with surprising ease.",
+      "{{wifeName}} is within reach."
+    ],
+    choices: [{ label: "Locate {{wifeName}}", next: 112 }]
+  },
+  106: {
+    title: "Duel with Ravana",
+    text: [
+      "You finally face Ravana in single combat within his palace.",
+      "The ten-headed demon lord fights with terrifying skill.",
+      "{{name}}, your bow and his magic clash in a dance of destiny."
+    ],
+    choices: [
+      { label: "Aim for the weak point", next: 113 },
+      { label: "Face him head-on", next: 114 }
+    ]
+  },
+  107: {
+    title: "Divine Momentum Carries Victory",
+    text: [
+      "Your blessed forces sweep through Lanka like an unstoppable tide.",
+      "Ravana's defenses crumble, and he is forced to face you in personal combat.",
+      "The god's favor is with you, {{name}}."
+    ],
+    choices: [{ label: "Confront Ravana", next: 106 }]
+  },
+  108: {
+    title: "Street Combat",
+    text: [
+      "The streets of Lanka become a battlefield.",
+      "Your soldiers fight with honor, and Hanuman's strength turns the tide.",
+      "{{name}}, you push deeper toward the palace."
+    ],
+    choices: [{ label: "Reach the palace", next: 115 }]
+  },
+  109: {
+    title: "Surprise from Behind",
+    text: [
+      "Your surprise assault catches Ravana's army completely off-guard.",
+      "They are split between defending the front gates and responding to your flank attack.",
+      "Chaos erupts in Lanka's streets."
+    ],
+    choices: [{ label: "Exploit the chaos", next: 116 }]
+  },
+  110: {
+    title: "Desperate Flight",
+    text: [
+      "You and {{wifeName}} fight through the guards, your sword never faltering.",
+      "Hanuman clears obstacles before you with explosive power.",
+      "The shore appears in the distance—freedom is within sight."
+    ],
+    choices: [{ label: "Reach the shore", next: 117 }]
+  },
+  111: {
+    title: "Hidden in the City",
+    text: [
+      "You hide with {{wifeName}} in an abandoned building as pursuit passes by.",
+      "Together in the darkness, {{wifeName}} whispers her thanks.",
+      "Once the guards search elsewhere, you slip out toward the shore."
+    ],
+    choices: [{ label: "Carefully reach the shore", next: 117 }]
+  },
+  112: {
+    title: "{{wifeName}} Reunited",
+    text: [
+      "You embrace {{wifeName}} for the first time since her abduction.",
+      "Tears flow as joy and relief overwhelm you both.",
+      "But the battle is not over—escape from Lanka remains your greatest challenge."
+    ],
+    choices: [{ label: "Escape Lanka with {{wifeName}}", next: 118 }]
+  },
+  113: {
+    title: "The Weak Point Strike",
+    text: [
+      "You identify Ravana's vulnerability and strike with precision.",
+      "Your arrow finds its mark, piercing the heart beneath the invincible hide.",
+      "The ten-headed demon lord falls, and his reign of terror ends."
+    ],
+    choices: [{ label: "Victory Achieved", next: 119 }]
+  },
+  114: {
+    title: "Head-On Combat",
+    text: [
+      "You and Ravana clash directly, weapon against magic.",
+      "The battle is fierce and long, testing every ounce of your strength and skill.",
+      "Finally, triumph comes as your blade strikes true."
+    ],
+    choices: [{ label: "Victory Achieved", next: 119 }]
+  },
+  115: {
+    title: "Reach the Palace Core",
+    text: [
+      "You breach the palace's inner sanctum.",
+      "Ravana waits, and the final confrontation looms before you."
+    ],
+    choices: [{ label: "Confront Ravana", next: 106 }]
+  },
+  116: {
+    title: "Capitalize on Confusion",
+    text: [
+      "With Lanka in chaos, your forces press forward with overwhelming force.",
+      "Ravana is forced to retreat deeper into his palace to regroup.",
+      "This is {{name}}'s moment—strike while the advantage is yours."
+    ],
+    choices: [{ label: "Storm the palace", next: 115 }]
+  },
+  117: {
+    title: "The Escape",
+    text: [
+      "You and {{wifeName}} reach the shore where Hanuman and your forces wait.",
+      "The ocean provides passage once more as you leave Lanka behind.",
+      "{{wifeName}} is safe, and together you begin the journey home."
+    ],
+    choices: [{ label: "The Return Journey", next: 120 }]
+  },
+  118: {
+    title: "Flee Lanka Together",
+    text: [
+      "With {{wifeName}} hand-in-hand, you navigate through the chaos of battle.",
+      "Your forces cover your retreat, and Hanuman ensures the path ahead is clear.",
+      "You escape Lanka as its defenders fall behind."
+    ],
+    choices: [{ label: "The Return Journey", next: 120 }]
+  },
+  119: {
+    title: "Lanka Conquered",
+    text: [
+      "{{name}}, with Ravana fallen, Lanka surrenders without further resistance.",
+      "Your forces secure the city, and {{wifeName}} is found safe among the palace treasures.",
+      "The nightmare is over; the triumph is complete."
+    ],
+    choices: [{ label: "The Return Journey", next: 120 }]
+  },
+  120: {
+    title: "Homeward Bound",
+    text: [
+      "{{name}}, you and {{wifeName}}, along with {{siblingOneName}}, Sugriva, and Hanuman, begin your journey home.",
+      "The exile is ending, and victory has been earned through trials and courage.",
+      "Ayodhya awaits, and your rightful place as king calls."
+    ],
+    choices: [
+      { label: "Return to Ayodhya in triumph", next: 121 },
+      { label: "The quest is complete", restart: true }
+    ]
+  },
+  121: {
+    title: "The Triumphal Return",
+    text: [
+      "{{name}}, you cross the threshold of Ayodhya once more.",
+      "{{siblingTwoName}} removes your sandals from the throne and presents them to you with joy.",
+      "The kingdom erupts in celebration as their true king returns, no longer in exile.",
+      "{{wifeName}} walks beside you as your queen, {{siblingOneName}} as your honored general, and all of Ayodhya rejoices.",
+      "{{name}}, this is your victory. This is your legend."
     ],
     choices: [{ label: "Restart", restart: true }]
-  },
-  68: {
-    title: "The Sandals Promise",
-    text: [
-      "{{siblingTwoName}} accepts your sandals as a symbol of rightful rule and departs in tears.",
-      "{{name}}, once {{siblingTwoName}} departs, your exile journey resumes and the forest's first major threat approaches."
-    ],
-    choices: [{ label: "Continue", next: -4 }]
   }
 };
+
+
+function addInventoryItem(item) {
+  if (!inventory.includes(item)) {
+    inventory.push(item);
+  }
+}
+
+function removeInventoryItem(item) {
+  var index = inventory.indexOf(item);
+  if (index > -1) {
+    inventory.splice(index, 1);
+  }
+}
+
+function hasInventoryItem(item) {
+  return inventory.includes(item);
+}
+
+function modifyStat(stat, amount) {
+  if (characterStats[stat] !== undefined) {
+    characterStats[stat] = Math.max(0, Math.min(100, characterStats[stat] + amount));
+  }
+}
+
+function modifyRelationship(character, amount) {
+  if (relationships[character] !== undefined) {
+    relationships[character] = Math.max(0, Math.min(100, relationships[character] + amount));
+  }
+}
+
+function addQuestObjective(questName, objective) {
+  var quest = questLog.find(function(q) { return q.name === questName; });
+  if (!quest) {
+    quest = { name: questName, status: "active", objectives: [] };
+    questLog.push(quest);
+  }
+  if (!quest.objectives.includes(objective)) {
+    quest.objectives.push(objective);
+  }
+}
+
+function completeQuestObjective(questName, objective) {
+  var quest = questLog.find(function(q) { return q.name === questName; });
+  if (quest) {
+    var index = quest.objectives.indexOf(objective);
+    if (index > -1) {
+      quest.objectives.splice(index, 1);
+    }
+    if (quest.objectives.length === 0) {
+      quest.status = "complete";
+    }
+  }
+}
+
+function addAchievement(achievement) {
+  if (!achievements.includes(achievement)) {
+    achievements.push(achievement);
+  }
+}
 
 function randomPercent() {
   return Math.floor(Math.random() * 100);
@@ -552,6 +1039,108 @@ function restart() {
   historyStack = [];
   clearStoryCard();
   updateUndoButton();
+}
+
+function exportSaveFile() {
+  var saveData = {
+    currentScene: currentScene,
+    playerName: playerName,
+    fatherName: fatherName,
+    motherName: motherName,
+    wifeName: wifeName,
+    siblingOneName: siblingOneName,
+    siblingTwoName: siblingTwoName,
+    siblingThreeName: siblingThreeName,
+    siblingOneGender: siblingOneGender,
+    siblingTwoGender: siblingTwoGender,
+    siblingThreeGender: siblingThreeGender,
+    secondMotherName: secondMotherName,
+    broughtLakshmana: broughtLakshmana,
+    wentAlone: wentAlone,
+    historyStack: historyStack,
+    dayNightMode: dayNightMode,
+    timestamp: new Date().toISOString()
+  };
+
+  var dataStr = JSON.stringify(saveData, null, 2);
+  var dataBlob = new Blob([dataStr], { type: "application/json" });
+  var url = URL.createObjectURL(dataBlob);
+  var link = document.createElement("a");
+  link.href = url;
+  link.download = "ramayana_savefile_" + new Date().toISOString().split("T")[0] + ".json";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function importSaveFile(event) {
+  var file = event.target.files[0];
+  if (!file) return;
+
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var saveData = JSON.parse(e.target.result);
+      
+      currentScene = saveData.currentScene || 0;
+      playerName = saveData.playerName || "";
+      fatherName = saveData.fatherName || "";
+      motherName = saveData.motherName || "";
+      wifeName = saveData.wifeName || "";
+      siblingOneName = saveData.siblingOneName || "";
+      siblingTwoName = saveData.siblingTwoName || "";
+      siblingThreeName = saveData.siblingThreeName || "";
+      siblingOneGender = saveData.siblingOneGender || "male";
+      siblingTwoGender = saveData.siblingTwoGender || "male";
+      siblingThreeGender = saveData.siblingThreeGender || "male";
+      secondMotherName = saveData.secondMotherName || "";
+      broughtLakshmana = saveData.broughtLakshmana || false;
+      wentAlone = saveData.wentAlone || false;
+      historyStack = saveData.historyStack || [];
+      dayNightMode = saveData.dayNightMode || "day";
+
+      updateDayNightButton();
+      showScene();
+      updateUndoButton();
+      alert("Game loaded successfully!");
+    } catch (error) {
+      alert("Error loading save file: " + error.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+function triggerFileUpload() {
+  var fileInput = document.getElementById("saveFileInput");
+  if (fileInput) {
+    fileInput.click();
+  }
+}
+
+function toggleDayNight() {
+  dayNightMode = dayNightMode === "day" ? "night" : "day";
+  document.body.classList.toggle("night-mode");
+  updateDayNightButton();
+  localStorage.setItem("dayNightMode", dayNightMode);
+}
+
+function updateDayNightButton() {
+  var btn = document.getElementById("dayNightToggle");
+  if (btn) {
+    btn.textContent = dayNightMode === "day" ? "🌙 Night" : "☀ Day";
+  }
+}
+
+function initializeDayNight() {
+  var savedMode = localStorage.getItem("dayNightMode");
+  if (savedMode) {
+    dayNightMode = savedMode;
+    if (dayNightMode === "night") {
+      document.body.classList.add("night-mode");
+    }
+  }
+  updateDayNightButton();
 }
 
 function getCanonNames() {
@@ -955,6 +1544,7 @@ function closeInventoryModal() {}
 document.addEventListener("DOMContentLoaded", function () {
   setupNavbar();
   setupVolumeSlider();
+  initializeDayNight();
   if (typeof applyResolutionTierStyling === "function") {
     applyResolutionTierStyling();
     window.addEventListener("resize", applyResolutionTierStyling);

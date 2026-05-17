@@ -1608,3 +1608,99 @@ blockquote,
     grid-template-columns: 1fr;
   }
 }
+
+/* Day/Night Mode */
+body.night-mode {
+  --bg-top: #0a0a15;
+  --bg-mid: #1a1a2e;
+  --bg-bottom: #16213e;
+  --panel: rgba(15, 15, 25, 0.88);
+  --panel-strong: rgba(20, 20, 35, 0.95);
+  --panel-border: rgba(100, 150, 255, 0.18);
+  --text: #e0e0ff;
+  --muted: rgba(224, 224, 255, 0.7);
+  --gold: #7fa3ff;
+  --gold-deep: #5577dd;
+  --crimson: #2a3a5a;
+  --shadow: 0 28px 70px rgba(0, 0, 0, 0.6);
+  --crisp-line: rgba(100, 150, 255, 0.2);
+}
+
+body.night-mode::before {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(100, 150, 255, 0.1), transparent 34%),
+    linear-gradient(90deg, transparent 0%, rgba(100, 150, 255, 0.02) 50%, transparent 100%);
+}
+
+body.night-mode::after {
+  background-image:
+    linear-gradient(rgba(100, 150, 200, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(100, 150, 200, 0.04) 1px, transparent 1px);
+}
+
+body.night-mode {
+  background:
+    linear-gradient(rgba(5, 5, 15, 0.8), rgba(5, 5, 15, 0.8)),
+    url("RamayanaBG.webp"),
+    radial-gradient(circle at top, rgba(100, 150, 200, 0.08), transparent 24%),
+    radial-gradient(circle at 15% 20%, rgba(100, 130, 200, 0.05), transparent 18%),
+    linear-gradient(160deg, #0a0a15 0%, #0f0f25 22%, #1a1a2e 58%, #16213e 100%);
+}
+
+body.night-mode #topNavbar {
+  border-color: rgba(100, 150, 255, 0.3);
+  background: linear-gradient(120deg, rgba(20, 25, 50, 0.9), rgba(15, 20, 40, 0.95));
+}
+
+body.night-mode #navbarToggle {
+  border-color: rgba(100, 150, 255, 0.35);
+  background: rgba(10, 15, 30, 0.9);
+  color: #a0c0ff;
+}
+
+body.night-mode #navbarToggle:hover,
+body.night-mode #navbarToggle:focus-visible {
+  background: rgba(100, 150, 255, 0.15);
+  border-color: rgba(150, 180, 255, 0.6);
+}
+
+body.night-mode #updateBadge {
+  border-color: rgba(100, 150, 255, 0.4);
+  background: linear-gradient(120deg, rgba(20, 25, 50, 0.95), rgba(15, 20, 40, 0.98));
+  color: #a0c0ff;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5);
+}
+
+body.night-mode::-webkit-scrollbar-track {
+  scrollbar-color: rgba(100, 150, 255, 0.2) rgba(5, 5, 15, 0.5);
+}
+
+body.night-mode #titleContainer,
+body.night-mode #storyCard,
+body.night-mode #timelineCard {
+  border-color: rgba(100, 150, 255, 0.2);
+  background:
+    linear-gradient(180deg, rgba(100, 150, 255, 0.04), rgba(100, 150, 255, 0.01)),
+    var(--panel);
+}
+
+body.night-mode button,
+body.night-mode .btn {
+  border-color: rgba(100, 150, 255, 0.3);
+  background:
+    linear-gradient(145deg, rgba(100, 150, 255, 0.15), rgba(70, 120, 255, 0.1)),
+    rgba(10, 15, 35, 0.8);
+}
+
+body.night-mode button:hover,
+body.night-mode .btn:hover {
+  border-color: rgba(120, 160, 255, 0.5);
+  background:
+    linear-gradient(145deg, rgba(100, 150, 255, 0.25), rgba(70, 120, 255, 0.15)),
+    rgba(20, 25, 45, 0.9);
+}
+
+body.night-mode #updateInfo {
+  border-color: rgba(100, 150, 255, 0.2);
+  background: rgba(100, 150, 255, 0.06);
+}

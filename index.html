@@ -10,7 +10,7 @@
   <link rel="icon" type="image/x-icon" href="ramayana_favicon.ico">
 </head>
 <body>
-  <a id="updateBadge" href="updates.html" aria-label="Go to updates page" data-resolution-label="HD">Update 1.0.0 - Grand Opening</a>
+  <a id="updateBadge" href="updates.html" aria-label="Go to updates page" data-resolution-label="HD">Update 1.0.3 - Lanka Arc Complete</a>
 
   <nav id="topNavbar" aria-label="Site navigation">
     <button id="navbarToggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="navLinks">☰</button>
@@ -19,6 +19,10 @@
       <!-- <a class="nav-link-pill" href="before-the-ramayana.html">Before the Ramayana</a> -->
       <a class="nav-link-pill" href="people-of-ramayana.html">People of the Ramayana</a>
       <a class="nav-link-pill" href="https://arjun-singh.com/" target="_blank" rel="noopener noreferrer">About</a>
+      <button id="dayNightToggle" type="button" class="nav-link-pill" onclick="toggleDayNight()" aria-label="Toggle day/night mode">🌙 Night</button>
+      <button id="saveBtn" type="button" class="nav-link-pill" onclick="exportSaveFile()" aria-label="Download save file">💾 Save</button>
+      <button id="loadBtn" type="button" class="nav-link-pill" onclick="triggerFileUpload()" aria-label="Load save file">📂 Load</button>
+      <input type="file" id="saveFileInput" accept=".json" onchange="importSaveFile(event)" style="display: none;" aria-hidden="true" />
     </div>
     <div id="soundtrackBadge" aria-label="Background soundtrack controls">
       <span class="soundtrack-label">Soundtrack</span>

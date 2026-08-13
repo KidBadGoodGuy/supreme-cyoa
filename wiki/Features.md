@@ -1,6 +1,6 @@
 # Features
 
-_Last updated: 2026-04-25 (UTC)_
+_Last updated: 2026-08-13 (UTC)_
 
 This page lists the live, player-facing features currently present in the project.
 
@@ -64,3 +64,12 @@ This page lists the live, player-facing features currently present in the projec
 - Semantic/ARIA support in key controls.
 - Input guidance for player-name defaults.
 - Graceful fallbacks for optional browser features.
+
+
+## 10) Reactive Ramayana RPG foundation
+
+- Living player-state model with dharma, knowledge, courage, wisdom, devotion, persuasion, stealth, agility, endurance, craft, perception, community reputation, relationships, discoveries, quests, weather, time of day, and journey history.
+- Seven-kanda atlas for Bala, Ayodhya, Aranya, Kishkindha, Sundara, Yuddha, and Uttara Kanda that preserves canonical anchors while describing reactive play around them.
+- Visible **Your Journey** receipt panel for important player actions without exposing every hidden consequence.
+- Contextual mini-game framework covering memory, trivia, dialogue construction, rhythm/music, calligraphy-style reconstruction, navigation, observation, pattern, timing, sorting, language, map reading, resource management, meditation, crafting, and logic challenges.
+- Python `WorldStateEngine` prototype for deterministic unlock evaluation, relationship memory, and future FastAPI/SQLite expansion.

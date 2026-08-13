@@ -10,7 +10,7 @@
   <link rel="icon" type="image/x-icon" href="ramayana_favicon.ico">
 </head>
 <body>
-  <a id="updateBadge" href="updates.html" aria-label="Go to updates page" data-resolution-label="HD">Update 1.0.3 - Lanka Arc Complete</a>
+  <a id="updateBadge" href="updates.html" aria-label="Go to updates page" data-resolution-label="HD">Update 1.0.4 - Reactive RPG Engine</a>
 
   <nav id="topNavbar" aria-label="Site navigation">
     <button id="navbarToggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="navLinks">☰</button>
@@ -38,12 +38,14 @@
       <h3 class="subtitle">An Epic Adventure Awaits</h3>
       <h4 id="description">Embark on your own journey through the great Indian epic.</h4>
       <p>You will travel through ancient India, make difficult choices, and uncover how the story of the Ramayana might unfold in different ways.</p>
+      <p class="rpg-promise"><strong>The epic is the river.</strong> Your choices shape relationships, discoveries, skills, routes, and reputation around the seven canonical kandas.</p>
     </header>
 
     <div id="beginningContainer">
       <div class="intro-card">
         <h2>Welcome, Brave Traveler</h2>
         <p>Type your name and begin your journey. Then start the game to enter the adventure.</p>
+        <p>Choose a background in your imagination—traveler, scribe, craftsperson, messenger, scholar, forest dweller, attendant, pilgrim, healer, musician, archer, or trader—and grow through action rather than simple leveling.</p>
         <!-- Family setup feature disabled.
         <button type="button" id="toggleFamilySetupBtn" onclick="toggleFamilySetup()" aria-controls="familySetupFields" aria-expanded="false">Enable Family Setup</button>
         <p id="familySetupNotice" class="setup-notice" aria-live="polite"></p>
@@ -51,6 +53,23 @@
         <div class="name-grid">
           <p id="playerNameLabel" class="setup-label">Name yourself</p>
           <input type="text" id="playerName" placeholder="Your name (Rama)" />
+        </div>
+        <div class="name-grid">
+          <p class="setup-label">Background</p>
+          <select id="playerBackground" aria-label="Choose your background">
+            <option value="traveler">Traveler</option>
+            <option value="scribe">Scribe</option>
+            <option value="craftsperson">Craftsperson</option>
+            <option value="messenger">Messenger</option>
+            <option value="scholar">Scholar</option>
+            <option value="forest dweller">Forest Dweller</option>
+            <option value="royal attendant">Royal Attendant</option>
+            <option value="pilgrim">Pilgrim</option>
+            <option value="healer">Healer</option>
+            <option value="musician">Musician</option>
+            <option value="archer">Archer</option>
+            <option value="trader">Trader</option>
+          </select>
         </div>
         <!-- Family setup feature disabled.
         <div class="name-grid family-setup-fields" id="familySetupFields" hidden>

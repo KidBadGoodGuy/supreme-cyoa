@@ -25,11 +25,68 @@ var lakshmanaAllyStatus = "unknown"; // ally, guardian, unknown
 var battleStats = { winsCount: 0, strategicVictories: 0, allyDeaths: 0 };
 var lyricsKnown = [];
 
+
+var rpgState = {
+  profile: { background: "traveler", clothing: "simple traveler's cloth", tendency: "balanced" },
+  stats: { dharma: 50, knowledge: 45, courage: 50, wisdom: 45, devotion: 40, persuasion: 40, stealth: 30, agility: 35, endurance: 45, craft: 30, perception: 40 },
+  reputations: { ayodhya: 10, mithila: 0, hermitages: 0, kishkindha: 0, vanaras: 0, lanka: 0, merchants: 0, travelers: 0 },
+  relationships: { vishvamitra: { trust: 0, respect: 0, gratitude: 0, suspicion: 0 }, sita: { trust: 10, affection: 10, respect: 5 }, lakshmana: { loyalty: 10, trust: 10, respect: 5 }, hanuman: { trust: 0, respect: 0, gratitude: 0 }, sugriva: { trust: 0, debt: 0, loyalty: 0 }, valmiki: { trust: 0, respect: 0 } },
+  skills: { scholarship: { reading: 1, languages: 1, lore: 1, recognition: 1 }, survival: { tracking: 1, navigation: 1, foraging: 1, wilderness: 1 }, social: { persuasion: 1, diplomacy: 1, etiquette: 1, storytelling: 1 }, craft: { woodworking: 1, repair: 1, construction: 1, textile: 1 }, performance: { music: 1, rhythm: 1, recitation: 1 }, spiritual: { meditation: 1, focus: 1, ritual: 1 }, athletics: { balance: 1, climbing: 1, running: 1, swimming: 1 } },
+  journal: { story: [], people: [], places: [], knowledge: [], promises: [], debts: [], discoveries: [], decisions: [], mysteries: [] },
+  world: { timeOfDay: "morning", weather: "clear", day: 1, location: "Ayodhya", canonAnchor: "Bala Kanda opening", unlocked: ["ayodhya_market", "valmiki_frame"] },
+  quests: { sevenKandaJourney: { status: "active", stage: "Bala Kanda", variants: [] }, villageDispute: { status: "available", solutions: [] }, forestHermitageAid: { status: "locked", solutions: [] } },
+  journey: []
+};
+
+var kandaAtlas = [
+  { name: "I — Bala Kanda", anchor: "Valmiki and Narada frame Rama's life; births, training with Vishvamitra, Ahalya, Mithila, Shiva's bow, marriages, Parashurama.", play: "Court errands, manuscript learning, sacrifice protection, respectful observation puzzles, Mithila etiquette, bow-hall lore checks." },
+  { name: "II — Ayodhya Kanda", anchor: "Coronation preparations turn to exile; Guha, Ganga, Bharadvaja, Chitrakuta, Dasharatha's death, Bharata, sandals, Nandigrama.", play: "Household trust, public rumor, route planning, promises, grief rituals, diplomacy with citizens and forest allies." },
+  { name: "III — Aranya Kanda", anchor: "Dandaka, sages, Panchavati, Surpanakha, Khara and Dushana, Maricha, Sita's abduction, Jatayu, Kabandha, Shabari.", play: "Living forest exploration with day/night, weather, hermitages, wildlife clues, hidden paths, tracking and compassion consequences." },
+  { name: "IV — Kishkindha Kanda", anchor: "Hanuman meets Rama; Sugriva alliance, Vali, Tara, Angada, rainy season, search parties, Sampati, Sita's location.", play: "Vanara politics, alliance reputation, monsoon downtime activities, search-party logistics, memory of promises." },
+  { name: "V — Sundara Kanda", anchor: "Hanuman's leap, Mainaka, Surasa, Simhika, night Lanka, Ashoka Vatika, Sita, ring, Ravana's court, Lanka burns, return.", play: "Supernatural scale shift with stealth, observation, rhythm of breath, symbolic pattern, and consequence-rich scouting reports." },
+  { name: "VI — Yuddha Kanda", anchor: "Vibhishana, ocean, bridge, crossing, diplomacy, Angada, war, Kumbhakarna, Indrajit, Sanjivani, Ravana, return, coronation.", play: "War-council strategy, bridge construction, mercy and morale, logistics, battlefield rescues, postwar reputation." },
+  { name: "VII — Uttara Kanda", anchor: "Later reign, public opinion, Sita's separation in received tradition, Valmiki's ashram, Lava and Kusha, Ashvamedha, recognition, Sita's return to Earth, Rama's final departure. Scholarly status is clearly labeled as discussed.", play: "Legacy simulation, public trust, recitation, governance petitions, difficult duty, memory of the whole journey." }
+];
+
+function rememberJourney(text) {
+  if (rpgState.journey.indexOf(text) === -1) { rpgState.journey.push(text); }
+}
+
+function adjustRpg(path, amount) {
+  var parts = path.split(".");
+  var target = rpgState;
+  for (var i = 0; i < parts.length - 1; i += 1) { target = target[parts[i]]; }
+  var key = parts[parts.length - 1];
+  if (typeof target[key] === "number") { target[key] = Math.max(-100, Math.min(100, target[key] + amount)); }
+}
+
+function runRpgActivity(activity) {
+  var log = "";
+  if (activity === "market") {
+    adjustRpg("stats.persuasion", 3); adjustRpg("reputations.merchants", 5); rpgState.journal.people.push("Ayodhya merchants"); log = "You mediated a fair market exchange; merchants may quote kinder prices later.";
+  } else if (activity === "study") {
+    adjustRpg("stats.knowledge", 4); rpgState.journal.knowledge.push("Valmiki-Narada opening frame"); log = "You copied a manuscript note and unlocked a lore-aware answer for future sages.";
+  } else if (activity === "forest") {
+    adjustRpg("stats.perception", 3); adjustRpg("stats.endurance", 2); rpgState.journal.places.push("Hidden forest path"); rpgState.journal.discoveries.push("A quiet route between hermitages"); log = "You mapped a hidden path; later forest travel can become safer or faster.";
+  } else if (activity === "music") {
+    adjustRpg("stats.devotion", 2); rpgState.skills.performance.rhythm += 1; log = "You kept a respectful tala pattern; storytellers remember your attention.";
+  }
+  rememberJourney(log);
+  showScene();
+}
+
+function buildRpgDashboard() {
+  var stats = Object.keys(rpgState.stats).map(function (key) { return "<span>" + key.toUpperCase() + " <strong>" + rpgState.stats[key] + "</strong></span>"; }).join("");
+  var kandas = kandaAtlas.map(function (kanda) { return "<details><summary>" + escapeHtml(kanda.name) + "</summary><p><strong>Canonical anchor:</strong> " + escapeHtml(kanda.anchor) + "</p><p><strong>Reactive play:</strong> " + escapeHtml(kanda.play) + "</p></details>"; }).join("");
+  var journey = rpgState.journey.length ? rpgState.journey.slice(-5).map(function (item) { return "<li>" + escapeHtml(item) + "</li>"; }).join("") : "<li>Your meaningful actions will appear here without exposing every hidden consequence.</li>";
+  return "<section id='rpgDashboard' aria-label='Reactive RPG systems'><div class='rpg-grid'><article><h3>Living Character</h3><p>You are an original " + escapeHtml(rpgState.profile.background) + " inside the epic, not a replacement for Rama, Sita, Hanuman, or other central figures.</p><div class='stat-cloud'>" + stats + "</div></article><article><h3>World Simulation</h3><p><strong>" + escapeHtml(rpgState.world.timeOfDay) + "</strong> · <strong>" + escapeHtml(rpgState.world.weather) + "</strong> · " + escapeHtml(rpgState.world.location) + "</p><p>NPCs evaluate trust, respect, suspicion, gratitude, debt, and loyalty instead of one morality meter.</p></article><article><h3>Your Journey</h3><ol>" + journey + "</ol></article></div><div class='activity-row'><button onclick=\"runRpgActivity('market')\">Mediate Market</button><button onclick=\"runRpgActivity('study')\">Study Manuscript</button><button onclick=\"runRpgActivity('forest')\">Scout Forest Path</button><button onclick=\"runRpgActivity('music')\">Practice Rhythm</button></div><div class='kanda-atlas'><h3>Seven-Kanda Reactive Atlas</h3>" + kandas + "</div><div class='mini-game-library'><h3>Contextual Mini-Game Library</h3><p>Memory, trivia, dialogue construction, rhythm, calligraphy-style reconstruction, navigation, observation, pattern, timing, sorting, language, map-reading, resource planning, meditation, crafting, and logic challenges can now update stats, relationships, quests, discoveries, and future dialogue.</p></div></section>";
+}
+
 // var familySetupEnabled = false;
 // var familySetupActivatedOnce = false;
 // var customNames = null;
 
-console.log("Update 27");
+console.log("Update 28");
 
 var scenes = {
   1: {
@@ -1057,6 +1114,7 @@ function exportSaveFile() {
     secondMotherName: secondMotherName,
     broughtLakshmana: broughtLakshmana,
     wentAlone: wentAlone,
+    rpgState: rpgState,
     historyStack: historyStack,
     dayNightMode: dayNightMode,
     timestamp: new Date().toISOString()
@@ -1097,6 +1155,7 @@ function importSaveFile(event) {
       secondMotherName = saveData.secondMotherName || "";
       broughtLakshmana = saveData.broughtLakshmana || false;
       wentAlone = saveData.wentAlone || false;
+      if (saveData.rpgState) { rpgState = saveData.rpgState; }
       historyStack = saveData.historyStack || [];
       dayNightMode = saveData.dayNightMode || "day";
 
@@ -1182,10 +1241,16 @@ function assignNames(nameSet) {
 
 function startAdventure() {
   var baseNameInput = document.getElementById("playerName");
+  var backgroundInput = document.getElementById("playerBackground");
   var basePlayerName = baseNameInput && baseNameInput.value.trim() ? baseNameInput.value.trim() : "Rama";
   var canonNames = getCanonNames();
   canonNames.playerName = basePlayerName;
   assignNames(canonNames);
+  rpgState.profile.background = backgroundInput && backgroundInput.value ? backgroundInput.value : "traveler";
+  if (rpgState.profile.background === "scholar" || rpgState.profile.background === "scribe") { adjustRpg("stats.knowledge", 5); }
+  if (rpgState.profile.background === "forest dweller") { adjustRpg("stats.perception", 4); adjustRpg("stats.endurance", 3); }
+  if (rpgState.profile.background === "trader") { adjustRpg("stats.persuasion", 4); adjustRpg("reputations.merchants", 4); }
+  if (rpgState.profile.background === "musician") { adjustRpg("stats.devotion", 3); rpgState.skills.performance.music += 1; }
 
   historyStack = [];
   currentScene = 1;
@@ -1355,6 +1420,8 @@ function showScene() {
     html += "<p>" + formatStoryHtml(paragraph) + "</p>";
   });
 
+  html += buildRpgDashboard();
+
   if (Array.isArray(scene.dialogue)) {
     html += "<div class='scene-dialogue' aria-label='Scene dialogue'>";
     scene.dialogue.forEach(function (entry) {
@@ -1387,6 +1454,10 @@ function makeChoice(choiceIndex) {
   if (typeof choice.onPick === "function") {
     choice.onPick();
   }
+  rememberJourney("Scene " + currentScene + ": " + interpolatePlayerName(choice.label));
+  if (choice.label.toLowerCase().indexOf("accept") !== -1) { adjustRpg("stats.dharma", 2); }
+  if (choice.label.toLowerCase().indexOf("negotiate") !== -1) { adjustRpg("stats.persuasion", 3); }
+  if (choice.label.toLowerCase().indexOf("scout") !== -1 || choice.label.toLowerCase().indexOf("search") !== -1) { adjustRpg("stats.perception", 2); }
 
   historyStack.push(currentScene);
   currentScene = resolveSpecialNext(choice.next);
